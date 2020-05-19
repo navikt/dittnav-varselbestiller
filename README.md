@@ -1,11 +1,11 @@
-# DittNAV event aggregator
+# dittnav-varsel-bestiller
 
 Microservice som brukes for å lese inn eventer fra DittNAV sine kafka-topics, og lagrer disse i DittNAV sin 
 event-cache (database). DittNAV-api henter ut eventer per bruker fra denne event-cache-en for å serve 
 DittNAV (frontend).
 
 # Kom i gang
-1. Bygge dittnav-event-aggregator:
+1. Bygge dittnav-varsel-bestiller:
     * bygge og kjøre enhetstester: `gradle clean test`
     * bygge og kjøre integrasjonstester: `gradle clean build`
 2. Start lokal instans av Kafka og Postgres ved å kjøre `docker-compose up -d`
