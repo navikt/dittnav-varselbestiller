@@ -1,0 +1,55 @@
+package no.nav.personbruker.dittnav.eventaggregator.metrics
+
+import io.prometheus.client.Counter
+import io.prometheus.client.Gauge
+
+object PrometheusMetricsCollector {
+
+    val NAMESPACE = "dittnav_consumer"
+
+    val EVENTS_SEEN_NAME = "kafka_events_seen"
+    val EVENTS_PROCESSED_NAME = "kafka_events_processed"
+    val EVENTS_FAILED_NAME = "kafka_events_failed"
+    val EVENT_LAST_SEEN_NAME = "kafka_event_type_last_seen"
+
+    private val MESSAGES_SEEN: Counter = Counter.build()
+            .name(EVENTS_SEEN_NAME)
+            .namespace(NAMESPACE)
+            .help("Events read since last startup")
+            .labelNames("type", "producer")
+            .register()
+
+    private val MESSAGES_PROCESSED: Counter = Counter.build()
+            .name(EVENTS_PROCESSED_NAME)
+            .namespace(NAMESPACE)
+            .help("Events successfully processed since last startup")
+            .labelNames("type", "producer")
+            .register()
+
+    private val MESSAGES_FAILED: Counter = Counter.build()
+            .name(EVENTS_FAILED_NAME)
+            .namespace(NAMESPACE)
+            .help("Events failed since last startup")
+            .labelNames("type", "producer")
+            .register()
+
+    private val MESSAGE_LAST_SEEN: Gauge = Gauge.build()
+            .name(EVENT_LAST_SEEN_NAME)
+            .namespace(NAMESPACE)
+            .help("Last time event type was seen")
+            .labelNames("type", "producer")
+            .register()
+
+    fun registerEventsSeen(count: Int, eventType: String, producer: String) {
+        MESSAGES_SEEN.labels(eventType, producer).inc(count.toDouble())
+        MESSAGE_LAST_SEEN.labels(eventType, producer).setToCurrentTime()
+    }
+
+    fun registerEventsProcessed(count: Int, topic: String, producer: String) {
+        MESSAGES_PROCESSED.labels(topic, producer).inc(count.toDouble())
+    }
+
+    fun registerEventsFailed(count: Int, topic: String, producer: String) {
+        MESSAGES_FAILED.labels(topic, producer).inc(count.toDouble())
+    }
+}

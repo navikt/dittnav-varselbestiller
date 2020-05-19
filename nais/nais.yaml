@@ -1,0 +1,40 @@
+apiVersion: "nais.io/v1alpha1"
+kind: "Application"
+metadata:
+  name: dittnav-event-aggregator
+  namespace: {{namespace}}
+  labels:
+    team: personbruker
+spec:
+  image: {{version}}
+  port: 8080
+  liveness:
+    path: /internal/isAlive
+    initialDelay: 5
+  readiness:
+    path: /internal/isReady
+    initialDelay: 5
+  prometheus:
+    path: /metrics
+  replicas:
+    min: 2
+    max: 4
+    cpuThresholdPercentage: 50
+  ingresses:
+  {{#each ingresses}}
+    - "{{this}}"
+  {{/each}}
+  vault:
+    enabled: true
+    paths:
+      - kvPath: /kv/{{cluster}}/sbs/dittnav-event-aggregator/{{namespace}}
+        mountPath: /var/run/secrets/nais.io/vault
+      - kvPath: /serviceuser/data/{{environment}}/srvdn-e-aggregator
+        mountPath: /secret/serviceuser
+  resources:
+    limits:
+      cpu: "3"
+      memory: 1200Mi
+    requests:
+      cpu: "1"
+      memory: 1024Mi
