@@ -1,0 +1,35 @@
+package no.nav.personbruker.dittnav.varsel.bestiller.beskjed
+
+import no.nav.personbruker.dittnav.varsel.bestiller.common.database.BrukernotifikasjonRepository
+import no.nav.personbruker.dittnav.varsel.bestiller.common.database.Database
+import no.nav.personbruker.dittnav.varsel.bestiller.common.database.PersistFailureReason
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
+class BeskjedRepository(private val database: Database) : BrukernotifikasjonRepository<Beskjed> {
+
+    private val log: Logger = LoggerFactory.getLogger(BeskjedRepository::class.java)
+
+    override suspend fun createInOneBatch(entities: List<Beskjed>) {
+        database.queryWithExceptionTranslation {
+            createBeskjeder(entities)
+        }
+    }
+
+    override suspend fun createOneByOneToFilterOutTheProblematicEvents(entities: List<Beskjed>) {
+        database.queryWithExceptionTranslation {
+            entities.forEach { entity ->
+                createBeskjed(entity).onFailure { reason ->
+                    when (reason) {
+                        PersistFailureReason.CONFLICTING_KEYS ->
+                            log.warn("Hoppet over persistering av Beskjed fordi produsent tidligere har brukt samme eventId: $entity")
+                        else ->
+                            log.warn("Hoppet over persistering av Beskjed: $entity")
+                    }
+
+                }
+            }
+        }
+    }
+
+}
