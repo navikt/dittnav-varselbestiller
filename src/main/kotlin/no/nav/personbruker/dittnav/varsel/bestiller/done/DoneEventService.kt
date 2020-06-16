@@ -3,6 +3,7 @@ package no.nav.personbruker.dittnav.varsel.bestiller.done
 import no.nav.brukernotifikasjon.schemas.Done
 import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.personbruker.dittnav.varsel.bestiller.common.EventBatchProcessorService
+import no.nav.personbruker.dittnav.varsel.bestiller.common.database.BrukernotifikasjonProducer
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.FieldValidationException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.NokkelNullException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.UntransformableRecordException
@@ -15,7 +16,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class DoneEventService(
-        private val doneRepository: DoneRepository,
+        private val producer: BrukernotifikasjonProducer<no.nav.personbruker.dittnav.varsel.bestiller.done.Done>,
         private val eventMetricsProbe: EventMetricsProbe
 ) : EventBatchProcessorService<Done> {
 
@@ -48,26 +49,10 @@ class DoneEventService(
                 }
             }
 
-            val groupedDoneEvents = groupDoneEventsByAssociatedEventType(successfullyTransformedEvents)
-            writeDoneEventsToCache(groupedDoneEvents)
+            producer.sendToKafka(successfullyTransformedEvents)
         }
 
         kastExceptionHvisMislykkedeTransformasjoner(problematicEvents)
-    }
-
-    private suspend fun groupDoneEventsByAssociatedEventType(successfullyTransformedEvents: List<no.nav.personbruker.dittnav.varsel.bestiller.done.Done>): DoneBatchProcessor {
-        val eventIds = successfullyTransformedEvents.map { it.eventId }.distinct()
-        val aktiveBrukernotifikasjoner = doneRepository.fetchBrukernotifikasjonerFromViewForEventIds(eventIds)
-        val batch = DoneBatchProcessor(aktiveBrukernotifikasjoner)
-        batch.process(successfullyTransformedEvents)
-        return batch
-    }
-
-    private suspend fun writeDoneEventsToCache(groupedDoneEvents: DoneBatchProcessor) {
-        doneRepository.writeDoneEventsForBeskjedToCache(groupedDoneEvents.foundBeskjed)
-        doneRepository.writeDoneEventsForOppgaveToCache(groupedDoneEvents.foundOppgave)
-        doneRepository.writeDoneEventsForInnboksToCache(groupedDoneEvents.foundInnboks)
-        doneRepository.writeDoneEventsToCache(groupedDoneEvents.notFoundEvents)
     }
 
     private fun kastExceptionHvisMislykkedeTransformasjoner(problematicEvents: MutableList<ConsumerRecord<Nokkel, Done>>) {

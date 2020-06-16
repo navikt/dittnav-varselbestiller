@@ -1,17 +1,10 @@
 package no.nav.personbruker.dittnav.varsel.bestiller
 
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import no.nav.brukernotifikasjon.schemas.Beskjed
-import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.common.KafkaEnvironment
 import no.nav.personbruker.dittnav.varsel.bestiller.beskjed.*
-import no.nav.personbruker.dittnav.varsel.bestiller.common.database.BrukernotifikasjonPersistingService
 import no.nav.personbruker.dittnav.varsel.bestiller.common.database.H2Database
 import no.nav.personbruker.dittnav.varsel.bestiller.common.database.kafka.util.KafkaTestUtil
-import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.Consumer
-import no.nav.personbruker.dittnav.varsel.bestiller.config.EventType
-import no.nav.personbruker.dittnav.varsel.bestiller.config.Kafka
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsProbe
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.ProducerNameResolver
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.ProducerNameScrubber
@@ -19,7 +12,6 @@ import no.nav.personbruker.dittnav.varsel.bestiller.metrics.StubMetricsReporter
 import no.nav.personbruker.dittnav.varsel.bestiller.nokkel.createNokkel
 import org.amshove.kluent.`should equal`
 import org.amshove.kluent.shouldEqualTo
-import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Test
 
@@ -41,19 +33,13 @@ class EndToEndTestIT {
     private val events = (1..10).map { createNokkel(it) to AvroBeskjedObjectMother.createBeskjed(it) }.toMap()
 
     init {
-        embeddedEnv.start()
+       embeddedEnv.start()
     }
 
     @AfterAll
     fun tearDown() {
         adminClient?.close()
         embeddedEnv.tearDown()
-
-        runBlocking {
-            database.dbQuery {
-                deleteAllBeskjed()
-            }
-        }
     }
 
     @Test
@@ -61,51 +47,18 @@ class EndToEndTestIT {
         embeddedEnv.serverPark.status `should equal` KafkaEnvironment.ServerParkStatus.Started
     }
 
-    @Test
-    fun `Skal lese inn Beskjeds-eventer og skrive de til databasen`() {
-        `Produserer noen testeventer`()
-        `Les inn alle eventene og verifiser at de har blitt lagt til i databasen`()
 
-        runBlocking {
-            database.dbQuery {
-                getAllBeskjed().size
-            } `should equal` events.size
-        }
-    }
 
     fun `Produserer noen testeventer`() {
         runBlocking {
             KafkaTestUtil.produceEvents(testEnvironment, topicen, events)
         } shouldEqualTo true
+
+
     }
 
-    fun `Les inn alle eventene og verifiser at de har blitt lagt til i databasen`() {
-        val beskjedRepository = BeskjedRepository(database)
-        val beskjedPersistingService = BrukernotifikasjonPersistingService(beskjedRepository)
-        val eventProcessor = BeskjedEventService(beskjedPersistingService, metricsProbe)
-        val consumerProps = Kafka.consumerProps(testEnvironment, EventType.BESKJED, true)
-        val kafkaConsumer = KafkaConsumer<Nokkel, Beskjed>(consumerProps)
-        val consumer = Consumer(topicen, kafkaConsumer, eventProcessor)
 
-        runBlocking {
-            consumer.startPolling()
 
-            `Wait until all events have been written to the database`()
 
-            consumer.stopPolling()
-        }
-    }
-
-    private fun `Wait until all events have been written to the database`() {
-        var currentNumberOfRecords = 0
-        while (currentNumberOfRecords < events.size) {
-            runBlocking {
-                database.dbQuery {
-                    currentNumberOfRecords = getAllBeskjed().size
-                }
-                delay(100)
-            }
-        }
-    }
 
 }

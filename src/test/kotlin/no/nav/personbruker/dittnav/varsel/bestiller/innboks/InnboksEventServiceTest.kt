@@ -2,7 +2,7 @@ package no.nav.personbruker.dittnav.varsel.bestiller.innboks
 
 import io.mockk.*
 import kotlinx.coroutines.runBlocking
-import no.nav.personbruker.dittnav.varsel.bestiller.common.database.BrukernotifikasjonPersistingService
+import no.nav.personbruker.dittnav.varsel.bestiller.common.database.BrukernotifikasjonProducer
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.UntransformableRecordException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.objectmother.ConsumerRecordsObjectMother
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsProbe
@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test
 
 class InnboksEventServiceTest {
 
-    private val persistingService = mockk<BrukernotifikasjonPersistingService<Innboks>>(relaxed = true)
+    private val persistingService = mockk<BrukernotifikasjonProducer<Innboks>>(relaxed = true)
     private val metricsProbe = mockk<EventMetricsProbe>(relaxed = true)
     private val metricsSession = mockk<EventMetricsSession>(relaxed = true)
     private val eventService = InnboksEventService(persistingService, metricsProbe)
@@ -35,32 +35,6 @@ class InnboksEventServiceTest {
     }
 
     @Test
-    fun `Should write events to database`() {
-        val records = ConsumerRecordsObjectMother.giveMeANumberOfInnboksRecords(5, "dummyTopic")
-
-        val capturedStores = slot<List<Innboks>>()
-
-        coEvery { persistingService.writeEventsToCache(capture(capturedStores)) } returns Unit
-
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
-
-        coEvery { metricsProbe.runWithMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
-        }
-
-        runBlocking {
-            eventService.processEvents(records)
-        }
-
-        verify(exactly = records.count()) { InnboksTransformer.toInternal(any(), any()) }
-        coVerify(exactly = 1) { persistingService.writeEventsToCache(allAny()) }
-        capturedStores.captured.size `should be` records.count()
-
-        confirmVerified(persistingService)
-        confirmVerified(InnboksTransformer)
-    }
-
-    @Test
     fun `Should finish processing batch before throwing exception when unable to transform event`() {
         val numberOfRecords = 5
         val numberOfFailedTransformations = 1
@@ -71,7 +45,7 @@ class InnboksEventServiceTest {
 
         val capturedStores = slot<List<Innboks>>()
 
-        coEvery { persistingService.writeEventsToCache(capture(capturedStores)) } returns Unit
+        coEvery { persistingService.sendToKafka(capture(capturedStores)) } returns Unit
 
         val mockedException = UntransformableRecordException("Simulated Exception")
 
@@ -90,7 +64,7 @@ class InnboksEventServiceTest {
         } `should throw` UntransformableRecordException::class
 
         verify(exactly = numberOfRecords) { InnboksTransformer.toInternal(any(), any()) }
-        coVerify(exactly = 1) { persistingService.writeEventsToCache(allAny()) }
+        coVerify(exactly = 1) { persistingService.sendToKafka(allAny()) }
         coVerify(exactly = numberOfFailedTransformations) { metricsSession.countFailedEventForProducer(any()) }
         capturedStores.captured.size `should be` numberOfSuccessfulTransformations
 
@@ -130,7 +104,7 @@ class InnboksEventServiceTest {
         }
 
         val capturedNumberOfEntitiesWrittenToTheDb = slot<List<Innboks>>()
-        coEvery { persistingService.writeEventsToCache(capture(capturedNumberOfEntitiesWrittenToTheDb)) } returns Unit
+        coEvery { persistingService.sendToKafka(capture(capturedNumberOfEntitiesWrittenToTheDb)) } returns Unit
 
         runBlocking {
             eventService.processEvents(records)

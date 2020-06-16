@@ -3,7 +3,7 @@ package no.nav.personbruker.dittnav.varsel.bestiller.oppgave
 import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.brukernotifikasjon.schemas.Oppgave
 import no.nav.personbruker.dittnav.varsel.bestiller.common.EventBatchProcessorService
-import no.nav.personbruker.dittnav.varsel.bestiller.common.database.BrukernotifikasjonPersistingService
+import no.nav.personbruker.dittnav.varsel.bestiller.common.database.BrukernotifikasjonProducer
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.FieldValidationException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.NokkelNullException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.UntransformableRecordException
@@ -15,7 +15,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.slf4j.LoggerFactory
 
 class OppgaveEventService(
-        private val persistingService: BrukernotifikasjonPersistingService<no.nav.personbruker.dittnav.varsel.bestiller.oppgave.Oppgave>,
+        private val producer: BrukernotifikasjonProducer<no.nav.personbruker.dittnav.varsel.bestiller.oppgave.Oppgave>,
         private val metricsProbe: EventMetricsProbe
 ) : EventBatchProcessorService<Oppgave> {
 
@@ -47,7 +47,7 @@ class OppgaveEventService(
                 }
             }
 
-            persistingService.writeEventsToCache(successfullyTransformedEvents)
+            producer.sendToKafka(successfullyTransformedEvents)
         }
 
         kastExceptionHvisMislykkedeTransformasjoner(problematicEvents)

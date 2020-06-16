@@ -2,7 +2,7 @@ package no.nav.personbruker.dittnav.varsel.bestiller.beskjed
 
 import io.mockk.*
 import kotlinx.coroutines.runBlocking
-import no.nav.personbruker.dittnav.varsel.bestiller.common.database.BrukernotifikasjonPersistingService
+import no.nav.personbruker.dittnav.varsel.bestiller.common.database.BrukernotifikasjonProducer
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.UntransformableRecordException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.objectmother.ConsumerRecordsObjectMother
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsProbe
@@ -16,15 +16,15 @@ import org.junit.jupiter.api.Test
 
 class BeskjedEventServiceTest {
 
-    private val persistingService = mockk<BrukernotifikasjonPersistingService<Beskjed>>(relaxed = true)
+    private val producer = mockk<BrukernotifikasjonProducer<Beskjed>>(relaxed = true)
     private val metricsProbe = mockk<EventMetricsProbe>(relaxed = true)
     private val metricsSession = mockk<EventMetricsSession>(relaxed = true)
-    private val eventService = BeskjedEventService(persistingService, metricsProbe)
+    private val eventService = BeskjedEventService(producer, metricsProbe)
 
     @BeforeEach
     private fun resetMocks() {
         mockkObject(BeskjedTransformer)
-        clearMocks(persistingService)
+        clearMocks(producer)
         clearMocks(metricsProbe)
         clearMocks(metricsSession)
     }
@@ -35,11 +35,11 @@ class BeskjedEventServiceTest {
     }
 
     @Test
-    fun `Skal skrive alle eventer til databasen`() {
+    fun `Skal skrive alle eventer til ny kafka-topic`() {
         val records = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(5, "dummyTopic")
 
         val capturedListOfEntities = slot<List<Beskjed>>()
-        coEvery { persistingService.writeEventsToCache(capture(capturedListOfEntities)) } returns Unit
+       coEvery { producer.sendToKafka(capture(capturedListOfEntities)) } returns Unit
 
         val slot = slot<suspend EventMetricsSession.() -> Unit>()
 
@@ -52,11 +52,11 @@ class BeskjedEventServiceTest {
         }
 
         verify(exactly = records.count()) { BeskjedTransformer.toInternal(any(), any()) }
-        coVerify(exactly = 1) { persistingService.writeEventsToCache(allAny()) }
+        coVerify(exactly = 1) { producer.sendToKafka(allAny()) }
         capturedListOfEntities.captured.size `should be` records.count()
 
         confirmVerified(BeskjedTransformer)
-        confirmVerified(persistingService)
+        confirmVerified(producer)
     }
 
     @Test
@@ -69,7 +69,7 @@ class BeskjedEventServiceTest {
         val transformedRecords = createANumberOfTransformedRecords(numberOfSuccessfulTransformations)
 
         val capturedListOfEntities = slot<List<Beskjed>>()
-        coEvery { persistingService.writeEventsToCache(capture(capturedListOfEntities)) } returns Unit
+       coEvery { producer.sendToKafka(capture(capturedListOfEntities)) } returns Unit
 
         val retriableExp = UntransformableRecordException("Simulert feil i en test")
         every { BeskjedTransformer.toInternal(any(), any()) } throws retriableExp andThenMany transformedRecords
@@ -87,12 +87,12 @@ class BeskjedEventServiceTest {
         } `should throw` UntransformableRecordException::class
 
         coVerify(exactly = totalNumberOfRecords) { BeskjedTransformer.toInternal(any(), any()) }
-        coVerify(exactly = 1) { persistingService.writeEventsToCache(allAny()) }
+        coVerify(exactly = 1) { producer.sendToKafka(allAny()) }
         coVerify(exactly = numberOfFailedTransformations) { metricsSession.countFailedEventForProducer(any()) }
         capturedListOfEntities.captured.size `should be` numberOfSuccessfulTransformations
 
         confirmVerified(BeskjedTransformer)
-        confirmVerified(persistingService)
+        confirmVerified(producer)
     }
 
     @Test
@@ -125,7 +125,7 @@ class BeskjedEventServiceTest {
         }
 
         val capturedNumberOfEntitiesWrittenToTheDb = slot<List<Beskjed>>()
-        coEvery { persistingService.writeEventsToCache(capture(capturedNumberOfEntitiesWrittenToTheDb)) } returns Unit
+        coEvery { producer.sendToKafka(capture(capturedNumberOfEntitiesWrittenToTheDb)) } returns Unit
 
         runBlocking {
             eventService.processEvents(records)
@@ -149,7 +149,7 @@ class BeskjedEventServiceTest {
         }
 
         val capturedNumberOfEntitiesWrittenToTheDb = slot<List<Beskjed>>()
-        coEvery { persistingService.writeEventsToCache(capture(capturedNumberOfEntitiesWrittenToTheDb)) } returns Unit
+        coEvery { producer.sendToKafka(capture(capturedNumberOfEntitiesWrittenToTheDb)) } returns Unit
 
         runBlocking {
             eventService.processEvents(records)

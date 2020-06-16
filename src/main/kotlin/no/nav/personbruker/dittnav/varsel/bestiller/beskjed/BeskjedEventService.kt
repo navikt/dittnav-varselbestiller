@@ -3,7 +3,7 @@ package no.nav.personbruker.dittnav.varsel.bestiller.beskjed
 import no.nav.brukernotifikasjon.schemas.Beskjed
 import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.personbruker.dittnav.varsel.bestiller.common.EventBatchProcessorService
-import no.nav.personbruker.dittnav.varsel.bestiller.common.database.BrukernotifikasjonPersistingService
+import no.nav.personbruker.dittnav.varsel.bestiller.common.database.BrukernotifikasjonProducer
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.FieldValidationException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.NokkelNullException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.UntransformableRecordException
@@ -16,7 +16,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class BeskjedEventService(
-        private val persistingService: BrukernotifikasjonPersistingService<no.nav.personbruker.dittnav.varsel.bestiller.beskjed.Beskjed>,
+        private val producer: BrukernotifikasjonProducer<no.nav.personbruker.dittnav.varsel.bestiller.beskjed.Beskjed>,
         private val metricsProbe: EventMetricsProbe
 ) : EventBatchProcessorService<Beskjed> {
 
@@ -49,7 +49,7 @@ class BeskjedEventService(
                 }
             }
 
-            persistingService.writeEventsToCache(successfullyTransformedEvents)
+            producer.sendToKafka(successfullyTransformedEvents)
         }
 
         kastExceptionHvisMislykkedeTransformasjoner(problematicEvents)
