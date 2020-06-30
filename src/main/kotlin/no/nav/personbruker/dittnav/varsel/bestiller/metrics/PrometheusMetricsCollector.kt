@@ -5,7 +5,7 @@ import io.prometheus.client.Gauge
 
 object PrometheusMetricsCollector {
 
-    val NAMESPACE = "dittnav_consumer"
+    val NAMESPACE = "dittnav_varsel_consumer"
 
     val EVENTS_SEEN_NAME = "kafka_events_seen"
     val EVENTS_PROCESSED_NAME = "kafka_events_processed"

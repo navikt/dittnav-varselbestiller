@@ -9,7 +9,7 @@ import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.personbruker.dittnav.varsel.bestiller.common.EventBatchProcessorService
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.RetriableDatabaseException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.UnretriableDatabaseException
-import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.UntransformableRecordException
+import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.UnvalidatableRecordException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.objectmother.ConsumerRecordsObjectMother
 import no.nav.personbruker.dittnav.varsel.bestiller.health.Status
 import org.amshove.kluent.`should equal`
@@ -84,7 +84,7 @@ class ConsumerTest {
     fun `Skal ikke kvittere ut eventer som lest, hvis transformering av et eller flere eventer feiler`() {
         val topic = "dummyTopicUntransformable"
         every { kafkaConsumer.poll(any<Duration>()) } returns ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(1, topic)
-        coEvery { eventBatchProcessorService.processEvents(any()) } throws UntransformableRecordException("Simulert feil i en test")
+        coEvery { eventBatchProcessorService.processEvents(any()) } throws UnvalidatableRecordException("Simulert feil i en test")
 
         val consumer: Consumer<Beskjed> = Consumer(topic, kafkaConsumer, eventBatchProcessorService)
 

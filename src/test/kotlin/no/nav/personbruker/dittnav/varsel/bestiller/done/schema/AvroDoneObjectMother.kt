@@ -38,11 +38,11 @@ object AvroDoneObjectMother {
         )
     }
 
-    fun createDone(eventId: String, fodselsnummer: String): Done {
+    fun createDoneWithFodselsnummer(fodselsnummer: String): Done {
         return Done(
                 Instant.now().toEpochMilli(),
                 fodselsnummer,
-                "100${eventId}"
+                "100dummyId"
         )
     }
 }

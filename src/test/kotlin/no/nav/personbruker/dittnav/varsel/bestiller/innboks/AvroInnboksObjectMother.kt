@@ -21,6 +21,10 @@ object AvroInnboksObjectMother {
         return createInnboks(defaultLopenummer, defaultFodselsnummer, text)
     }
 
+    fun createInnboksWithFodselsnummer(fodselsnummer: String): Innboks {
+        return createInnboks(defaultLopenummer, fodselsnummer, defaultText)
+    }
+
     fun createInnboks(lopenummer: Int, fodselsnummer: String, text: String): Innboks {
         return Innboks(
                 Instant.now().toEpochMilli(),

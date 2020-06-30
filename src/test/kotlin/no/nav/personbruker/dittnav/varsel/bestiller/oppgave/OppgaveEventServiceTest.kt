@@ -2,29 +2,28 @@ package no.nav.personbruker.dittnav.varsel.bestiller.oppgave
 
 import io.mockk.*
 import kotlinx.coroutines.runBlocking
-import no.nav.personbruker.dittnav.varsel.bestiller.common.database.BrukernotifikasjonProducer
-import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.UntransformableRecordException
+import no.nav.brukernotifikasjon.schemas.Oppgave
+import no.nav.personbruker.dittnav.varsel.bestiller.common.RecordKeyValueWrapper
+import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.KafkaProducerWrapper
 import no.nav.personbruker.dittnav.varsel.bestiller.common.objectmother.ConsumerRecordsObjectMother
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsProbe
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsSession
 import org.amshove.kluent.`should be`
-import org.amshove.kluent.`should throw`
-import org.amshove.kluent.invoking
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class OppgaveEventServiceTest {
 
-    private val persistingService = mockk<BrukernotifikasjonProducer<Oppgave>>(relaxed = true)
+    private val kafkaProducer = mockk<KafkaProducerWrapper<Oppgave>>(relaxed = true)
     private val metricsProbe = mockk<EventMetricsProbe>(relaxed = true)
     private val metricsSession = mockk<EventMetricsSession>(relaxed = true)
-    private val eventService = OppgaveEventService(persistingService, metricsProbe)
+    private val eventService = OppgaveEventService(kafkaProducer, metricsProbe)
 
     @BeforeEach
     fun resetMocks() {
-        mockkObject(OppgaveTransformer)
-        clearMocks(persistingService)
+        mockkObject(OppgaveValidation)
+        clearMocks(kafkaProducer)
         clearMocks(metricsProbe)
         clearMocks(metricsSession)
     }
@@ -33,7 +32,7 @@ class OppgaveEventServiceTest {
     fun cleanUp() {
         unmockkAll()
     }
-
+/*
     @Test
     fun `Should finish processing batch before throwing exception when unable to transform event`() {
         val numberOfRecords = 5
@@ -49,7 +48,7 @@ class OppgaveEventServiceTest {
 
         val mockedException = UntransformableRecordException("Simulated Exception")
 
-        every { OppgaveTransformer.toInternal(any(), any()) } throws mockedException andThenMany transformedRecords
+        every { OppgaveValidation.toInternal(any(), any()) } throws mockedException andThenMany transformedRecords
 
         val slot = slot<suspend EventMetricsSession.() -> Unit>()
 
@@ -63,15 +62,17 @@ class OppgaveEventServiceTest {
             }
         } `should throw` UntransformableRecordException::class
 
-        verify(exactly = numberOfRecords) { OppgaveTransformer.toInternal(any(), any()) }
+        verify(exactly = numberOfRecords) { OppgaveValidation.toInternal(any(), any()) }
         coVerify(exactly = 1) { persistingService.sendToKafka(allAny()) }
         coVerify(exactly = numberOfFailedTransformations) { metricsSession.countFailedEventForProducer(any()) }
         capturedStores.captured.size `should be` numberOfSuccessfulTransformations
 
         confirmVerified(persistingService)
-        confirmVerified(OppgaveTransformer)
+        confirmVerified(OppgaveValidation)
     }
 
+
+ */
     @Test
     fun shouldRegisterMetricsForEveryEvent() {
         val numberOfRecords = 5
@@ -103,8 +104,8 @@ class OppgaveEventServiceTest {
             slot.captured.invoke(metricsSession)
         }
 
-        val capturedNumberOfEntitiesWrittenToTheDb = slot<List<Oppgave>>()
-        coEvery { persistingService.sendToKafka(capture(capturedNumberOfEntitiesWrittenToTheDb)) } returns Unit
+        val capturedNumberOfEntitiesWrittenToTheDb =  slot<List<RecordKeyValueWrapper<Oppgave>>>()
+        coEvery { kafkaProducer.sendEvents(capture(capturedNumberOfEntitiesWrittenToTheDb)) } returns Unit
 
         runBlocking {
             eventService.processEvents(records)
@@ -115,9 +116,4 @@ class OppgaveEventServiceTest {
         coVerify(exactly = 1) { metricsSession.countFailedEventForProducer(any()) }
     }
 
-    private fun createANumberOfTransformedOppgaveRecords(number: Int): List<Oppgave> {
-        return (1..number).map {
-            OppgaveObjectMother.giveMeAktivOppgave(it.toString(), "12345")
-        }
-    }
 }

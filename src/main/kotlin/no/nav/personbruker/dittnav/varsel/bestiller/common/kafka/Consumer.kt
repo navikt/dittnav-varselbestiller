@@ -5,7 +5,7 @@ import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.personbruker.dittnav.varsel.bestiller.common.EventBatchProcessorService
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.RetriableDatabaseException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.UnretriableDatabaseException
-import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.UntransformableRecordException
+import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.UnvalidatableRecordException
 import no.nav.personbruker.dittnav.varsel.bestiller.health.HealthCheck
 import no.nav.personbruker.dittnav.varsel.bestiller.health.HealthStatus
 import no.nav.personbruker.dittnav.varsel.bestiller.health.Status
@@ -35,7 +35,7 @@ class Consumer<T>(
 
     override suspend fun status(): HealthStatus {
         val serviceName = topic + "consumer"
-        return if(job.isActive) {
+        return if (job.isActive) {
             HealthStatus(serviceName, Status.OK, "Consumer is running", includeInReadiness = false)
         } else {
             log.error("Selftest mot Kafka-consumere feilet, consumer kjører ikke.")
@@ -72,10 +72,9 @@ class Consumer<T>(
         } catch (re: RetriableException) {
             log.warn("Polling mot Kafka feilet, prøver igjen senere. Topic: $topic", re)
 
-        } catch (ure: UntransformableRecordException) {
-            val msg = "Et eller flere eventer kunne ikke transformeres, stopper videre polling. Topic: $topic. \n Bruker appen sisteversjon av brukernotifikasjon-schemas?"
+        } catch (ure: UnvalidatableRecordException) {
+            val msg = "Et eller flere eventer gikk ikke gjennom validering. Topic: $topic."
             log.error(msg, ure)
-            stopPolling()
 
         } catch (ude: UnretriableDatabaseException) {
             log.error("Det skjedde en alvorlig feil mot databasen, stopper videre polling. Topic: $topic", ude)

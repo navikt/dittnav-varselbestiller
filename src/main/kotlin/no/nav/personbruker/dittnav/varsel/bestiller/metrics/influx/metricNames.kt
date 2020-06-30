@@ -1,6 +1,6 @@
 package no.nav.personbruker.dittnav.varsel.bestiller.metrics.influx
 
-private const val METRIC_NAMESPACE = "dittnav.kafka.events.v1"
+private const val METRIC_NAMESPACE = "dittnav.kafka.events.varsel.v1"
 
 const val EVENTS_SEEN = "$METRIC_NAMESPACE.seen"
 const val EVENTS_FAILED = "$METRIC_NAMESPACE.failed"
