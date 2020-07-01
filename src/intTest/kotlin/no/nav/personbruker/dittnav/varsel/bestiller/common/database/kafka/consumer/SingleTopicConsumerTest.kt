@@ -5,7 +5,7 @@ import kotlinx.coroutines.runBlocking
 import no.nav.brukernotifikasjon.schemas.Beskjed
 import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.common.KafkaEnvironment
-import no.nav.personbruker.dittnav.varsel.bestiller.common.SimpleEventCounterService
+import no.nav.personbruker.dittnav.varsel.bestiller.common.CapturingEventProcessor
 import no.nav.personbruker.dittnav.varsel.bestiller.common.database.kafka.util.KafkaTestUtil
 import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.Consumer
 import no.nav.personbruker.dittnav.varsel.bestiller.config.EventType
@@ -47,7 +47,7 @@ class SingleTopicConsumerTest {
     @Test
     fun `Lese inn alle testeventene fra Kafka`() {
         `Produserer noen testeventer`()
-        val eventProcessor = SimpleEventCounterService<Beskjed>()
+        val eventProcessor = CapturingEventProcessor<Beskjed>()
         val consumerProps = Kafka.consumerProps(testEnvironment, EventType.BESKJED, true)
         val kafkaConsumer = KafkaConsumer<Nokkel, Beskjed>(consumerProps)
         val consumer = Consumer(topicen, kafkaConsumer, eventProcessor)
@@ -69,7 +69,7 @@ class SingleTopicConsumerTest {
         } shouldEqualTo true
     }
 
-    private suspend fun `Vent til alle eventer har blitt konsumert`(eventProcessor: SimpleEventCounterService<Beskjed>) {
+    private suspend fun `Vent til alle eventer har blitt konsumert`(eventProcessor: CapturingEventProcessor<Beskjed>) {
         while (`have all events been consumed`(eventProcessor, events)) {
             delay(100)
         }
@@ -77,5 +77,5 @@ class SingleTopicConsumerTest {
 
 }
 
-private fun `have all events been consumed`(eventProcessor: SimpleEventCounterService<Beskjed>, events: Map<Nokkel, Beskjed>) =
+private fun `have all events been consumed`(eventProcessor: CapturingEventProcessor<Beskjed>, events: Map<Nokkel, Beskjed>) =
         eventProcessor.eventCounter < events.size

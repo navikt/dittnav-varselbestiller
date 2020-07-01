@@ -7,7 +7,7 @@ import no.nav.brukernotifikasjon.schemas.Innboks
 import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.brukernotifikasjon.schemas.Oppgave
 import no.nav.common.KafkaEnvironment
-import no.nav.personbruker.dittnav.varsel.bestiller.common.SimpleEventCounterService
+import no.nav.personbruker.dittnav.varsel.bestiller.common.CapturingEventProcessor
 import no.nav.personbruker.dittnav.varsel.bestiller.common.database.kafka.util.KafkaTestUtil
 import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.Consumer
 import no.nav.personbruker.dittnav.varsel.bestiller.config.Environment
@@ -32,9 +32,9 @@ class MultipleTopicsConsumerTest {
     private val testEnvironment = KafkaTestUtil.createEnvironmentForEmbeddedKafka(embeddedEnv)
     private val adminClient = embeddedEnv.adminClient
 
-    private val beskjedEventProcessor = SimpleEventCounterService<Beskjed>()
-    private val oppgaveEventProcessor = SimpleEventCounterService<Oppgave>()
-    private val innboksEventProcessor = SimpleEventCounterService<Innboks>()
+    private val beskjedEventProcessor = CapturingEventProcessor<Beskjed>()
+    private val oppgaveEventProcessor = CapturingEventProcessor<Oppgave>()
+    private val innboksEventProcessor = CapturingEventProcessor<Innboks>()
 
     private val beskjedEvents = (1..10).map { createNokkel(it) to AvroBeskjedObjectMother.createBeskjed(it) }.toMap()
     private val oppgaveEvents = (1..11).map { createNokkel(it) to AvroOppgaveObjectMother.createOppgave(it) }.toMap()
@@ -99,25 +99,25 @@ class MultipleTopicsConsumerTest {
         }
     }
 
-    private fun `Har alle eventer blitt lest`(beskjed: SimpleEventCounterService<Beskjed>, BeskjedEvents: Map<Nokkel, Beskjed>,
-                                              oppgave: SimpleEventCounterService<Oppgave>, oppgaveEvents: Map<Nokkel, Oppgave>,
-                                              innboks: SimpleEventCounterService<Innboks>, innboksEvents: Map<Nokkel, Innboks>): Boolean {
+    private fun `Har alle eventer blitt lest`(beskjed: CapturingEventProcessor<Beskjed>, BeskjedEvents: Map<Nokkel, Beskjed>,
+                                              oppgave: CapturingEventProcessor<Oppgave>, oppgaveEvents: Map<Nokkel, Oppgave>,
+                                              innboks: CapturingEventProcessor<Innboks>, innboksEvents: Map<Nokkel, Innboks>): Boolean {
         return beskjed.eventCounter < BeskjedEvents.size &&
                 oppgave.eventCounter < oppgaveEvents.size &&
                 innboks.eventCounter < innboksEvents.size
     }
 
-    private fun createInfoConsumer(env: Environment, BeskjedEventProcessor: SimpleEventCounterService<Beskjed>): Consumer<Beskjed> {
+    private fun createInfoConsumer(env: Environment, beskjedEventProcessor: CapturingEventProcessor<Beskjed>): Consumer<Beskjed> {
         val kafkaProps = Kafka.consumerProps(env, EventType.BESKJED, true)
-        return setupConsumerForTheBeskjedTopic(kafkaProps, BeskjedEventProcessor)
+        return setupConsumerForTheBeskjedTopic(kafkaProps, beskjedEventProcessor)
     }
 
-    private fun createOppgaveConsumer(env: Environment, oppgaveEventProcessor: SimpleEventCounterService<Oppgave>): Consumer<Oppgave> {
+    private fun createOppgaveConsumer(env: Environment, oppgaveEventProcessor: CapturingEventProcessor<Oppgave>): Consumer<Oppgave> {
         val kafkaProps = Kafka.consumerProps(env, EventType.OPPGAVE, true)
         return setupConsumerForTheOppgaveTopic(kafkaProps, oppgaveEventProcessor)
     }
 
-    private fun createInnboksConsumer(env: Environment, innboksEventProcessor: SimpleEventCounterService<Innboks>): Consumer<Innboks> {
+    private fun createInnboksConsumer(env: Environment, innboksEventProcessor: CapturingEventProcessor<Innboks>): Consumer<Innboks> {
         val kafkaProps = Kafka.consumerProps(env, EventType.INNBOKS, true)
         return setupConsumerForTheInnboksTopic(kafkaProps, innboksEventProcessor)
     }

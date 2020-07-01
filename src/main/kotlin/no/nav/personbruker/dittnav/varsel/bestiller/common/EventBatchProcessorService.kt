@@ -10,4 +10,7 @@ interface EventBatchProcessorService<T> {
 
     val ConsumerRecord<Nokkel, T>.systembruker : String get() = key().getSystembruker()
 
+    fun ConsumerRecords<Nokkel, T>.asWrapperList() : List<RecordKeyValueWrapper<T>> = map { record ->
+        RecordKeyValueWrapper(record.key(), record.value())
+    }
 }
