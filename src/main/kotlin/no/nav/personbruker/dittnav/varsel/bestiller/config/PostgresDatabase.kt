@@ -28,7 +28,7 @@ class PostgresDatabase(env: Environment) : Database {
     }
 
     private fun createConnectionViaVaultWithDbUser(env: Environment): HikariDataSource {
-        return hikariDatasourceViaVault(env, env.dbUser)
+        return hikariDatasourceViaVault(env, env.dbReadOnlyUser)
     }
 
     companion object {
