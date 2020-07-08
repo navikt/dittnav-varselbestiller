@@ -1,4 +1,4 @@
-package no.nav.personbruker.dittnav.varsel.bestiller.common.database.kafka.util
+package no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.util
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig
 import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig

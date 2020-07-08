@@ -7,7 +7,8 @@ import no.nav.personbruker.dittnav.varsel.bestiller.common.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.FieldValidationException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.NokkelNullException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.UnvalidatableRecordException
-import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.KafkaProducerWrapper
+import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.KafkaProducer
+import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.createKeyForEvent
 import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.serializer.getNonNullKey
 import no.nav.personbruker.dittnav.varsel.bestiller.config.EventType.BESKJED
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsProbe
@@ -17,7 +18,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class BeskjedEventService(
-        private val kafkaProducer: KafkaProducerWrapper<Beskjed>,
+        private val kafkaProducer: KafkaProducer<Beskjed>,
         private val metricsProbe: EventMetricsProbe
 ) : EventBatchProcessorService<Beskjed> {
 
@@ -30,10 +31,13 @@ class BeskjedEventService(
         metricsProbe.runWithMetrics(eventType = BESKJED) {
             events.forEach { event ->
                 try {
-                    BeskjedValidation.validateEvent(event.getNonNullKey(), event.value())
-                    successfullyValidatedEvents.add(RecordKeyValueWrapper(event.getNonNullKey(), event.value()))
-                    countSuccessfulEventForProducer(event.systembruker)
+                    //if (isEventEksternVarsling(event.value().getLink())) { //TODO legg til når eksternVarslings felt er i schemas
+                    val varselBeskjedKey = createKeyForEvent(event.getNonNullKey())
+                    val varselBeskjedValue = createBeskjedEksternVarslingForEvent(event.value())
 
+                    successfullyValidatedEvents.add(RecordKeyValueWrapper(varselBeskjedKey, varselBeskjedValue))
+                    countSuccessfulEventForProducer(event.systembruker)
+                    //}
                 } catch (nne: NokkelNullException) {
                     countFailedEventForProducer("NoProducerSpecified")
                     log.warn("Beskjed-eventet manglet nøkkel. Topic: ${event.topic()}, Partition: ${event.partition()}, Offset: ${event.offset()}", nne)

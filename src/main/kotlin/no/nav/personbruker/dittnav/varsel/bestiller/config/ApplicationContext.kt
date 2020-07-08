@@ -5,6 +5,7 @@ import no.nav.personbruker.dittnav.varsel.bestiller.beskjed.BeskjedEventService
 import no.nav.personbruker.dittnav.varsel.bestiller.common.database.Database
 import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.Consumer
 import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.KafkaProducerWrapper
+import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.LogKafkaProducer
 import no.nav.personbruker.dittnav.varsel.bestiller.done.DoneEventService
 import no.nav.personbruker.dittnav.varsel.bestiller.health.HealthService
 import no.nav.personbruker.dittnav.varsel.bestiller.innboks.InnboksEventService
@@ -20,7 +21,6 @@ class ApplicationContext {
     val database: Database = PostgresDatabase(environment)
 
     val eventMetricsProbe = buildEventMetricsProbe(environment, database)
-
 
     val beskjedKafkaProps = Kafka.consumerProps(environment, EventType.BESKJED)
     var beskjedConsumer = initializeBeskjedConsumer()
@@ -38,10 +38,17 @@ class ApplicationContext {
     val healthService = HealthService(this)
 
     private fun initializeBeskjedConsumer(): Consumer<Beskjed> {
-        val beskjedKafkaProducer = KafkaProducer<Nokkel, Beskjed>(Kafka.producerProps(environment, EventType.BESKJED))
+        val beskjedKafkaProducer = KafkaProducer<Nokkel, Beskjed>(Kafka.producerProps(environment, EventType.BESKJED_EKSTERN_VARSLING))
         beskjedKafkaProducer.initTransactions()
 
-        val beskjedKafkaProducerWrapper = KafkaProducerWrapper(Kafka.beskjedVarselBestillerTopicName, beskjedKafkaProducer)
+        val beskjedKafkaProducerWrapper: no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.KafkaProducer<Beskjed>
+
+        if (ConfigUtil.isCurrentlyRunningOnNais()) {
+            beskjedKafkaProducerWrapper = LogKafkaProducer<Beskjed>()
+        } else {
+            beskjedKafkaProducerWrapper = KafkaProducerWrapper(Kafka.beskjedVarselBestillerTopicName, beskjedKafkaProducer)
+        }
+
         val beskjedEventService = BeskjedEventService(beskjedKafkaProducerWrapper, eventMetricsProbe)
         return KafkaConsumerSetup.setupConsumerForTheBeskjedTopic(beskjedKafkaProps, beskjedEventService)
     }
@@ -72,7 +79,6 @@ class ApplicationContext {
         val innboksEventService = InnboksEventService(innboksKafkaProducerWrapper, eventMetricsProbe)
         return KafkaConsumerSetup.setupConsumerForTheInnboksTopic(innboksKafkaProps, innboksEventService)
     }
-
 
     fun reinitializeConsumers() {
         if (beskjedConsumer.isCompleted()) {

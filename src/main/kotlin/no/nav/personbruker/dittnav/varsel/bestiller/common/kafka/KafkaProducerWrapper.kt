@@ -11,9 +11,9 @@ import org.apache.kafka.common.KafkaException
 class KafkaProducerWrapper<T>(
         private val destinationTopicName: String,
         private val kafkaProducer: KafkaProducer<Nokkel, T>
-) {
+) : no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.KafkaProducer<T> {
 
-    fun sendEvents(events: List<RecordKeyValueWrapper<T>>) {
+    override fun sendEvents(events: List<RecordKeyValueWrapper<T>>) {
         try {
             kafkaProducer.beginTransaction()
             events.forEach { event ->
@@ -33,4 +33,5 @@ class KafkaProducerWrapper<T>(
         val producerRecord = ProducerRecord(destinationTopicName, event.key, event.value)
         kafkaProducer.send(producerRecord)
     }
+
 }

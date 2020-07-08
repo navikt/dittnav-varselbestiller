@@ -27,7 +27,7 @@ plugins {
     kotlin("jvm").version(kotlinVersion)
     kotlin("plugin.allopen").version(kotlinVersion)
 
-    id("org.flywaydb.flyway") version("5.2.4")
+    id("org.flywaydb.flyway") version ("5.2.4")
 
     // Apply the application plugin to add support for building a CLI application.
     application
@@ -112,7 +112,7 @@ tasks {
         environment("KAFKA_SCHEMAREGISTRY_SERVERS", "http://localhost:8081")
         environment("SERVICEUSER_USERNAME", "username")
         environment("SERVICEUSER_PASSWORD", "password")
-        environment("GROUP_ID", "dittnav_events")
+        environment("GROUP_ID", "dittnav_varsel-bestiller")
         environment("DB_HOST", "localhost:5432")
         environment("DB_NAME", "dittnav-event-cache-preprod")
         environment("DB_PASSWORD", "testpassword")

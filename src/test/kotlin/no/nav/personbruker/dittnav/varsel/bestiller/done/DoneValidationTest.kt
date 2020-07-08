@@ -3,7 +3,7 @@ package no.nav.personbruker.dittnav.varsel.bestiller.done
 import kotlinx.coroutines.runBlocking
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.FieldValidationException
 import no.nav.personbruker.dittnav.varsel.bestiller.done.schema.AvroDoneObjectMother
-import no.nav.personbruker.dittnav.varsel.bestiller.nokkel.createNokkel
+import no.nav.personbruker.dittnav.varsel.bestiller.nokkel.createNokkelWithEventId
 import no.nav.personbruker.dittnav.varsel.bestiller.nokkel.createNokkelWithSystembruker
 import org.amshove.kluent.`should throw`
 import org.amshove.kluent.invoking
@@ -11,13 +11,13 @@ import org.junit.jupiter.api.Test
 
 class DoneValidationTest {
 
-    private val dummyNokkel = createNokkel(1)
+    private val dummyNokkel = createNokkelWithEventId(1)
     private val dummyText = "dummyText"
 
     @Test
     fun `Should validate and be okay`() {
         val original = AvroDoneObjectMother.createDone("1")
-        val nokkel = createNokkel(1)
+        val nokkel = createNokkelWithEventId(1)
 
         DoneValidation.validateEvent(nokkel, original)
     }

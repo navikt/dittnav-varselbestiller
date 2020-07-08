@@ -5,7 +5,7 @@ import kotlinx.atomicfu.locks.withLock
 import no.nav.brukernotifikasjon.schemas.Nokkel
 import org.apache.kafka.clients.consumer.ConsumerRecords
 
-class CapturingEventProcessor<T>(var eventCounter: Int = 0) : EventBatchProcessorService<T> {
+class CapturingEventProcessor<T> : EventBatchProcessorService<T> {
 
     private val lock = ReentrantLock()
     private val eventBuffer = ArrayList<RecordKeyValueWrapper<T>>()

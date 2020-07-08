@@ -3,26 +3,29 @@ package no.nav.personbruker.dittnav.varsel.bestiller
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import no.nav.brukernotifikasjon.schemas.*
+import no.nav.brukernotifikasjon.schemas.Beskjed
+import no.nav.brukernotifikasjon.schemas.Done
+import no.nav.brukernotifikasjon.schemas.Nokkel
+import no.nav.brukernotifikasjon.schemas.Oppgave
 import no.nav.common.KafkaEnvironment
 import no.nav.personbruker.dittnav.varsel.bestiller.beskjed.AvroBeskjedObjectMother
 import no.nav.personbruker.dittnav.varsel.bestiller.beskjed.BeskjedEventService
-import no.nav.personbruker.dittnav.varsel.bestiller.common.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.varsel.bestiller.common.CapturingEventProcessor
+import no.nav.personbruker.dittnav.varsel.bestiller.common.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.varsel.bestiller.common.database.H2Database
-import no.nav.personbruker.dittnav.varsel.bestiller.common.database.kafka.util.KafkaTestUtil
 import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.Consumer
 import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.KafkaProducerWrapper
+import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.util.KafkaTestUtil
 import no.nav.personbruker.dittnav.varsel.bestiller.config.EventType
-import no.nav.personbruker.dittnav.varsel.bestiller.done.schema.AvroDoneObjectMother
-import no.nav.personbruker.dittnav.varsel.bestiller.nokkel.createNokkel
-import no.nav.personbruker.dittnav.varsel.bestiller.oppgave.AvroOppgaveObjectMother
 import no.nav.personbruker.dittnav.varsel.bestiller.config.Kafka
 import no.nav.personbruker.dittnav.varsel.bestiller.done.DoneEventService
+import no.nav.personbruker.dittnav.varsel.bestiller.done.schema.AvroDoneObjectMother
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsProbe
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.ProducerNameResolver
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.ProducerNameScrubber
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.StubMetricsReporter
+import no.nav.personbruker.dittnav.varsel.bestiller.nokkel.createNokkelWithEventId
+import no.nav.personbruker.dittnav.varsel.bestiller.oppgave.AvroOppgaveObjectMother
 import no.nav.personbruker.dittnav.varsel.bestiller.oppgave.OppgaveEventService
 import org.amshove.kluent.`should equal`
 import org.amshove.kluent.shouldEqualTo
@@ -33,11 +36,11 @@ import org.junit.jupiter.api.Test
 
 class EndToEndTestIT {
 
-    private val beskjedTopic = "backupBeskjedTopic"
+    private val beskjedTopic = "dittnavBeskjedTopic"
     private val targetBeskjedTopic = "targetBeskjedTopic"
-    private val oppgaveTopic = "backupOppgaveTopic"
+    private val oppgaveTopic = "dittnavOppgaveTopic"
     private val targetOppgaveTopic = "targetOppgaveTopic"
-    private val doneTopic = "backupDoneTopic"
+    private val doneTopic = "dittnavDoneTopic"
     private val targetDoneTopic = "targetDoneTopic"
 
     private val topicList = listOf(
@@ -56,9 +59,9 @@ class EndToEndTestIT {
 
     private val adminClient = embeddedEnv.adminClient
 
-    private val beskjedEvents = (1..10).map { createNokkel(it) to AvroBeskjedObjectMother.createBeskjed(it) }.toMap()
-    private val oppgaveEvents = (1..10).map { createNokkel(it) to AvroOppgaveObjectMother.createOppgave(it) }.toMap()
-    private val doneEvents = (1..10).map { createNokkel(it) to AvroDoneObjectMother.createDone(it) }.toMap()
+    private val beskjedEvents = (1..10).map { createNokkelWithEventId(it) to AvroBeskjedObjectMother.createBeskjed(it) }.toMap()
+    private val oppgaveEvents = (1..10).map { createNokkelWithEventId(it) to AvroOppgaveObjectMother.createOppgave(it) }.toMap()
+    private val doneEvents = (1..10).map { createNokkelWithEventId(it) to AvroDoneObjectMother.createDone(it) }.toMap()
 
     private val capturedBeskjedRecords = ArrayList<RecordKeyValueWrapper<Beskjed>>()
     private val capturedOppgaveRecords = ArrayList<RecordKeyValueWrapper<Oppgave>>()
@@ -117,7 +120,6 @@ class EndToEndTestIT {
             capturedDoneRecords.contains(RecordKeyValueWrapper(it.key, it.value))
         }
     }
-
 
     fun `Les inn alle beskjed eventene fra topic-en vaar og verifiser at de har blitt lagt til i varsel-bestiller topic`() {
         val consumerProps = Kafka.consumerProps(testEnvironment, EventType.BESKJED, true)

@@ -2,20 +2,20 @@ package no.nav.personbruker.dittnav.varsel.bestiller.innboks
 
 import kotlinx.coroutines.runBlocking
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.FieldValidationException
-import no.nav.personbruker.dittnav.varsel.bestiller.nokkel.createNokkel
+import no.nav.personbruker.dittnav.varsel.bestiller.nokkel.createNokkelWithEventId
 import org.amshove.kluent.`should throw`
 import org.amshove.kluent.invoking
 import org.junit.jupiter.api.Test
 
 class InnboksValidationTest {
 
-    private val dummyNokkel = createNokkel(1)
+    private val dummyNokkel = createNokkelWithEventId(1)
 
     @Test
     fun `Should validate and be okay`() {
         val eventId = 1
         val original = AvroInnboksObjectMother.createInnboks(eventId)
-        val nokkel = createNokkel(eventId)
+        val nokkel = createNokkelWithEventId(eventId)
 
         InnboksValidation.validateEvent(nokkel, original)
     }

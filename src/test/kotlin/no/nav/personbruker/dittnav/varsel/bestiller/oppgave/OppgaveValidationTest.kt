@@ -2,14 +2,14 @@ package no.nav.personbruker.dittnav.varsel.bestiller.oppgave
 
 import kotlinx.coroutines.runBlocking
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.FieldValidationException
-import no.nav.personbruker.dittnav.varsel.bestiller.nokkel.createNokkel
-import org.amshove.kluent.*
+import no.nav.personbruker.dittnav.varsel.bestiller.nokkel.createNokkelWithEventId
+import org.amshove.kluent.`should throw`
+import org.amshove.kluent.invoking
 import org.junit.jupiter.api.Test
-import java.time.ZoneId
 
 class OppgaveValidationTest {
 
-    private val dummyNokkel = createNokkel(1)
+    private val dummyNokkel = createNokkelWithEventId(1)
     private val dummyFnr = "dummyFrn"
     private val dummyEventId = 1
 
@@ -17,7 +17,7 @@ class OppgaveValidationTest {
     fun `Should validate and be okay`() {
         val eventId = 1
         val original = AvroOppgaveObjectMother.createOppgave(eventId)
-        val nokkel = createNokkel(eventId)
+        val nokkel = createNokkelWithEventId(eventId)
 
         OppgaveValidation.validateEvent(nokkel, original)
     }

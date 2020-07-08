@@ -1,4 +1,4 @@
-package no.nav.personbruker.dittnav.varsel.bestiller.common.database.kafka.util
+package no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.util
 
 import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.common.JAASCredential

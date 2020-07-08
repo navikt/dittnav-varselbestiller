@@ -1,10 +1,13 @@
-package no.nav.personbruker.dittnav.varsel.bestiller.common.database.kafka
+package no.nav.personbruker.dittnav.varsel.bestiller.common.kafka
 
 import kotlinx.coroutines.runBlocking
-import no.nav.common.JAASCredential
 import no.nav.common.KafkaEnvironment
-import no.nav.personbruker.dittnav.varsel.bestiller.common.database.kafka.util.KafkaConsumerUtil
-import no.nav.personbruker.dittnav.varsel.bestiller.common.database.kafka.util.KafkaProducerUtil
+import no.nav.personbruker.dittnav.varsel.bestiller.beskjed.AvroBeskjedObjectMother
+import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.util.KafkaConsumerUtil
+import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.util.KafkaProducerUtil
+import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.util.KafkaTestUtil
+import no.nav.personbruker.dittnav.varsel.bestiller.config.Kafka
+import no.nav.personbruker.dittnav.varsel.bestiller.nokkel.createNokkelWithEventId
 import org.amshove.kluent.`should equal`
 import org.amshove.kluent.shouldContainAll
 import org.amshove.kluent.shouldEqualTo
@@ -18,39 +21,35 @@ import org.junit.jupiter.api.Test
  * Dette er gjort for å kunne demonstrere hvordan man bruker kafka-embedded-env uten å forholde seg til kafka-properties
  * som er satt opp i dette prosjeket.
  */
-class StringBasicKafkaEmbeddedTesting {
+class AvroBasicKafkaEmbeddedTesting {
 
-    private val topicen = "kafka.topic"
+    private val topicen = Kafka.beskjedTopicName
     private val username = "srvkafkaclient"
     private val password = "kafkaclient"
-    private val embeddedEnv = KafkaEnvironment(
-            topicNames = listOf(topicen),
-            withSecurity = true,
-            users = listOf(JAASCredential(username, password))
-    )
-    private val kafkaBrokerUrl = embeddedEnv.brokersURL.substringAfterLast("/")
+    private val embeddedEnv = KafkaTestUtil.createDefaultKafkaEmbeddedInstance(listOf(topicen))
 
-    private val events = (1..9).map { "$it" to "event$it" }.toMap()
+    private val events = (1..9).map { createNokkelWithEventId(it) to AvroBeskjedObjectMother.createBeskjed(it) }.toMap()
 
     init {
         embeddedEnv.start()
     }
 
     @AfterAll
-    fun tearDown() {
+    fun `tear down`() {
         embeddedEnv.tearDown()
     }
 
     @Test
-    fun `Kafka-instansen i minnet har blitt staret`() {
+    fun `Kafka instansen i minnet har blitt staret`() {
         embeddedEnv.serverPark.status `should equal` KafkaEnvironment.ServerParkStatus.Started
     }
 
     @Test
-    fun `Skal produsere og konsumere en meldinger som kun er en string`() {
-        `produser string-eventer`()
+    fun `Lese inn eventer`() {
+        `Produser avro-eventer`()
         runBlocking {
-            KafkaConsumerUtil.kafkaConsume(kafkaBrokerUrl,
+            KafkaConsumerUtil.kafkaAvroConsume(embeddedEnv.brokersURL,
+                    embeddedEnv.schemaRegistry!!.url,
                     topicen,
                     username,
                     password,
@@ -58,9 +57,10 @@ class StringBasicKafkaEmbeddedTesting {
         } shouldContainAll events
     }
 
-    private fun `produser string-eventer`() {
+    private fun `Produser avro-eventer`() {
         runBlocking {
-            KafkaProducerUtil.kafkaProduce(kafkaBrokerUrl,
+            KafkaProducerUtil.kafkaAvroProduce(embeddedEnv.brokersURL,
+                    embeddedEnv.schemaRegistry!!.url,
                     topicen,
                     username,
                     password,
