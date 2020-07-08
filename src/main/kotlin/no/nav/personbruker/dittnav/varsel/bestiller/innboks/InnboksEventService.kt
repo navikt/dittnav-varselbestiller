@@ -7,7 +7,8 @@ import no.nav.personbruker.dittnav.varsel.bestiller.common.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.FieldValidationException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.NokkelNullException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.UnvalidatableRecordException
-import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.KafkaProducerWrapper
+import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.KafkaProducer
+import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.createKeyForEvent
 import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.serializer.getNonNullKey
 import no.nav.personbruker.dittnav.varsel.bestiller.config.EventType.INNBOKS
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsProbe
@@ -16,7 +17,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.slf4j.LoggerFactory
 
 class InnboksEventService(
-        private val kafkaProducer: KafkaProducerWrapper<Innboks>,
+        private val kafkaProducer: KafkaProducer<Innboks>,
         private val metricsProbe: EventMetricsProbe
 ) : EventBatchProcessorService<Innboks> {
 
@@ -29,8 +30,10 @@ class InnboksEventService(
         metricsProbe.runWithMetrics(eventType = INNBOKS) {
             events.forEach { event ->
                 try {
-                    InnboksValidation.validateEvent(event.getNonNullKey(), event.value())
-                    successfullyValidatedEvents.add(RecordKeyValueWrapper(event.getNonNullKey(), event.value()))
+                    val innboksEksternVarslingKey = createKeyForEvent(event.getNonNullKey())
+                    val innboksEksternVarslingEvent = createInnboksEksternVarslingForEvent(event.value())
+
+                    successfullyValidatedEvents.add(RecordKeyValueWrapper(innboksEksternVarslingKey, innboksEksternVarslingEvent))
                     countSuccessfulEventForProducer(event.systembruker)
 
                 } catch (e: NokkelNullException) {

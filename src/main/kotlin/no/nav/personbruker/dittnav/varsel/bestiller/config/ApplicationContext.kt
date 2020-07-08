@@ -40,7 +40,6 @@ class ApplicationContext {
     private fun initializeBeskjedConsumer(): Consumer<Beskjed> {
         val beskjedKafkaProducer = KafkaProducer<Nokkel, Beskjed>(Kafka.producerProps(environment, EventType.BESKJED_EKSTERN_VARSLING))
         beskjedKafkaProducer.initTransactions()
-
         val beskjedKafkaProducerWrapper: no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.KafkaProducer<Beskjed>
 
         if (ConfigUtil.isCurrentlyRunningOnNais()) {
@@ -56,8 +55,14 @@ class ApplicationContext {
     private fun initializeOppgaveConsumer(): Consumer<Oppgave> {
         val oppgaveKafkaProducer = KafkaProducer<Nokkel, Oppgave>(Kafka.producerProps(environment, EventType.OPPGAVE))
         oppgaveKafkaProducer.initTransactions()
+        val oppgaveKafkaProducerWrapper: no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.KafkaProducer<Oppgave>
 
-        val oppgaveKafkaProducerWrapper = KafkaProducerWrapper(Kafka.oppgaveVarselBestillerTopicName, oppgaveKafkaProducer)
+        if (ConfigUtil.isCurrentlyRunningOnNais()) {
+            oppgaveKafkaProducerWrapper = LogKafkaProducer<Oppgave>()
+        } else {
+            oppgaveKafkaProducerWrapper = KafkaProducerWrapper(Kafka.oppgaveVarselBestillerTopicName, oppgaveKafkaProducer)
+        }
+
         val oppgaveEventService = OppgaveEventService(oppgaveKafkaProducerWrapper, eventMetricsProbe)
         return KafkaConsumerSetup.setupConsumerForTheOppgaveTopic(oppgaveKafkaProps, oppgaveEventService)
     }
@@ -65,8 +70,14 @@ class ApplicationContext {
     private fun initializeDoneConsumer(): Consumer<Done> {
         val doneKafkaProducer = KafkaProducer<Nokkel, Done>(Kafka.producerProps(environment, EventType.DONE))
         doneKafkaProducer.initTransactions()
+        val doneKafkaProducerWrapper: no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.KafkaProducer<Done>
 
-        val doneKafkaProducerWrapper = KafkaProducerWrapper(Kafka.doneVarselBestillerTopicName, doneKafkaProducer)
+        if (ConfigUtil.isCurrentlyRunningOnNais()) {
+            doneKafkaProducerWrapper = LogKafkaProducer<Done>()
+        } else {
+            doneKafkaProducerWrapper = KafkaProducerWrapper(Kafka.doneVarselBestillerTopicName, doneKafkaProducer)
+        }
+
         val doneEventService = DoneEventService(doneKafkaProducerWrapper, eventMetricsProbe)
         return KafkaConsumerSetup.setupConsumerForTheDoneTopic(doneKafkaProps, doneEventService)
     }
@@ -74,8 +85,14 @@ class ApplicationContext {
     private fun initializeInnboksConsumer(): Consumer<Innboks> {
         val innboksKafkaProducer = KafkaProducer<Nokkel, Innboks>(Kafka.producerProps(environment, EventType.INNBOKS))
         innboksKafkaProducer.initTransactions()
+        val innboksKafkaProducerWrapper: no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.KafkaProducer<Innboks>
 
-        val innboksKafkaProducerWrapper = KafkaProducerWrapper(Kafka.innboksVarselBestillerTopicName, innboksKafkaProducer)
+        if (ConfigUtil.isCurrentlyRunningOnNais()) {
+            innboksKafkaProducerWrapper = LogKafkaProducer<Innboks>()
+        } else {
+            innboksKafkaProducerWrapper = KafkaProducerWrapper(Kafka.innboksVarselBestillerTopicName, innboksKafkaProducer)
+        }
+
         val innboksEventService = InnboksEventService(innboksKafkaProducerWrapper, eventMetricsProbe)
         return KafkaConsumerSetup.setupConsumerForTheInnboksTopic(innboksKafkaProps, innboksEventService)
     }

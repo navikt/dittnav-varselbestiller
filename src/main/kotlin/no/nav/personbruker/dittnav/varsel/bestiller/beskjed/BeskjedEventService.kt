@@ -32,10 +32,10 @@ class BeskjedEventService(
             events.forEach { event ->
                 try {
                     //if (isEventEksternVarsling(event.value().getLink())) { //TODO legg til når eksternVarslings felt er i schemas
-                    val varselBeskjedKey = createKeyForEvent(event.getNonNullKey())
-                    val varselBeskjedValue = createBeskjedEksternVarslingForEvent(event.value())
+                    val beskjedEksternVarslingKey = createKeyForEvent(event.getNonNullKey())
+                    val beskjedEksternVarslingEvent = createBeskjedEksternVarslingForEvent(event.value())
 
-                    successfullyValidatedEvents.add(RecordKeyValueWrapper(varselBeskjedKey, varselBeskjedValue))
+                    successfullyValidatedEvents.add(RecordKeyValueWrapper(beskjedEksternVarslingKey, beskjedEksternVarslingEvent))
                     countSuccessfulEventForProducer(event.systembruker)
                     //}
                 } catch (nne: NokkelNullException) {

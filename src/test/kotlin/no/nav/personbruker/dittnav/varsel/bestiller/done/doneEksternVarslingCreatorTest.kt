@@ -2,6 +2,7 @@ package no.nav.personbruker.dittnav.varsel.bestiller.done
 
 import kotlinx.coroutines.runBlocking
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.FieldValidationException
+import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.createKeyForEvent
 import no.nav.personbruker.dittnav.varsel.bestiller.done.schema.AvroDoneObjectMother
 import no.nav.personbruker.dittnav.varsel.bestiller.nokkel.createNokkelWithEventId
 import no.nav.personbruker.dittnav.varsel.bestiller.nokkel.createNokkelWithSystembruker
@@ -9,17 +10,15 @@ import org.amshove.kluent.`should throw`
 import org.amshove.kluent.invoking
 import org.junit.jupiter.api.Test
 
-class DoneValidationTest {
-
-    private val dummyNokkel = createNokkelWithEventId(1)
-    private val dummyText = "dummyText"
+class doneEksternVarslingCreatorTest {
 
     @Test
-    fun `Should validate and be okay`() {
+    fun `Should validate and return event`() {
         val original = AvroDoneObjectMother.createDone("1")
         val nokkel = createNokkelWithEventId(1)
 
-        DoneValidation.validateEvent(nokkel, original)
+        createKeyForEvent(nokkel)
+        createDoneEksternVarslingForEvent(original)
     }
 
     @Test
@@ -29,20 +28,19 @@ class DoneValidationTest {
 
         invoking {
             runBlocking {
-                DoneValidation.validateEvent(dummyNokkel, event)
+                createDoneEksternVarslingForEvent(event)
             }
         } `should throw` FieldValidationException::class
     }
 
     @Test
     fun `should throw FieldValidationException when systembruker field is too long`() {
-        val tooLongSystembruker = "1".repeat(1001)
+        val tooLongSystembruker = "1".repeat(101)
         val nokkel = createNokkelWithSystembruker(tooLongSystembruker)
-        val event = AvroDoneObjectMother.createDone(dummyText)
 
         invoking {
             runBlocking {
-                DoneValidation.validateEvent(nokkel, event)
+                createKeyForEvent(nokkel)
             }
         } `should throw` FieldValidationException::class
     }

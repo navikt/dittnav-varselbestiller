@@ -7,7 +7,8 @@ import no.nav.personbruker.dittnav.varsel.bestiller.common.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.FieldValidationException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.NokkelNullException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.UnvalidatableRecordException
-import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.KafkaProducerWrapper
+import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.KafkaProducer
+import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.createKeyForEvent
 import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.serializer.getNonNullKey
 import no.nav.personbruker.dittnav.varsel.bestiller.config.EventType.DONE
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsProbe
@@ -17,7 +18,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class DoneEventService(
-        private val kafkaProducer: KafkaProducerWrapper<Done>,
+        private val kafkaProducer: KafkaProducer<Done>,
         private val eventMetricsProbe: EventMetricsProbe
 ) : EventBatchProcessorService<Done> {
 
@@ -31,8 +32,10 @@ class DoneEventService(
 
             events.forEach { event ->
                 try {
-                    DoneValidation.validateEvent(event.getNonNullKey(), event.value())
-                    successfullyValidatedEvents.add(RecordKeyValueWrapper(event.getNonNullKey(), event.value()))
+                    val doneEksternVarslingKey = createKeyForEvent(event.getNonNullKey())
+                    val doneEksternVarslingEvent = createDoneEksternVarslingForEvent(event.value())
+
+                    successfullyValidatedEvents.add(RecordKeyValueWrapper(doneEksternVarslingKey, doneEksternVarslingEvent))
                     countSuccessfulEventForProducer(event.systembruker)
 
                 } catch (e: NokkelNullException) {
