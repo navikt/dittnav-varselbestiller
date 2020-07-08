@@ -1,6 +1,6 @@
 package no.nav.personbruker.dittnav.varsel.bestiller.common.database
 
-import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.AggregatorBatchUpdateException
+import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.VarselBestillerBatchUpdateException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.RetriableDatabaseException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.UnretriableDatabaseException
 import org.amshove.kluent.`should be`
@@ -75,7 +75,7 @@ class DatabaseTest {
             translateExternalExceptionsToInternalOnes {
                 throw BatchUpdateException("Simulert exception", IntArray(1))
             }
-        } `should throw` AggregatorBatchUpdateException::class
+        } `should throw` VarselBestillerBatchUpdateException::class
     }
 
 }

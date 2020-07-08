@@ -3,7 +3,7 @@ package no.nav.personbruker.dittnav.varsel.bestiller.common.database
 import com.zaxxer.hikari.HikariDataSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.AggregatorBatchUpdateException
+import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.VarselBestillerBatchUpdateException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.RetriableDatabaseException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.UnretriableDatabaseException
 import no.nav.personbruker.dittnav.varsel.bestiller.health.HealthCheck
@@ -66,7 +66,7 @@ inline fun <T> translateExternalExceptionsToInternalOnes(databaseActions: () -> 
 
     } catch (bue: BatchUpdateException) {
         val msg = "Batch-operasjon mot databasen feilet"
-        throw AggregatorBatchUpdateException(msg, bue)
+        throw VarselBestillerBatchUpdateException(msg, bue)
 
     } catch (te: SQLTransientException) {
         val message = "Skriving til databasen feilet grunnet en periodisk feil."

@@ -4,7 +4,7 @@ import org.influxdb.dto.Point
 
 data class SensuEvent(
         val dataPoint: Point,
-        val name: String = "aggregator-kafka-events"
+        val name: String = "dittnav-varsel-bestiller-kafka-events"
 ) {
     fun toJson(): String {
         return """
