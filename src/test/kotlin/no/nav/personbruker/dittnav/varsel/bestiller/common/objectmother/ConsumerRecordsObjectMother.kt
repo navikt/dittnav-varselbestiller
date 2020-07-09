@@ -2,7 +2,6 @@ package no.nav.personbruker.dittnav.varsel.bestiller.common.objectmother
 
 import no.nav.brukernotifikasjon.schemas.*
 import no.nav.personbruker.dittnav.varsel.bestiller.beskjed.AvroBeskjedObjectMother
-import no.nav.personbruker.dittnav.varsel.bestiller.common.database.entity.Brukernotifikasjon
 import no.nav.personbruker.dittnav.varsel.bestiller.done.schema.AvroDoneObjectMother
 import no.nav.personbruker.dittnav.varsel.bestiller.innboks.AvroInnboksObjectMother
 import no.nav.personbruker.dittnav.varsel.bestiller.nokkel.createNokkelWithEventId
@@ -12,26 +11,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.common.TopicPartition
 
 object ConsumerRecordsObjectMother {
-
-    fun createMatchingRecords(entitiesInDbToMatch: List<Brukernotifikasjon>): ConsumerRecords<Nokkel, Done> {
-        val listOfConsumerRecord = mutableListOf<ConsumerRecord<Nokkel, Done>>()
-        entitiesInDbToMatch.forEach { entity ->
-            val done = AvroDoneObjectMother.createDoneRecord(entity.eventId, entity.fodselsnummer)
-            listOfConsumerRecord.add(done)
-        }
-        return giveMeConsumerRecordsWithThisConsumerRecord(listOfConsumerRecord)
-    }
-
-    fun createMatchingRecords(entityInDbToMatch: Brukernotifikasjon): ConsumerRecords<Nokkel, Done> {
-        val matchingDoneEvent = AvroDoneObjectMother.createDoneRecord(entityInDbToMatch.eventId, entityInDbToMatch.fodselsnummer)
-        return giveMeConsumerRecordsWithThisConsumerRecord(matchingDoneEvent)
-    }
-
-    fun <T> giveMeConsumerRecordsWithThisConsumerRecord(listOfConcreteRecords: List<ConsumerRecord<Nokkel, T>>): ConsumerRecords<Nokkel, T> {
-        val records = mutableMapOf<TopicPartition, List<ConsumerRecord<Nokkel, T>>>()
-        records[TopicPartition(listOfConcreteRecords[0].topic(), 1)] = listOfConcreteRecords
-        return ConsumerRecords(records)
-    }
 
     fun <T> giveMeConsumerRecordsWithThisConsumerRecord(concreteRecord: ConsumerRecord<Nokkel, T>): ConsumerRecords<Nokkel, T> {
         val records = mutableMapOf<TopicPartition, List<ConsumerRecord<Nokkel, T>>>()
