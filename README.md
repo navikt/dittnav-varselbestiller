@@ -1,8 +1,8 @@
 # dittnav-varsel-bestiller
 
-Microservice som brukes for å lese inn eventer fra DittNAV sine kafka-topics, og lagrer disse i DittNAV sin 
-event-cache (database). DittNAV-api henter ut eventer per bruker fra denne event-cache-en for å serve 
-DittNAV (frontend).
+Microservice som brukes for å lese inn eventer fra DittNAV sine kafka-topics, 
+appen filtrerer på ekstern-varslings-event og sender disse videre til varsling/dokument topic-en. 
+De varsler bruker enten på epost eller SMS.
 
 # Kom i gang
 1. Bygge dittnav-varsel-bestiller:
