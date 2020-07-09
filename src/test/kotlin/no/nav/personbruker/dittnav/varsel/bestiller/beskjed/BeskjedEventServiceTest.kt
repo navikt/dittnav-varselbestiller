@@ -155,7 +155,7 @@ class BeskjedEventServiceTest {
     }
 
     @Test
-    fun shouldReportEverySuccessfulEvent() {
+    fun `Skal rapportere hvert vellykket event`() {
         val numberOfRecords = 5
 
         val records = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords, "beskjed")

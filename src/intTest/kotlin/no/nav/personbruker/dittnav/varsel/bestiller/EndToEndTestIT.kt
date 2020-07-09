@@ -78,17 +78,17 @@ class EndToEndTestIT {
     }
 
     @Test
-    fun `Kafka instansen i minnet har blitt staret`() {
+    fun `Started Kafka instance in memory`() {
         embeddedEnv.serverPark.status `should equal` KafkaEnvironment.ServerParkStatus.Started
     }
 
     @Test
-    fun `Skal lese inn Beskjed-eventer og sende dem til varsel-bestiller topic`() {
+    fun `Should read Beskjed-events and send to varsel-bestiller-topic`() {
         runBlocking {
             KafkaTestUtil.produceEvents(testEnvironment, beskjedTopic, beskjedEvents)
         } shouldEqualTo true
 
-        `Les inn alle beskjed eventene fra topic-en vaar og verifiser at de har blitt lagt til i varsel-bestiller topic`()
+        `Read all Beskjed-events from our topic and verify that they have been sent to varsel-bestiller-topic`()
 
         beskjedEvents.all {
             capturedBeskjedRecords.contains(RecordKeyValueWrapper(it.key, it.value))
@@ -96,12 +96,12 @@ class EndToEndTestIT {
     }
 
     @Test
-    fun `Skal lese inn Oppgave-eventer og sende dem til varsel-bestiller topic`() {
+    fun `Should read Oppgave-events and send to varsel-bestiller-topic`() {
         runBlocking {
             KafkaTestUtil.produceEvents(testEnvironment, oppgaveTopic, oppgaveEvents)
         } shouldEqualTo true
 
-        `Les inn alle oppgave eventene fra vaar topic og verifiser at de har blitt lagt til i varsel-bestiller topic`()
+        `Read all Oppgave-events from our topic and verify that they have been sent to varsel-bestiller-topic`()
 
         oppgaveEvents.all {
             capturedOppgaveRecords.contains(RecordKeyValueWrapper(it.key, it.value))
@@ -109,19 +109,19 @@ class EndToEndTestIT {
     }
 
     @Test
-    fun `Skal lese inn Done-eventer og sende dem til varsel-bestiller topic`() {
+    fun `Should read Done-events and send to varsel-bestiller-topic`() {
         runBlocking {
             KafkaTestUtil.produceEvents(testEnvironment, doneTopic, doneEvents)
         } shouldEqualTo true
 
-        `Les inn alle done eventene fra vaar topic og verifiser at de har blitt lagt til i varsel-bestiller topic-en`()
+        `Read all Done-events from our topic and verify that they have been sent to varsel-bestiller-topic`()
 
         doneEvents.all {
             capturedDoneRecords.contains(RecordKeyValueWrapper(it.key, it.value))
         }
     }
 
-    fun `Les inn alle beskjed eventene fra topic-en vaar og verifiser at de har blitt lagt til i varsel-bestiller topic`() {
+    fun `Read all Beskjed-events from our topic and verify that they have been sent to varsel-bestiller-topic`() {
         val consumerProps = Kafka.consumerProps(testEnvironment, EventType.BESKJED, true)
         val kafkaConsumer = KafkaConsumer<Nokkel, Beskjed>(consumerProps)
 
@@ -167,7 +167,7 @@ class EndToEndTestIT {
         capturedBeskjedRecords.addAll(capturingProcessor.getEvents())
     }
 
-    fun `Les inn alle oppgave eventene fra vaar topic og verifiser at de har blitt lagt til i varsel-bestiller topic`() {
+    fun `Read all Oppgave-events from our topic and verify that they have been sent to varsel-bestiller-topic`() {
         val consumerProps = Kafka.consumerProps(testEnvironment, EventType.OPPGAVE, true)
         val kafkaConsumer = KafkaConsumer<Nokkel, Oppgave>(consumerProps)
 
@@ -213,7 +213,7 @@ class EndToEndTestIT {
         capturedOppgaveRecords.addAll(capturingProcessor.getEvents())
     }
 
-    fun `Les inn alle done eventene fra vaar topic og verifiser at de har blitt lagt til i varsel-bestiller topic-en`() {
+    fun `Read all Done-events from our topic and verify that they have been sent to varsel-bestiller-topic`() {
         val consumerProps = Kafka.consumerProps(testEnvironment, EventType.DONE, true)
         val kafkaConsumer = KafkaConsumer<Nokkel, Done>(consumerProps)
 
