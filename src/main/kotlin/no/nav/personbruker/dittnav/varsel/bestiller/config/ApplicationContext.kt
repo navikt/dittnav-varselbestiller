@@ -30,11 +30,7 @@ class ApplicationContext {
 
     val doneKafkaProps = Kafka.consumerProps(environment, EventType.DONE)
     var doneConsumer = initializeDoneConsumer()
-
-    val innboksKafkaProps = Kafka.consumerProps(environment, EventType.INNBOKS)
-    var innboksConsumer = initializeInnboksConsumer()
-
-
+    
     val healthService = HealthService(this)
 
     private fun initializeBeskjedConsumer(): Consumer<Beskjed> {
@@ -82,21 +78,6 @@ class ApplicationContext {
         return KafkaConsumerSetup.setupConsumerForTheDoneTopic(doneKafkaProps, doneEventService)
     }
 
-    private fun initializeInnboksConsumer(): Consumer<Innboks> {
-        val innboksKafkaProducer = KafkaProducer<Nokkel, Innboks>(Kafka.producerProps(environment, EventType.INNBOKS))
-        innboksKafkaProducer.initTransactions()
-        val innboksKafkaProducerWrapper: no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.KafkaProducer<Innboks>
-
-        if (ConfigUtil.isCurrentlyRunningOnNais()) {
-            innboksKafkaProducerWrapper = LogKafkaProducer<Innboks>()
-        } else {
-            innboksKafkaProducerWrapper = KafkaProducerWrapper(Kafka.innboksVarselBestillerTopicName, innboksKafkaProducer)
-        }
-
-        val innboksEventService = InnboksEventService(innboksKafkaProducerWrapper, eventMetricsProbe)
-        return KafkaConsumerSetup.setupConsumerForTheInnboksTopic(innboksKafkaProps, innboksEventService)
-    }
-
     fun reinitializeConsumers() {
         if (beskjedConsumer.isCompleted()) {
             beskjedConsumer = initializeBeskjedConsumer()
@@ -110,13 +91,6 @@ class ApplicationContext {
             log.info("oppgaveConsumer har blitt reinstansiert.")
         } else {
             log.warn("oppgaveConsumer kunne ikke bli reinstansiert fordi den fortsatt er aktiv.")
-        }
-
-        if (innboksConsumer.isCompleted()) {
-            innboksConsumer = initializeInnboksConsumer()
-            log.info("innboksConsumer har blitt reinstansiert.")
-        } else {
-            log.warn("innboksConsumer kunne ikke bli reinstansiert fordi den fortsatt er aktiv.")
         }
 
         if (doneConsumer.isCompleted()) {

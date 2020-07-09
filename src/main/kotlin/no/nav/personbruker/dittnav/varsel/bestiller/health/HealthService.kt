@@ -8,7 +8,6 @@ class HealthService(private val applicationContext: ApplicationContext) {
         return listOf(
                 applicationContext.database.status(),
                 applicationContext.beskjedConsumer.status(),
-                applicationContext.innboksConsumer.status(),
                 applicationContext.oppgaveConsumer.status(),
                 applicationContext.doneConsumer.status()
         )
