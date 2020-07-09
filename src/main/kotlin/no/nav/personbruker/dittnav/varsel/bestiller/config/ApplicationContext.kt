@@ -112,6 +112,13 @@ class ApplicationContext {
             log.warn("oppgaveConsumer kunne ikke bli reinstansiert fordi den fortsatt er aktiv.")
         }
 
+        if (innboksConsumer.isCompleted()) {
+            innboksConsumer = initializeInnboksConsumer()
+            log.info("innboksConsumer har blitt reinstansiert.")
+        } else {
+            log.warn("innboksConsumer kunne ikke bli reinstansiert fordi den fortsatt er aktiv.")
+        }
+
         if (doneConsumer.isCompleted()) {
             doneConsumer = initializeDoneConsumer()
             log.info("doneConsumer har blitt reinstansiert.")
