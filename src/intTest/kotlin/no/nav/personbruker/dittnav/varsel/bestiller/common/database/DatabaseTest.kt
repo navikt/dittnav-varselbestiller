@@ -1,6 +1,5 @@
 package no.nav.personbruker.dittnav.varsel.bestiller.common.database
 
-import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.VarselBestillerBatchUpdateException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.RetriableDatabaseException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.UnretriableDatabaseException
 import org.amshove.kluent.`should be`
@@ -67,15 +66,6 @@ class DatabaseTest {
                 throw SQLTransientException("Simulert exception")
             }
         } `should throw` RetriableDatabaseException::class
-    }
-
-    @Test
-    fun `Skal haandtere BatchUpdateException, og mappe til intern exceptiontype`() {
-        invoking {
-            translateExternalExceptionsToInternalOnes {
-                throw BatchUpdateException("Simulert exception", IntArray(1))
-            }
-        } `should throw` VarselBestillerBatchUpdateException::class
     }
 
 }

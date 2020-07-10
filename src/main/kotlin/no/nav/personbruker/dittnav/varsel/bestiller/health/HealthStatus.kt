@@ -6,5 +6,5 @@ data class HealthStatus(val serviceName: String,
                         val includeInReadiness: Boolean = true)
 
 enum class Status {
-    OK, ERROR, NOT_STARTED
+    OK, ERROR
 }

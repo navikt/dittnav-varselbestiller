@@ -23,8 +23,7 @@ class Consumer<T>(
         val topic: String,
         val kafkaConsumer: KafkaConsumer<Nokkel, T>,
         val eventBatchProcessorService: EventBatchProcessorService<T>,
-        val job: Job = Job(),
-        var neverStarted: Boolean = true
+        val job: Job = Job()
 ) : CoroutineScope, HealthCheck {
 
     private val log: Logger = LoggerFactory.getLogger(Consumer::class.java)
@@ -42,9 +41,7 @@ class Consumer<T>(
 
     override suspend fun status(): HealthStatus {
         val serviceName = topic + "consumer"
-        return if (neverStarted) {
-            HealthStatus(serviceName, Status.NOT_STARTED, "Consumer is not running", includeInReadiness = false)
-        } else if (job.isActive) {
+        return if (job.isActive) {
             HealthStatus(serviceName, Status.OK, "Consumer is running", includeInReadiness = false)
         } else {
             log.error("Selftest mot Kafka-consumere , consumer kjører ikke.")
@@ -53,7 +50,6 @@ class Consumer<T>(
     }
 
     fun startPolling() {
-        neverStarted = false
         launch {
             kafkaConsumer.use { consumer ->
                 consumer.subscribe(listOf(topic))
