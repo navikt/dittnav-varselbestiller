@@ -1,30 +1,12 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-val prometheusVersion = "0.6.0"
-val ktorVersion = "1.3.0"
-val junitVersion = "5.4.1"
-val kafkaVersion = "2.3.0"
-val confluentVersion = "5.3.0"
-val brukernotifikasjonSchemaVersion = "1.2020.02.07-13.16-fa9d319688b1"
-val logstashVersion = 5.2
-val logbackVersion = "1.2.3"
-val vaultJdbcVersion = "1.3.1"
-val hikariCPVersion = "3.2.0"
-val postgresVersion = "42.2.5"
-val h2Version = "1.4.200"
-val assertJVersion = "3.12.2"
-val kafkaEmvededVersion = "2.2.1"
-val kluentVersion = "1.52"
-val kafkaEmbeddedEnvVersion = "2.1.1"
-val mockkVersion = "1.9.3"
-val influxdbVersion = "2.8"
-
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin on the JVM.
-    val kotlinVersion = "1.3.50"
-    kotlin("jvm").version(kotlinVersion)
-    kotlin("plugin.allopen").version(kotlinVersion)
+    kotlin("jvm").version(Kotlin.version)
+    kotlin("plugin.allopen").version(Kotlin.version)
+
+    id(Shadow.pluginId) version (Shadow.version)
 
     // Apply the application plugin to add support for building a CLI application.
     application
@@ -37,8 +19,9 @@ tasks.withType<KotlinCompile> {
 repositories {
     jcenter()
     mavenCentral()
-    maven("http://packages.confluent.io/maven")
+    maven("https://packages.confluent.io/maven")
     mavenLocal()
+    maven("https://jitpack.io")
 }
 
 sourceSets {
@@ -54,33 +37,31 @@ val intTestImplementation by configurations.getting {
 configurations["intTestRuntimeOnly"].extendsFrom(configurations.testRuntimeOnly.get())
 
 dependencies {
-    implementation(kotlin("stdlib-jdk8"))
-    implementation("no.nav:vault-jdbc:$vaultJdbcVersion")
-    implementation("com.zaxxer:HikariCP:$hikariCPVersion")
-    implementation("org.postgresql:postgresql:$postgresVersion")
-    implementation("ch.qos.logback:logback-classic:$logbackVersion")
-    implementation("net.logstash.logback:logstash-logback-encoder:$logstashVersion")
-    implementation("io.prometheus:simpleclient_common:$prometheusVersion")
-    implementation("io.prometheus:simpleclient_hotspot:$prometheusVersion")
-    implementation("io.prometheus:simpleclient_logback:$prometheusVersion")
-    implementation("io.ktor:ktor-server-netty:$ktorVersion")
-    implementation("org.apache.kafka:kafka-clients:$kafkaVersion")
-    implementation("io.confluent:kafka-avro-serializer:$confluentVersion")
-    implementation("no.nav:brukernotifikasjon-schemas:$brukernotifikasjonSchemaVersion")
-    implementation("org.influxdb:influxdb-java:$influxdbVersion")
-    implementation("io.ktor:ktor-html-builder:$ktorVersion")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
-    testImplementation(kotlin("test-junit5"))
-    testImplementation("no.nav:kafka-embedded-env:$kafkaEmbeddedEnvVersion")
-    testImplementation("org.apache.kafka:kafka_2.12:$kafkaVersion")
-    testImplementation("org.apache.kafka:kafka-streams:$kafkaVersion")
-    testImplementation("io.confluent:kafka-schema-registry:$confluentVersion")
-    testImplementation("com.h2database:h2:$h2Version")
-    testImplementation("org.amshove.kluent:kluent:$kluentVersion")
-    testImplementation("io.mockk:mockk:$mockkVersion")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+    implementation(NAV.vaultJdbc)
+    implementation(Hikari.cp)
+    implementation(Postgresql.postgresql)
+    implementation(Logback.classic)
+    implementation(Logstash.logbackEncoder)
+    implementation(Prometheus.common)
+    implementation(Prometheus.hotspot)
+    implementation(Prometheus.logback)
+    implementation(Ktor.serverNetty)
+    implementation(Kafka.Apache.clients)
+    implementation(Kafka.Confluent.avroSerializer)
+    implementation(Brukernotifikasjon.schemas)
+    implementation(Influxdb.java)
+    implementation(Ktor.htmlBuilder)
+    testImplementation(Junit.api)
+    testImplementation(NAV.kafkaEmbedded)
+    testImplementation(Kafka.Apache.kafka_2_12)
+    testImplementation(Kafka.Apache.streams)
+    testImplementation(Kafka.Confluent.schemaRegistry)
+    testImplementation(H2Database.h2)
+    testImplementation(Kluent.kluent)
+    testImplementation(Mockk.mockk)
+    testImplementation(Junit.engine)
 
-    intTestImplementation("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+    intTestImplementation(Junit.engine)
 }
 
 application {
@@ -88,13 +69,6 @@ application {
 }
 
 tasks {
-    withType<Jar> {
-        manifest {
-            attributes["Main-Class"] = application.mainClassName
-        }
-        from(configurations.runtime.get().map { if (it.isDirectory) it else zipTree(it) })
-    }
-
     withType<Test> {
         useJUnitPlatform()
         testLogging {
@@ -134,3 +108,5 @@ val integrationTest = task<Test>("integrationTest") {
 }
 
 tasks.check { dependsOn(integrationTest) }
+
+apply(plugin = Shadow.pluginId)

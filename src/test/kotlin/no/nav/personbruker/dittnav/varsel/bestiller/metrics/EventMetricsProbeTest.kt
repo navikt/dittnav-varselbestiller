@@ -7,9 +7,9 @@ import no.nav.personbruker.dittnav.varsel.bestiller.metrics.influx.EVENTS_BATCH
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.influx.EVENTS_FAILED
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.influx.EVENTS_PROCESSED
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.influx.EVENTS_SEEN
+import org.amshove.kluent.`should equal`
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
 
 internal class EventMetricsProbeTest {
 
@@ -48,8 +48,8 @@ internal class EventMetricsProbeTest {
         verify(exactly = 1) { PrometheusMetricsCollector.registerEventsSeen(any() , any(), any()) }
         verify(exactly = 1) { PrometheusMetricsCollector.registerEventsProcessed(any() , any(), any()) }
 
-        assertEquals(producerAlias, producerNameForPrometheus.captured)
-        assertEquals(producerAlias, capturedTags.captured["producer"])
+        producerNameForPrometheus.captured `should equal` producerAlias
+        capturedTags.captured["producer"] `should equal` producerAlias
     }
 
     @Test
@@ -78,8 +78,8 @@ internal class EventMetricsProbeTest {
         verify(exactly = 1) { PrometheusMetricsCollector.registerEventsSeen(any(), any(), any()) }
         verify(exactly = 1) { PrometheusMetricsCollector.registerEventsFailed(any(), any(), any()) }
 
-        assertEquals(producerAlias, producerNameForPrometheus.captured)
-        assertEquals(producerAlias, capturedTags.captured["producer"])
+        producerNameForPrometheus.captured `should equal` producerAlias
+        capturedTags.captured["producer"] `should equal` producerAlias
     }
 
     @Test
@@ -110,8 +110,8 @@ internal class EventMetricsProbeTest {
         verify(exactly = 1) { PrometheusMetricsCollector.registerEventsProcessed(2, any(), any()) }
         verify(exactly = 1) { PrometheusMetricsCollector.registerEventsFailed(1, any(), any()) }
 
-        assertEquals(capturedFieldsForSeen.captured["counter"] as Int, 3)
-        assertEquals(capturedFieldsForProcessed.captured["counter"] as Int, 2)
-        assertEquals(capturedFieldsForFailed.captured["counter"] as Int, 1)
+        capturedFieldsForSeen.captured["counter"] `should equal` 3
+        capturedFieldsForProcessed.captured["counter"] `should equal` 2
+        capturedFieldsForFailed.captured["counter"] `should equal` 1
     }
 }
