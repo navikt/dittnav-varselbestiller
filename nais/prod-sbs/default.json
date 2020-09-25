@@ -1,9 +1,0 @@
-{
-  "namespace": "default",
-  "cluster": "prod",
-  "environment": "prod",
-  "ingresses": [
-    "https://dittnav-varsel-bestiller.nais.oera.no",
-    "https://dittnav-varsel-bestiller.prod-sbs.nais.io"
-  ]
-}

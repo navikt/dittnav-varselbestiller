@@ -1,0 +1,8 @@
+{
+  "namespace": "personbruker",
+  "cluster": "preprod",
+  "environment": "dev",
+  "ingresses": [
+    "https://dittnav-varsel-bestiller.personbruker.nais.oera-q.local"
+  ]
+}
