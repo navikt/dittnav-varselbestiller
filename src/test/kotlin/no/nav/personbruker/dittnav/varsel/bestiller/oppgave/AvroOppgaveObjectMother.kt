@@ -9,7 +9,7 @@ object AvroOppgaveObjectMother {
     private val defaultFodselsnr = "12345"
     private val defaultTekst = "Dette er oppgave til brukeren"
     private val defaultSikkerhetsnivaa = 4
-    private val defaultEksternVarsling = false
+    private val defaultEksternVarsling = true
 
     fun createOppgave(lopenummer: Int): Oppgave {
         return createOppgave(lopenummer, defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling)
@@ -27,8 +27,8 @@ object AvroOppgaveObjectMother {
         return createOppgave(defaultLopenummer, defaultFodselsnr, defaultTekst, sikkerhetsnivaa, defaultEksternVarsling)
     }
 
-    fun createOppgaveWithEksternVarsling(): Oppgave {
-        return createOppgave(defaultLopenummer, defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, true)
+    fun createOppgaveWithEksternVarsling(eksternVarsling: Boolean): Oppgave {
+        return createOppgave(defaultLopenummer, defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, eksternVarsling)
     }
 
     fun createOppgave(lopenummer: Int, fodselsnummer: String, tekst: String, sikkerhetsnivaa: Int, eksternVarsling: Boolean): Oppgave {

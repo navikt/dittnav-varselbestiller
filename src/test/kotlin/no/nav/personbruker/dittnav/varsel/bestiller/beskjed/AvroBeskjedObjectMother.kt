@@ -9,7 +9,7 @@ object AvroBeskjedObjectMother {
     private val defaultFodselsnr = "1234"
     private val defaultText = "Dette er Beskjed til brukeren"
     private val defaultSikkerhetsnivaa = 4
-    private val defaultEksternVarsling = false
+    private val defaultEksternVarsling = true
 
     fun createBeskjed(lopenummer: Int): Beskjed {
         return createBeskjed(lopenummer, defaultFodselsnr, defaultText, defaultSikkerhetsnivaa, defaultEksternVarsling)
@@ -19,7 +19,6 @@ object AvroBeskjedObjectMother {
         return createBeskjed(defaultLopenummer, fodselsnummer, defaultText, defaultSikkerhetsnivaa, defaultEksternVarsling)
     }
 
-
     fun createBeskjedWithText(text: String): Beskjed {
         return createBeskjed(defaultLopenummer, defaultFodselsnr, text, defaultSikkerhetsnivaa, defaultEksternVarsling)
     }
@@ -28,8 +27,8 @@ object AvroBeskjedObjectMother {
         return createBeskjed(defaultLopenummer, defaultFodselsnr, defaultText, nivaa, defaultEksternVarsling)
     }
 
-    fun createBeskjedWithEksternVarsling(): Beskjed {
-        return createBeskjed(defaultLopenummer, defaultFodselsnr, defaultText, defaultSikkerhetsnivaa, true)
+    fun createBeskjedWithEksternVarsling(eksternVarsling: Boolean): Beskjed {
+        return createBeskjed(defaultLopenummer, defaultFodselsnr, defaultText, defaultSikkerhetsnivaa, eksternVarsling)
     }
 
     fun createBeskjed(lopenummer: Int, fodselsnummer: String, text: String, sikkerhetsnivaa: Int, eksternVarsling: Boolean): Beskjed {
