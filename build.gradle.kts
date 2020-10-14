@@ -38,6 +38,7 @@ configurations["intTestRuntimeOnly"].extendsFrom(configurations.testRuntimeOnly.
 
 dependencies {
     implementation("com.github.navikt:brukernotifikasjon-schemas:ekstern-varsling-SNAPSHOT")
+    implementation("com.github.navikt:doknotifikasjon-schemas:1.2020.10.13-11.57-126b24008aa6")
     implementation(Hikari.cp)
     implementation(Influxdb.java)
     implementation(Kafka.Apache.clients)
