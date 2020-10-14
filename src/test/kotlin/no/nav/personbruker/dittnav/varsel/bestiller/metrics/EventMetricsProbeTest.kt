@@ -2,13 +2,15 @@ package no.nav.personbruker.dittnav.varsel.bestiller.metrics
 
 import io.mockk.*
 import kotlinx.coroutines.runBlocking
+import no.nav.personbruker.dittnav.common.metrics.MetricsReporter
+import no.nav.personbruker.dittnav.common.metrics.masking.ProducerNameScrubber
+import no.nav.personbruker.dittnav.common.metrics.masking.PublicAliasResolver
 import no.nav.personbruker.dittnav.varsel.bestiller.config.EventType
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.influx.EVENTS_BATCH
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.influx.EVENTS_FAILED
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.influx.EVENTS_PROCESSED
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.influx.EVENTS_SEEN
 import org.amshove.kluent.`should be equal to`
-import org.amshove.kluent.`should equal`
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -16,7 +18,7 @@ internal class EventMetricsProbeTest {
 
     private val metricsReporter = mockk<MetricsReporter>()
     private val prometheusCollector = mockkObject(PrometheusMetricsCollector)
-    private val producerNameResolver = mockk<ProducerNameResolver>()
+    private val producerNameResolver = mockk<PublicAliasResolver>()
 
     @BeforeEach
     fun cleanup() {

@@ -37,7 +37,7 @@ val intTestImplementation by configurations.getting {
 configurations["intTestRuntimeOnly"].extendsFrom(configurations.testRuntimeOnly.get())
 
 dependencies {
-    implementation(Brukernotifikasjon.schemas)
+    implementation("com.github.navikt:brukernotifikasjon-schemas:ekstern-varsling-SNAPSHOT")
     implementation(Hikari.cp)
     implementation(Influxdb.java)
     implementation(Kafka.Apache.clients)
@@ -51,6 +51,8 @@ dependencies {
     implementation(Prometheus.common)
     implementation(Prometheus.hotspot)
     implementation(Prometheus.logback)
+    implementation(DittNAV.Common.metrics)
+
 
     testImplementation(H2Database.h2)
     testImplementation(Junit.api)
@@ -61,6 +63,7 @@ dependencies {
     testImplementation(Kluent.kluent)
     testImplementation(Mockk.mockk)
     testImplementation(NAV.kafkaEmbedded)
+    testImplementation(Kotlinx.atomicfu)
 
     intTestImplementation(Junit.engine)
 }

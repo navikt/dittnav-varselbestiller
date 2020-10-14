@@ -8,6 +8,9 @@ import no.nav.brukernotifikasjon.schemas.Done
 import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.brukernotifikasjon.schemas.Oppgave
 import no.nav.common.KafkaEnvironment
+import no.nav.personbruker.dittnav.common.metrics.StubMetricsReporter
+import no.nav.personbruker.dittnav.common.metrics.masking.ProducerNameScrubber
+import no.nav.personbruker.dittnav.common.metrics.masking.PublicAliasResolver
 import no.nav.personbruker.dittnav.varsel.bestiller.beskjed.AvroBeskjedObjectMother
 import no.nav.personbruker.dittnav.varsel.bestiller.beskjed.BeskjedEventService
 import no.nav.personbruker.dittnav.varsel.bestiller.common.CapturingEventProcessor
@@ -21,16 +24,12 @@ import no.nav.personbruker.dittnav.varsel.bestiller.config.Kafka
 import no.nav.personbruker.dittnav.varsel.bestiller.done.DoneEventService
 import no.nav.personbruker.dittnav.varsel.bestiller.done.schema.AvroDoneObjectMother
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsProbe
-import no.nav.personbruker.dittnav.varsel.bestiller.metrics.ProducerNameResolver
-import no.nav.personbruker.dittnav.varsel.bestiller.metrics.ProducerNameScrubber
-import no.nav.personbruker.dittnav.varsel.bestiller.metrics.StubMetricsReporter
+import no.nav.personbruker.dittnav.varsel.bestiller.metrics.db.getProdusentnavn
 import no.nav.personbruker.dittnav.varsel.bestiller.nokkel.createNokkelWithEventId
 import no.nav.personbruker.dittnav.varsel.bestiller.oppgave.AvroOppgaveObjectMother
 import no.nav.personbruker.dittnav.varsel.bestiller.oppgave.OppgaveEventService
 import org.amshove.kluent.`should be equal to`
-import org.amshove.kluent.`should equal`
 import org.amshove.kluent.shouldBeEqualTo
-import org.amshove.kluent.shouldEqualTo
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.junit.jupiter.api.AfterAll
@@ -55,8 +54,8 @@ class EndToEndTestIT {
 
     private val metricsReporter = StubMetricsReporter()
     val database = H2Database()
-    val nameResolver = ProducerNameResolver(database)
-    val nameScrubber = ProducerNameScrubber(nameResolver)
+    private val producerNameAliasResolver = PublicAliasResolver({ database.queryWithExceptionTranslation { getProdusentnavn() } })
+    val nameScrubber = ProducerNameScrubber(producerNameAliasResolver)
     private val metricsProbe = EventMetricsProbe(metricsReporter, nameScrubber)
 
     private val adminClient = embeddedEnv.adminClient
