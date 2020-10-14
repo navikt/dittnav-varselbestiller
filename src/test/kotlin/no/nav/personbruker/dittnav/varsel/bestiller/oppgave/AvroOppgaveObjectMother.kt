@@ -9,31 +9,38 @@ object AvroOppgaveObjectMother {
     private val defaultFodselsnr = "12345"
     private val defaultTekst = "Dette er oppgave til brukeren"
     private val defaultSikkerhetsnivaa = 4
+    private val defaultEksternVarsling = false
 
     fun createOppgave(lopenummer: Int): Oppgave {
-        return createOppgave(lopenummer, defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa)
+        return createOppgave(lopenummer, defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling)
     }
 
     fun createOppgaveWithFodselsnummer(lopenummer: Int, fodselsnummer: String): Oppgave {
-        return createOppgave(lopenummer, fodselsnummer, defaultTekst, defaultSikkerhetsnivaa)
+        return createOppgave(lopenummer, fodselsnummer, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling)
     }
 
     fun createOppgaveWithText(tekst: String): Oppgave {
-        return createOppgave(defaultLopenummer, defaultFodselsnr, tekst, defaultSikkerhetsnivaa)
+        return createOppgave(defaultLopenummer, defaultFodselsnr, tekst, defaultSikkerhetsnivaa, defaultEksternVarsling)
     }
 
     fun createOppgaveWithSikkerhetsnivaa(sikkerhetsnivaa: Int): Oppgave {
-        return createOppgave(defaultLopenummer, defaultFodselsnr, defaultTekst, sikkerhetsnivaa)
+        return createOppgave(defaultLopenummer, defaultFodselsnr, defaultTekst, sikkerhetsnivaa, defaultEksternVarsling)
     }
 
-    fun createOppgave(lopenummer: Int, fodselsnummer: String, tekst: String, sikkerhetsnivaa: Int): Oppgave {
+    fun createOppgaveWithEksternVarsling(): Oppgave {
+        return createOppgave(defaultLopenummer, defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, true)
+    }
+
+    fun createOppgave(lopenummer: Int, fodselsnummer: String, tekst: String, sikkerhetsnivaa: Int, eksternVarsling: Boolean): Oppgave {
         return Oppgave(
                 Instant.now().toEpochMilli(),
                 fodselsnummer,
                 "100$lopenummer",
                 tekst,
                 "https://nav.no/systemX/$lopenummer",
-                sikkerhetsnivaa)
+                sikkerhetsnivaa,
+                eksternVarsling
+        )
     }
 
 }

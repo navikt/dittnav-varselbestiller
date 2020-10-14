@@ -7,6 +7,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.personbruker.dittnav.varsel.bestiller.common.database.Database
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.db.Produsent
+import org.amshove.kluent.`should be equal to`
 import org.amshove.kluent.`should be null`
 import org.amshove.kluent.`should equal`
 import org.junit.jupiter.api.AfterEach
@@ -36,7 +37,7 @@ internal class ProducerNameResolverTest {
     fun `skal returnere produsentnavn`() {
         runBlocking {
             val producerNameAlias = producerNameResolver.getProducerNameAlias("x-dittnav")
-            producerNameAlias `should equal` "dittnav"
+            producerNameAlias `should be equal to` "dittnav"
         }
     }
 
@@ -50,7 +51,7 @@ internal class ProducerNameResolverTest {
             }.throws(SQLException())
 
             val newProducerNameAlias = producerNameResolver.getProducerNameAlias("x-dittnav")
-            originalProducerNameAlias `should equal` newProducerNameAlias
+            originalProducerNameAlias `should be equal to` newProducerNameAlias
         }
     }
 

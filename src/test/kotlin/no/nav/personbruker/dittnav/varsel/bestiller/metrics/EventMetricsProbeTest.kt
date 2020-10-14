@@ -7,6 +7,7 @@ import no.nav.personbruker.dittnav.varsel.bestiller.metrics.influx.EVENTS_BATCH
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.influx.EVENTS_FAILED
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.influx.EVENTS_PROCESSED
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.influx.EVENTS_SEEN
+import org.amshove.kluent.`should be equal to`
 import org.amshove.kluent.`should equal`
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -48,8 +49,8 @@ internal class EventMetricsProbeTest {
         verify(exactly = 1) { PrometheusMetricsCollector.registerEventsSeen(any() , any(), any()) }
         verify(exactly = 1) { PrometheusMetricsCollector.registerEventsProcessed(any() , any(), any()) }
 
-        producerNameForPrometheus.captured `should equal` producerAlias
-        capturedTags.captured["producer"] `should equal` producerAlias
+        producerNameForPrometheus.captured `should be equal to` producerAlias
+        capturedTags.captured["producer"] `should be equal to` producerAlias
     }
 
     @Test
@@ -78,8 +79,8 @@ internal class EventMetricsProbeTest {
         verify(exactly = 1) { PrometheusMetricsCollector.registerEventsSeen(any(), any(), any()) }
         verify(exactly = 1) { PrometheusMetricsCollector.registerEventsFailed(any(), any(), any()) }
 
-        producerNameForPrometheus.captured `should equal` producerAlias
-        capturedTags.captured["producer"] `should equal` producerAlias
+        producerNameForPrometheus.captured `should be equal to` producerAlias
+        capturedTags.captured["producer"] `should be equal to` producerAlias
     }
 
     @Test
@@ -110,8 +111,8 @@ internal class EventMetricsProbeTest {
         verify(exactly = 1) { PrometheusMetricsCollector.registerEventsProcessed(2, any(), any()) }
         verify(exactly = 1) { PrometheusMetricsCollector.registerEventsFailed(1, any(), any()) }
 
-        capturedFieldsForSeen.captured["counter"] `should equal` 3
-        capturedFieldsForProcessed.captured["counter"] `should equal` 2
-        capturedFieldsForFailed.captured["counter"] `should equal` 1
+        capturedFieldsForSeen.captured["counter"] `should be equal to` 3
+        capturedFieldsForProcessed.captured["counter"] `should be equal to` 2
+        capturedFieldsForFailed.captured["counter"] `should be equal to` 1
     }
 }

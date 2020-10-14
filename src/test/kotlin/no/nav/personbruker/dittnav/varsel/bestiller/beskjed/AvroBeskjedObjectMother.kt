@@ -9,24 +9,30 @@ object AvroBeskjedObjectMother {
     private val defaultFodselsnr = "1234"
     private val defaultText = "Dette er Beskjed til brukeren"
     private val defaultSikkerhetsnivaa = 4
-
-    fun createBeskjedWithText(text: String): Beskjed {
-        return createBeskjed(defaultLopenummer, defaultFodselsnr, text, defaultSikkerhetsnivaa)
-    }
-
-    fun createBeskjedWithSikkerhetsnivaa(nivaa: Int): Beskjed {
-        return createBeskjed(defaultLopenummer, defaultFodselsnr, defaultText, nivaa)
-    }
+    private val defaultEksternVarsling = false
 
     fun createBeskjed(lopenummer: Int): Beskjed {
-        return createBeskjed(lopenummer, defaultFodselsnr, defaultText, defaultSikkerhetsnivaa)
+        return createBeskjed(lopenummer, defaultFodselsnr, defaultText, defaultSikkerhetsnivaa, defaultEksternVarsling)
     }
 
     fun createBeskjedWithFodselsnummer(fodselsnummer: String): Beskjed {
-        return createBeskjed(defaultLopenummer, fodselsnummer, defaultText, defaultSikkerhetsnivaa)
+        return createBeskjed(defaultLopenummer, fodselsnummer, defaultText, defaultSikkerhetsnivaa, defaultEksternVarsling)
     }
 
-    fun createBeskjed(lopenummer: Int, fodselsnummer: String, text: String, sikkerhetsnivaa: Int): Beskjed {
+
+    fun createBeskjedWithText(text: String): Beskjed {
+        return createBeskjed(defaultLopenummer, defaultFodselsnr, text, defaultSikkerhetsnivaa, defaultEksternVarsling)
+    }
+
+    fun createBeskjedWithSikkerhetsnivaa(nivaa: Int): Beskjed {
+        return createBeskjed(defaultLopenummer, defaultFodselsnr, defaultText, nivaa, defaultEksternVarsling)
+    }
+
+    fun createBeskjedWithEksternVarsling(): Beskjed {
+        return createBeskjed(defaultLopenummer, defaultFodselsnr, defaultText, defaultSikkerhetsnivaa, true)
+    }
+
+    fun createBeskjed(lopenummer: Int, fodselsnummer: String, text: String, sikkerhetsnivaa: Int, eksternVarsling: Boolean): Beskjed {
         return Beskjed(
                 Instant.now().toEpochMilli(),
                 Instant.now().toEpochMilli(),
@@ -34,7 +40,9 @@ object AvroBeskjedObjectMother {
                 "100$lopenummer",
                 text,
                 "https://nav.no/systemX/$lopenummer",
-                sikkerhetsnivaa)
+                sikkerhetsnivaa,
+                eksternVarsling
+        )
     }
 
 }

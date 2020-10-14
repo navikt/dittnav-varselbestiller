@@ -27,7 +27,9 @@ import no.nav.personbruker.dittnav.varsel.bestiller.metrics.StubMetricsReporter
 import no.nav.personbruker.dittnav.varsel.bestiller.nokkel.createNokkelWithEventId
 import no.nav.personbruker.dittnav.varsel.bestiller.oppgave.AvroOppgaveObjectMother
 import no.nav.personbruker.dittnav.varsel.bestiller.oppgave.OppgaveEventService
+import org.amshove.kluent.`should be equal to`
 import org.amshove.kluent.`should equal`
+import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldEqualTo
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -79,14 +81,14 @@ class EndToEndTestIT {
 
     @Test
     fun `Started Kafka instance in memory`() {
-        embeddedEnv.serverPark.status `should equal` KafkaEnvironment.ServerParkStatus.Started
+        embeddedEnv.serverPark.status `should be equal to` KafkaEnvironment.ServerParkStatus.Started
     }
 
     @Test
     fun `Should read Beskjed-events and send to varsel-bestiller-topic`() {
         runBlocking {
             KafkaTestUtil.produceEvents(testEnvironment, beskjedTopic, beskjedEvents)
-        } shouldEqualTo true
+        } shouldBeEqualTo true
 
         `Read all Beskjed-events from our topic and verify that they have been sent to varsel-bestiller-topic`()
 
@@ -99,7 +101,7 @@ class EndToEndTestIT {
     fun `Should read Oppgave-events and send to varsel-bestiller-topic`() {
         runBlocking {
             KafkaTestUtil.produceEvents(testEnvironment, oppgaveTopic, oppgaveEvents)
-        } shouldEqualTo true
+        } shouldBeEqualTo true
 
         `Read all Oppgave-events from our topic and verify that they have been sent to varsel-bestiller-topic`()
 
@@ -112,7 +114,7 @@ class EndToEndTestIT {
     fun `Should read Done-events and send to varsel-bestiller-topic`() {
         runBlocking {
             KafkaTestUtil.produceEvents(testEnvironment, doneTopic, doneEvents)
-        } shouldEqualTo true
+        } shouldBeEqualTo true
 
         `Read all Done-events from our topic and verify that they have been sent to varsel-bestiller-topic`()
 
