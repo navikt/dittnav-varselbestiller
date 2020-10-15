@@ -6,6 +6,7 @@ import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig
 import io.confluent.kafka.serializers.KafkaAvroSerializer
 import no.nav.personbruker.dittnav.varsel.bestiller.beskjed.AvroBeskjedObjectMother
 import org.amshove.kluent.`should be null`
+import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldEqual
 import org.junit.jupiter.api.Test
 
@@ -32,7 +33,7 @@ class SwallowSerializationErrorsAvroDeserializerTest {
         val serialized = serializer.serialize(topic, original)
         val deserialized = deserializer.deserialize(topic, serialized)
 
-        deserialized shouldEqual original
+        deserialized shouldBeEqualTo original
     }
 
     @Test

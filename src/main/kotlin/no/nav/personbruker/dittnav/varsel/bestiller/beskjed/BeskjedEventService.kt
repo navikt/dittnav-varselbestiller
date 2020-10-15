@@ -31,13 +31,12 @@ class BeskjedEventService(
         metricsProbe.runWithMetrics(eventType = BESKJED) {
             events.forEach { event ->
                 try {
-                    //if (isEventEksternVarsling(event.value().getLink())) { //TODO legg til når eksternVarslings felt er i schemas
-                    val beskjedEksternVarslingKey = createKeyForEvent(event.getNonNullKey())
-                    val beskjedEksternVarslingEvent = createBeskjedEksternVarslingForEvent(event.value())
-
-                    successfullyValidatedEvents.add(RecordKeyValueWrapper(beskjedEksternVarslingKey, beskjedEksternVarslingEvent))
-                    countSuccessfulEventForProducer(event.systembruker)
-                    //}
+                    if (skalVarsleEksternt(event.value())) {
+                        val beskjedEksternVarslingKey = createKeyForEvent(event.getNonNullKey())
+                        val beskjedEksternVarslingEvent = createBeskjedEksternVarslingForEvent(event.value())
+                        successfullyValidatedEvents.add(RecordKeyValueWrapper(beskjedEksternVarslingKey, beskjedEksternVarslingEvent))
+                        countSuccessfulEventForProducer(event.systembruker)
+                    }
                 } catch (nne: NokkelNullException) {
                     countFailedEventForProducer("NoProducerSpecified")
                     log.warn("Beskjed-eventet manglet nøkkel. Topic: ${event.topic()}, Partition: ${event.partition()}, Offset: ${event.offset()}", nne)
@@ -55,8 +54,11 @@ class BeskjedEventService(
             }
             kafkaProducer.sendEvents(successfullyValidatedEvents)
         }
-
         kastExceptionHvisMislykkedValidering(problematicEvents)
+    }
+
+    private fun skalVarsleEksternt(event: Beskjed): Boolean {
+        return event.getEksternVarsling()
     }
 
     private fun kastExceptionHvisMislykkedValidering(problematicEvents: MutableList<ConsumerRecord<Nokkel, Beskjed>>) {

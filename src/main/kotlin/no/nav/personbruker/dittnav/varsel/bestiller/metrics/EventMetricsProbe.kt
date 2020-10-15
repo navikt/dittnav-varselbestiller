@@ -1,5 +1,7 @@
 package no.nav.personbruker.dittnav.varsel.bestiller.metrics
 
+import no.nav.personbruker.dittnav.common.metrics.MetricsReporter
+import no.nav.personbruker.dittnav.common.metrics.masking.ProducerNameScrubber
 import no.nav.personbruker.dittnav.varsel.bestiller.config.EventType
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.influx.EVENTS_BATCH
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.influx.EVENTS_FAILED

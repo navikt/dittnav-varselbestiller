@@ -63,7 +63,3 @@ fun validateSikkerhetsnivaa(sikkerhetsnivaa: Int): Int {
         else -> throw FieldValidationException("Sikkerhetsnivaa kan bare være 3 eller 4.")
     }
 }
-
-fun isEventEksternVarsling(field: String): Boolean {
-    return isEksternVarslingRegex.matches(field)
-}

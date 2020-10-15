@@ -12,6 +12,7 @@ import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.Unretriabl
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.UnvalidatableRecordException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.objectmother.ConsumerRecordsObjectMother
 import no.nav.personbruker.dittnav.varsel.bestiller.health.Status
+import org.amshove.kluent.`should be equal to`
 import org.amshove.kluent.`should equal`
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.errors.DisconnectException
@@ -40,7 +41,7 @@ class ConsumerTest {
             consumer.startPolling()
             delay(300)
 
-            consumer.status().status `should equal` Status.OK
+            consumer.status().status `should be equal to` Status.OK
             consumer.stopPolling()
         }
         verify(atLeast = 1) { kafkaConsumer.commitSync() }
@@ -58,7 +59,7 @@ class ConsumerTest {
             consumer.startPolling()
             delay(10)
             consumer.job.join()
-            consumer.status().status `should equal` Status.ERROR
+            consumer.status().status `should be equal to` Status.ERROR
         }
         verify(exactly = 0) { kafkaConsumer.commitSync() }
     }
@@ -75,7 +76,7 @@ class ConsumerTest {
             consumer.startPolling()
             delay(10)
             consumer.job.join()
-            consumer.status().status `should equal` Status.ERROR
+            consumer.status().status `should be equal to` Status.ERROR
         }
         verify(exactly = 0) { kafkaConsumer.commitSync() }
     }
@@ -92,7 +93,7 @@ class ConsumerTest {
             consumer.startPolling()
             delay(10)
             consumer.job.join()
-            consumer.status().status `should equal` Status.ERROR
+            consumer.status().status `should be equal to` Status.ERROR
         }
         verify(exactly = 0) { kafkaConsumer.commitSync() }
     }
@@ -108,7 +109,7 @@ class ConsumerTest {
             consumer.startPolling()
             `Vent litt for aa bevise at det fortsettes aa polle`()
 
-            consumer.status().status `should equal` Status.OK
+            consumer.status().status `should be equal to` Status.OK
             consumer.stopPolling()
         }
         verify(exactly = 0) { kafkaConsumer.commitSync() }
@@ -126,7 +127,7 @@ class ConsumerTest {
             consumer.startPolling()
             `Vent litt for aa bevise at det fortsettes aa polle`()
 
-            consumer.status().status `should equal` Status.OK
+            consumer.status().status `should be equal to` Status.OK
             consumer.stopPolling()
         }
         verify(exactly = 0) { kafkaConsumer.commitSync() }
@@ -143,7 +144,7 @@ class ConsumerTest {
             consumer.startPolling()
             delay(30)
 
-            consumer.status().status `should equal` Status.OK
+            consumer.status().status `should be equal to` Status.OK
             consumer.stopPolling()
         }
         verify(exactly = 0) { kafkaConsumer.commitSync() }
