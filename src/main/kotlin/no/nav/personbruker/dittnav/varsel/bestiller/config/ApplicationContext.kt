@@ -1,14 +1,18 @@
 package no.nav.personbruker.dittnav.varsel.bestiller.config
 
-import no.nav.brukernotifikasjon.schemas.*
+import no.nav.brukernotifikasjon.schemas.Beskjed
+import no.nav.brukernotifikasjon.schemas.Done
+import no.nav.brukernotifikasjon.schemas.Oppgave
+import no.nav.doknotifikasjon.schemas.Doknotifikasjon
+import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
+import no.nav.personbruker.dittnav.common.util.kafka.producer.KafkaProducerWrapper
 import no.nav.personbruker.dittnav.varsel.bestiller.beskjed.BeskjedEventService
 import no.nav.personbruker.dittnav.varsel.bestiller.common.database.Database
 import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.Consumer
-import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.KafkaProducerWrapper
-import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.LogKafkaProducer
+import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonProducer
+import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varsel.bestiller.done.DoneEventService
 import no.nav.personbruker.dittnav.varsel.bestiller.health.HealthService
-import no.nav.personbruker.dittnav.varsel.bestiller.innboks.InnboksEventService
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.buildEventMetricsProbe
 import no.nav.personbruker.dittnav.varsel.bestiller.oppgave.OppgaveEventService
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -17,64 +21,39 @@ import org.slf4j.LoggerFactory
 class ApplicationContext {
 
     private val log = LoggerFactory.getLogger(ApplicationContext::class.java)
-    val environment = Environment()
+    private val environment = Environment()
     val database: Database = PostgresDatabase(environment)
 
     val eventMetricsProbe = buildEventMetricsProbe(environment, database)
 
-    val beskjedKafkaProps = Kafka.consumerProps(environment, EventType.BESKJED)
+    private val kafkaProducerDoknotifikasjon = KafkaProducerWrapper(Kafka.doknotifikasjonTopicName, KafkaProducer<String, Doknotifikasjon>(Kafka.producerProps(environment, EventType.DOKNOTIFIKASJON)))
+    private val kafkaProducerDoknotifikasjonStop = KafkaProducerWrapper(Kafka.doknotifikasjonStopTopicName, KafkaProducer<String, DoknotifikasjonStopp>(Kafka.producerProps(environment, EventType.DOKNOTIFIKASJON_STOPP)))
+    private val doknotifikasjonProducer = DoknotifikasjonProducer(kafkaProducerDoknotifikasjon)
+    private val doknotifikasjonStopProducer = DoknotifikasjonStoppProducer(kafkaProducerDoknotifikasjonStop)
+
+    private val beskjedKafkaProps = Kafka.consumerProps(environment, EventType.BESKJED)
+    private val beskjedEventService = BeskjedEventService(doknotifikasjonProducer, eventMetricsProbe)
     var beskjedConsumer = initializeBeskjedConsumer()
 
-    val oppgaveKafkaProps = Kafka.consumerProps(environment, EventType.OPPGAVE)
+    private val oppgaveKafkaProps = Kafka.consumerProps(environment, EventType.OPPGAVE)
+    val oppgaveEventService = OppgaveEventService(doknotifikasjonProducer, eventMetricsProbe)
     var oppgaveConsumer = initializeOppgaveConsumer()
 
-    val doneKafkaProps = Kafka.consumerProps(environment, EventType.DONE)
+    private val doneKafkaProps = Kafka.consumerProps(environment, EventType.DONE)
+    private val doneEventService = DoneEventService(doknotifikasjonStopProducer, eventMetricsProbe)
     var doneConsumer = initializeDoneConsumer()
-    
+
     val healthService = HealthService(this)
 
     private fun initializeBeskjedConsumer(): Consumer<Beskjed> {
-        val beskjedKafkaProducer = KafkaProducer<Nokkel, Beskjed>(Kafka.producerProps(environment, EventType.BESKJED_EKSTERN_VARSLING))
-        beskjedKafkaProducer.initTransactions()
-        val beskjedKafkaProducerWrapper: no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.KafkaProducer<Beskjed>
-
-        if (ConfigUtil.isCurrentlyRunningOnNais()) {
-            beskjedKafkaProducerWrapper = LogKafkaProducer<Beskjed>()
-        } else {
-            beskjedKafkaProducerWrapper = KafkaProducerWrapper(Kafka.beskjedVarselBestillerTopicName, beskjedKafkaProducer)
-        }
-
-        val beskjedEventService = BeskjedEventService(beskjedKafkaProducerWrapper, eventMetricsProbe)
         return KafkaConsumerSetup.setupConsumerForTheBeskjedTopic(beskjedKafkaProps, beskjedEventService)
     }
 
     private fun initializeOppgaveConsumer(): Consumer<Oppgave> {
-        val oppgaveKafkaProducer = KafkaProducer<Nokkel, Oppgave>(Kafka.producerProps(environment, EventType.OPPGAVE))
-        oppgaveKafkaProducer.initTransactions()
-        val oppgaveKafkaProducerWrapper: no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.KafkaProducer<Oppgave>
-
-        if (ConfigUtil.isCurrentlyRunningOnNais()) {
-            oppgaveKafkaProducerWrapper = LogKafkaProducer<Oppgave>()
-        } else {
-            oppgaveKafkaProducerWrapper = KafkaProducerWrapper(Kafka.oppgaveVarselBestillerTopicName, oppgaveKafkaProducer)
-        }
-
-        val oppgaveEventService = OppgaveEventService(oppgaveKafkaProducerWrapper, eventMetricsProbe)
         return KafkaConsumerSetup.setupConsumerForTheOppgaveTopic(oppgaveKafkaProps, oppgaveEventService)
     }
 
     private fun initializeDoneConsumer(): Consumer<Done> {
-        val doneKafkaProducer = KafkaProducer<Nokkel, Done>(Kafka.producerProps(environment, EventType.DONE))
-        doneKafkaProducer.initTransactions()
-        val doneKafkaProducerWrapper: no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.KafkaProducer<Done>
-
-        if (ConfigUtil.isCurrentlyRunningOnNais()) {
-            doneKafkaProducerWrapper = LogKafkaProducer<Done>()
-        } else {
-            doneKafkaProducerWrapper = KafkaProducerWrapper(Kafka.doneVarselBestillerTopicName, doneKafkaProducer)
-        }
-
-        val doneEventService = DoneEventService(doneKafkaProducerWrapper, eventMetricsProbe)
         return KafkaConsumerSetup.setupConsumerForTheDoneTopic(doneKafkaProps, doneEventService)
     }
 

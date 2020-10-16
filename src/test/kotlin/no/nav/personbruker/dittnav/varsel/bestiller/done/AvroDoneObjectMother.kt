@@ -1,4 +1,4 @@
-package no.nav.personbruker.dittnav.varsel.bestiller.done.schema
+package no.nav.personbruker.dittnav.varsel.bestiller.done
 
 import no.nav.brukernotifikasjon.schemas.Done
 import no.nav.brukernotifikasjon.schemas.Nokkel

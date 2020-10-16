@@ -4,12 +4,13 @@ import io.mockk.*
 import kotlinx.coroutines.runBlocking
 import no.nav.brukernotifikasjon.schemas.Done
 import no.nav.brukernotifikasjon.schemas.Nokkel
-import no.nav.personbruker.dittnav.varsel.bestiller.common.RecordKeyValueWrapper
+import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
+import no.nav.personbruker.dittnav.common.util.kafka.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.FieldValidationException
-import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.KafkaProducerWrapper
-import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.createKeyForEvent
 import no.nav.personbruker.dittnav.varsel.bestiller.common.objectmother.ConsumerRecordsObjectMother
-import no.nav.personbruker.dittnav.varsel.bestiller.done.schema.AvroDoneObjectMother
+import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.AvroDoknotifikasjonStoppObjectMother
+import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonStoppProducer
+import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.createDoknotifikasjonStoppFromDone
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsProbe
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsSession
 import org.amshove.kluent.`should be`
@@ -19,18 +20,16 @@ import org.junit.jupiter.api.Test
 
 class DoneEventServiceTest {
 
-    private val producer = mockk<KafkaProducerWrapper<Done>>(relaxed = true)
+    private val doknotifikasjonStoppProducer = mockk<DoknotifikasjonStoppProducer>(relaxed = true)
     private val metricsProbe = mockk<EventMetricsProbe>(relaxed = true)
     private val metricsSession = mockk<EventMetricsSession>(relaxed = true)
-    private val eventService = DoneEventService(producer, metricsProbe)
+    private val eventService = DoneEventService(doknotifikasjonStoppProducer, metricsProbe)
 
     @BeforeEach
     private fun resetMocks() {
-        clearMocks(producer)
+        clearMocks(doknotifikasjonStoppProducer)
         clearMocks(metricsProbe)
         clearMocks(metricsSession)
-        mockkStatic("no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.VarselKeyCreatorKt")
-        mockkStatic("no.nav.personbruker.dittnav.varsel.bestiller.done.DoneEksternVarslingCreatorKt")
     }
 
     @AfterAll
@@ -49,8 +48,8 @@ class DoneEventServiceTest {
             slot.captured.invoke(metricsSession)
         }
 
-        val capturedNumberOfEntities = slot<List<RecordKeyValueWrapper<Done>>>()
-        coEvery { producer.sendEvents(capture(capturedNumberOfEntities)) } returns Unit
+        val capturedNumberOfEntities = slot<List<RecordKeyValueWrapper<String, DoknotifikasjonStopp>>>()
+        coEvery { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(capture(capturedNumberOfEntities)) } returns Unit
 
         runBlocking {
             eventService.processEvents(records)
@@ -63,17 +62,10 @@ class DoneEventServiceTest {
 
     @Test
     fun `Skal skrive alle eventer til ny kafka-topic`() {
-        val records = ConsumerRecordsObjectMother.giveMeANumberOfDoneRecords(5, "dummyTopic")
-        val successfullKeys = mutableListOf<Nokkel>()
-        val successfullEvents = mutableListOf<Done>()
+        val doneRecords = ConsumerRecordsObjectMother.giveMeANumberOfDoneRecords(5, "dummyTopic")
+        val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, DoknotifikasjonStopp>>>()
 
-        records.forEach { record -> successfullKeys.add(record.key()) }
-        records.forEach { record -> successfullEvents.add(record.value()) }
-
-        val capturedListOfEntities = slot<List<RecordKeyValueWrapper<Done>>>()
-        coEvery { createKeyForEvent(any()) } returnsMany successfullKeys
-        coEvery { createDoneEksternVarslingForEvent(any()) } returnsMany successfullEvents
-        coEvery { producer.sendEvents(capture(capturedListOfEntities)) } returns Unit
+        coEvery { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(capture(capturedListOfEntities)) } returns Unit
 
         val slot = slot<suspend EventMetricsSession.() -> Unit>()
         coEvery { metricsProbe.runWithMetrics(any(), capture(slot)) } coAnswers {
@@ -81,15 +73,14 @@ class DoneEventServiceTest {
         }
 
         runBlocking {
-            eventService.processEvents(records)
+            eventService.processEvents(doneRecords)
         }
 
-        verify(exactly = records.count()) { createKeyForEvent(any()) }
-        verify(exactly = records.count()) { createDoneEksternVarslingForEvent(any()) }
-        coVerify(exactly = 1) { producer.sendEvents(allAny()) }
-        capturedListOfEntities.captured.size `should be` records.count()
+        verify(exactly = doneRecords.count()) { createDoknotifikasjonStoppFromDone(ofType(Nokkel::class), ofType(Done::class)) }
+        coVerify(exactly = 1) { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(any()) }
+        capturedListOfEntities.captured.size `should be` doneRecords.count()
 
-        confirmVerified(producer)
+        confirmVerified(doknotifikasjonStoppProducer)
     }
 
     @Test
@@ -99,18 +90,12 @@ class DoneEventServiceTest {
         val numberOfSuccessfulTransformations = totalNumberOfRecords - numberOfFailedTransformations
 
         val records = ConsumerRecordsObjectMother.giveMeANumberOfDoneRecords(totalNumberOfRecords, "dummyTopic")
-        val successfullKey = mutableListOf<Nokkel>()
-        val successfullEvents = mutableListOf<Done>()
-
-        records.forEach { record -> successfullKey.add(record.key()) }
-        records.forEach { record -> successfullEvents.add(record.value()) }
-
-        val capturedListOfEntities = slot<List<RecordKeyValueWrapper<Done>>>()
-        coEvery { producer.sendEvents(capture(capturedListOfEntities)) } returns Unit
+        val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, DoknotifikasjonStopp>>>()
+        coEvery { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(capture(capturedListOfEntities)) } returns Unit
 
         val fieldValidationException = FieldValidationException("Simulert feil i en test")
-        every { createKeyForEvent(any()) } returnsMany successfullKey
-        every { createDoneEksternVarslingForEvent(any()) } throws fieldValidationException andThenMany successfullEvents
+        val doknotifikasjonStopp = AvroDoknotifikasjonStoppObjectMother.giveMeANumberOfDoknotifikasjonStopp(5)
+        every { createDoknotifikasjonStoppFromDone(ofType(Nokkel::class), ofType(Done::class)) } throws fieldValidationException andThenMany doknotifikasjonStopp
 
         val slot = slot<suspend EventMetricsSession.() -> Unit>()
 
@@ -122,11 +107,11 @@ class DoneEventServiceTest {
             eventService.processEvents(records)
         }
 
-        coVerify(exactly = 1) { producer.sendEvents(allAny()) }
+        coVerify(exactly = 1) { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(any()) }
         coVerify(exactly = numberOfFailedTransformations) { metricsSession.countFailedEventForProducer(any()) }
         capturedListOfEntities.captured.size `should be` numberOfSuccessfulTransformations
 
-        confirmVerified(producer)
+        confirmVerified(doknotifikasjonStoppProducer)
     }
 
     @Test

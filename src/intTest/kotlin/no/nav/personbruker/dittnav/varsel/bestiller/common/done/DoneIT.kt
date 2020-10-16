@@ -5,19 +5,21 @@ import kotlinx.coroutines.runBlocking
 import no.nav.brukernotifikasjon.schemas.Done
 import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.common.KafkaEnvironment
+import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
 import no.nav.personbruker.dittnav.common.metrics.StubMetricsReporter
 import no.nav.personbruker.dittnav.common.metrics.masking.ProducerNameScrubber
 import no.nav.personbruker.dittnav.common.metrics.masking.PublicAliasResolver
+import no.nav.personbruker.dittnav.common.util.kafka.RecordKeyValueWrapper
+import no.nav.personbruker.dittnav.common.util.kafka.producer.KafkaProducerWrapper
 import no.nav.personbruker.dittnav.varsel.bestiller.common.CapturingEventProcessor
-import no.nav.personbruker.dittnav.varsel.bestiller.common.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.varsel.bestiller.common.database.H2Database
 import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.Consumer
-import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.KafkaProducerWrapper
 import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.util.KafkaTestUtil
 import no.nav.personbruker.dittnav.varsel.bestiller.config.EventType
 import no.nav.personbruker.dittnav.varsel.bestiller.config.Kafka
+import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonStoppProducer
+import no.nav.personbruker.dittnav.varsel.bestiller.done.AvroDoneObjectMother
 import no.nav.personbruker.dittnav.varsel.bestiller.done.DoneEventService
-import no.nav.personbruker.dittnav.varsel.bestiller.done.schema.AvroDoneObjectMother
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsProbe
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.db.getProdusentnavn
 import no.nav.personbruker.dittnav.varsel.bestiller.nokkel.createNokkelWithEventId
@@ -31,15 +33,12 @@ import org.junit.jupiter.api.Test
 
 class DoneIT {
 
-    private val doneTopic = "dittnavDoneTopic"
-    private val targetDoneTopic = "targetDoneTopic"
-
-    private val embeddedEnv = KafkaTestUtil.createDefaultKafkaEmbeddedInstance(listOf(doneTopic, targetDoneTopic))
+    private val embeddedEnv = KafkaTestUtil.createDefaultKafkaEmbeddedInstance(listOf(Kafka.doneTopicName, Kafka.doknotifikasjonStopTopicName))
     private val testEnvironment = KafkaTestUtil.createEnvironmentForEmbeddedKafka(embeddedEnv)
 
     private val doneEvents = (1..10).map { createNokkelWithEventId(it) to AvroDoneObjectMother.createDone(it) }.toMap()
 
-    private val capturedDoneRecords = ArrayList<RecordKeyValueWrapper<Done>>()
+    private val capturedDoknotifikasjonStopRecords = ArrayList<RecordKeyValueWrapper<String, DoknotifikasjonStopp>>()
 
     private val metricsReporter = StubMetricsReporter()
     private val database = H2Database()
@@ -65,13 +64,13 @@ class DoneIT {
     @Test
     fun `Should read Done-events and send to varsel-bestiller-topic`() {
         runBlocking {
-            KafkaTestUtil.produceEvents(testEnvironment, doneTopic, doneEvents)
+            KafkaTestUtil.produceEvents(testEnvironment, Kafka.doneTopicName, doneEvents)
         } shouldBeEqualTo true
 
         `Read all Done-events from our topic and verify that they have been sent to varsel-bestiller-topic`()
 
         doneEvents.all {
-            capturedDoneRecords.contains(RecordKeyValueWrapper(it.key, it.value))
+            capturedDoknotifikasjonStopRecords.contains(RecordKeyValueWrapper(it.key, it.value))
         }
     }
 
@@ -79,14 +78,12 @@ class DoneIT {
         val consumerProps = Kafka.consumerProps(testEnvironment, EventType.DONE, true)
         val kafkaConsumer = KafkaConsumer<Nokkel, Done>(consumerProps)
 
-        val producerProps = Kafka.producerProps(testEnvironment, EventType.DONE, true)
-        val kafkaProducer = KafkaProducer<Nokkel, Done>(producerProps)
-        val producerWrapper = KafkaProducerWrapper(targetDoneTopic, kafkaProducer)
+        val kafkaProducerWrapper = KafkaProducerWrapper(Kafka.doknotifikasjonStopTopicName, KafkaProducer<String, DoknotifikasjonStopp>(Kafka.producerProps(testEnvironment, EventType.DOKNOTIFIKASJON_STOPP)))
+        val doknotifikasjonStoppProducer = DoknotifikasjonStoppProducer(kafkaProducerWrapper)
 
-        val eventService = DoneEventService(producerWrapper, metricsProbe)
-        val consumer = Consumer(doneTopic, kafkaConsumer, eventService)
+        val eventService = DoneEventService(doknotifikasjonStoppProducer, metricsProbe)
+        val consumer = Consumer(Kafka.doneTopicName, kafkaConsumer, eventService)
 
-        kafkaProducer.initTransactions()
         runBlocking {
             consumer.startPolling()
 
@@ -97,11 +94,11 @@ class DoneIT {
     }
 
     private fun `Wait until all done events have been received by target topic`() {
-        val targetConsumerProps = Kafka.consumerProps(testEnvironment, EventType.DONE, true)
+        val targetConsumerProps = Kafka.consumerProps(testEnvironment, EventType.DOKNOTIFIKASJON_STOPP, true)
         val targetKafkaConsumer = KafkaConsumer<Nokkel, Done>(targetConsumerProps)
         val capturingProcessor = CapturingEventProcessor<Done>()
 
-        val targetConsumer = Consumer(targetDoneTopic, targetKafkaConsumer, capturingProcessor)
+        val targetConsumer = Consumer(Kafka.doknotifikasjonStopTopicName, targetKafkaConsumer, capturingProcessor)
 
         var currentNumberOfRecords = 0
 
@@ -118,6 +115,6 @@ class DoneIT {
             targetConsumer.stopPolling()
         }
 
-        capturedDoneRecords.addAll(capturingProcessor.getEvents())
+        capturedDoknotifikasjonStopRecords.addAll(capturingProcessor.getEvents())
     }
 }
