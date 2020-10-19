@@ -10,7 +10,7 @@ import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.FieldValid
 import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varsel.bestiller.common.objectmother.ConsumerRecordsObjectMother
 import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.AvroDoknotifikasjonObjectMother
-import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.createDoknotifikasjonFromBeskjed
+import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonTransformer
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsProbe
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsSession
 import org.amshove.kluent.`should be`
@@ -27,6 +27,7 @@ class BeskjedEventServiceTest {
 
     @BeforeEach
     private fun resetMocks() {
+        mockkObject(DoknotifikasjonTransformer)
         clearMocks(doknotifikasjonProducer)
         clearMocks(metricsProbe)
         clearMocks(metricsSession)
@@ -41,30 +42,6 @@ class BeskjedEventServiceTest {
     fun `skal forkaste eventer som mangler fodselsnummer`() {
         val beskjedWithoutFodselsnummer = AvroBeskjedObjectMother.createBeskjedWithFodselsnummer("")
         val cr = ConsumerRecordsObjectMother.createConsumerRecord("beskjed", beskjedWithoutFodselsnummer)
-        val records = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(cr)
-
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
-        coEvery { metricsProbe.runWithMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
-        }
-
-        val capturedNumberOfEntities = slot<List<RecordKeyValueWrapper<String, Doknotifikasjon>>>()
-        coEvery { doknotifikasjonProducer.produceDoknotifikasjon(capture(capturedNumberOfEntities)) } returns Unit
-
-        runBlocking {
-            eventService.processEvents(records)
-        }
-
-        capturedNumberOfEntities.captured.size `should be` 0
-
-        coVerify(exactly = 1) { metricsSession.countFailedEventForProducer(any()) }
-    }
-
-    @Test
-    fun `skal forkaste eventer som har feil sikkerhetsnivaa`() {
-        val tooLowSecurityLevel = 2
-        val beskjedWithTooLowSecurityLevel = AvroBeskjedObjectMother.createBeskjedWithSikkerhetsnivaa(tooLowSecurityLevel)
-        val cr = ConsumerRecordsObjectMother.createConsumerRecord("beskjed", beskjedWithTooLowSecurityLevel)
         val records = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(cr)
 
         val slot = slot<suspend EventMetricsSession.() -> Unit>()
@@ -100,7 +77,7 @@ class BeskjedEventServiceTest {
             eventService.processEvents(beskjedRecords)
         }
 
-        verify(exactly = beskjedRecords.count()) { createDoknotifikasjonFromBeskjed(ofType(Nokkel::class), ofType(Beskjed::class)) }
+        verify(exactly = beskjedRecords.count()) { DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(ofType(Nokkel::class), ofType(Beskjed::class)) }
         coVerify(exactly = 1) { doknotifikasjonProducer.produceDoknotifikasjon(any()) }
         capturedListOfEntities.captured.size `should be` beskjedRecords.count()
 
@@ -119,7 +96,7 @@ class BeskjedEventServiceTest {
 
         val fieldValidationException = FieldValidationException("Simulert feil i en test")
         val doknotifikasjoner = AvroDoknotifikasjonObjectMother.giveMeANumberOfDoknotifikasjoner(5)
-        every { createDoknotifikasjonFromBeskjed(ofType(Nokkel::class), ofType(Beskjed::class)) } throws fieldValidationException andThenMany doknotifikasjoner
+        every { DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(ofType(Nokkel::class), ofType(Beskjed::class)) } throws fieldValidationException andThenMany doknotifikasjoner
 
         val slot = slot<suspend EventMetricsSession.() -> Unit>()
 

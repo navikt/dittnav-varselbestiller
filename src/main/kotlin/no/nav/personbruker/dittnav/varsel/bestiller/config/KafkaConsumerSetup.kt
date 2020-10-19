@@ -27,22 +27,17 @@ object KafkaConsumerSetup {
         log.info("...ferdig med å stoppe kafka-pollerne.")
     }
 
-    fun setupConsumerForTheBeskjedTopic(kafkaProps: Properties, eventProcessor: EventBatchProcessorService<Beskjed>): Consumer<Beskjed> {
+    fun setupConsumerForTheBeskjedTopic(kafkaProps: Properties, eventProcessor: EventBatchProcessorService<Nokkel, Beskjed>): Consumer<Nokkel, Beskjed> {
         val kafkaConsumer = KafkaConsumer<Nokkel, Beskjed>(kafkaProps)
         return Consumer(Kafka.beskjedTopicName, kafkaConsumer, eventProcessor)
     }
 
-    fun setupConsumerForTheOppgaveTopic(kafkaProps: Properties, eventProcessor: EventBatchProcessorService<Oppgave>): Consumer<Oppgave> {
+    fun setupConsumerForTheOppgaveTopic(kafkaProps: Properties, eventProcessor: EventBatchProcessorService<Nokkel, Oppgave>): Consumer<Nokkel, Oppgave> {
         val kafkaConsumer = KafkaConsumer<Nokkel, Oppgave>(kafkaProps)
         return Consumer(Kafka.oppgaveTopicName, kafkaConsumer, eventProcessor)
     }
 
-    fun setupConsumerForTheInnboksTopic(kafkaProps: Properties, eventProcessor: EventBatchProcessorService<Innboks>): Consumer<Innboks> {
-        val kafkaConsumer = KafkaConsumer<Nokkel, Innboks>(kafkaProps)
-        return Consumer(Kafka.innboksTopicName, kafkaConsumer, eventProcessor)
-    }
-
-    fun setupConsumerForTheDoneTopic(kafkaProps: Properties, eventProcessor: EventBatchProcessorService<Done>): Consumer<Done> {
+    fun setupConsumerForTheDoneTopic(kafkaProps: Properties, eventProcessor: EventBatchProcessorService<Nokkel, Done>): Consumer<Nokkel, Done> {
         val kafkaConsumer = KafkaConsumer<Nokkel, Done>(kafkaProps)
         return Consumer(Kafka.doneTopicName, kafkaConsumer, eventProcessor)
     }

@@ -7,10 +7,10 @@ import no.nav.brukernotifikasjon.schemas.Oppgave
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.personbruker.dittnav.common.util.kafka.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.FieldValidationException
-import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varsel.bestiller.common.objectmother.ConsumerRecordsObjectMother
 import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.AvroDoknotifikasjonObjectMother
-import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.createDoknotifikasjonFromOppgave
+import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonProducer
+import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonTransformer
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsProbe
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsSession
 import org.amshove.kluent.`should be`
@@ -27,6 +27,7 @@ class OppgaveEventServiceTest {
 
     @BeforeEach
     private fun resetMocks() {
+        mockkObject(DoknotifikasjonTransformer)
         clearMocks(doknotifikasjonProducer)
         clearMocks(metricsProbe)
         clearMocks(metricsSession)
@@ -60,29 +61,6 @@ class OppgaveEventServiceTest {
         coVerify(exactly = 1) { metricsSession.countFailedEventForProducer(any()) }
     }
 
-    @Test
-    fun `skal forkaste eventer som har feil sikkerhetsnivaa`() {
-        val tooLowSecurityLevel = 2
-        val oppgaveWithTooLowSecurityLevel = AvroOppgaveObjectMother.createOppgaveWithSikkerhetsnivaa(tooLowSecurityLevel)
-        val cr = ConsumerRecordsObjectMother.createConsumerRecord("oppgave", oppgaveWithTooLowSecurityLevel)
-        val records = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(cr)
-
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
-        coEvery { metricsProbe.runWithMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
-        }
-
-        val capturedNumberOfEntities = slot<List<RecordKeyValueWrapper<String, Doknotifikasjon>>>()
-        coEvery { doknotifikasjonProducer.produceDoknotifikasjon(capture(capturedNumberOfEntities)) } returns Unit
-
-        runBlocking {
-            eventService.processEvents(records)
-        }
-
-        capturedNumberOfEntities.captured.size `should be` 0
-
-        coVerify(exactly = 1) { metricsSession.countFailedEventForProducer(any()) }
-    }
 
     @Test
     fun `Skal skrive alle eventer til ny kafka-topic`() {
@@ -100,7 +78,7 @@ class OppgaveEventServiceTest {
             eventService.processEvents(oppgaveRecords)
         }
 
-        verify(exactly = oppgaveRecords.count()) { createDoknotifikasjonFromOppgave(ofType(Nokkel::class), ofType(Oppgave::class)) }
+        verify(exactly = oppgaveRecords.count()) { DoknotifikasjonTransformer.createDoknotifikasjonFromOppgave(ofType(Nokkel::class), ofType(Oppgave::class)) }
         coVerify(exactly = 1) { doknotifikasjonProducer.produceDoknotifikasjon(allAny()) }
         capturedListOfEntities.captured.size `should be` oppgaveRecords.count()
 
@@ -119,7 +97,7 @@ class OppgaveEventServiceTest {
 
         val fieldValidationException = FieldValidationException("Simulert feil i en test")
         val doknotifikasjoner = AvroDoknotifikasjonObjectMother.giveMeANumberOfDoknotifikasjoner(5)
-        every { createDoknotifikasjonFromOppgave(ofType(Nokkel::class), ofType(Oppgave::class)) } throws fieldValidationException andThenMany doknotifikasjoner
+        every { DoknotifikasjonTransformer.createDoknotifikasjonFromOppgave(ofType(Nokkel::class), ofType(Oppgave::class)) } throws fieldValidationException andThenMany doknotifikasjoner
 
         val slot = slot<suspend EventMetricsSession.() -> Unit>()
 

@@ -78,12 +78,15 @@ class BeskjedIT {
         val consumerProps = Kafka.consumerProps(testEnvironment, EventType.BESKJED, true)
         val kafkaConsumer = KafkaConsumer<Nokkel, Beskjed>(consumerProps)
 
-        val kafkaProducerWrapper = KafkaProducerWrapper(Kafka.doknotifikasjonTopicName, KafkaProducer<String, Doknotifikasjon>(Kafka.producerProps(testEnvironment, EventType.DOKNOTIFIKASJON)))
+        val producerProps = Kafka.producerProps(testEnvironment, EventType.DOKNOTIFIKASJON, true)
+        val kafkaProducer = KafkaProducer<String, Doknotifikasjon>(producerProps)
+        val kafkaProducerWrapper = KafkaProducerWrapper(Kafka.doknotifikasjonTopicName, kafkaProducer)
         val doknotifikasjonProducer = DoknotifikasjonProducer(kafkaProducerWrapper)
 
         val eventService = BeskjedEventService(doknotifikasjonProducer, metricsProbe)
         val consumer = Consumer(Kafka.beskjedTopicName, kafkaConsumer, eventService)
 
+        kafkaProducer.initTransactions()
         runBlocking {
             consumer.startPolling()
 
@@ -94,9 +97,9 @@ class BeskjedIT {
     }
 
     private fun `Wait until all beskjed events have been received by target topic`() {
-        val targetConsumerProps = Kafka.consumerProps(testEnvironment, EventType.BESKJED, true)
-        val targetKafkaConsumer = KafkaConsumer<Nokkel, Beskjed>(targetConsumerProps)
-        val capturingProcessor = CapturingEventProcessor<Beskjed>()
+        val targetConsumerProps = Kafka.consumerProps(testEnvironment, EventType.DOKNOTIFIKASJON, true)
+        val targetKafkaConsumer = KafkaConsumer<String, Doknotifikasjon>(targetConsumerProps)
+        val capturingProcessor = CapturingEventProcessor<String, Doknotifikasjon>()
 
         val targetConsumer = Consumer(Kafka.doknotifikasjonTopicName, targetKafkaConsumer, capturingProcessor)
 

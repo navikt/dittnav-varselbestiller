@@ -11,7 +11,7 @@ import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.Unvalidata
 import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.serializer.getNonNullKey
 import no.nav.personbruker.dittnav.varsel.bestiller.config.EventType.BESKJED
 import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonProducer
-import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.createDoknotifikasjonFromBeskjed
+import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonTransformer
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsProbe
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory
 class BeskjedEventService(
         private val doknotifikasjonProducer: DoknotifikasjonProducer,
         private val metricsProbe: EventMetricsProbe
-) : EventBatchProcessorService<Beskjed> {
+) : EventBatchProcessorService<Nokkel, Beskjed> {
 
     private val log: Logger = LoggerFactory.getLogger(BeskjedEventService::class.java)
 
@@ -34,20 +34,20 @@ class BeskjedEventService(
                 try {
                     if (skalVarsleEksternt(event.value())) {
                         val doknotifikasjonKey = event.getNonNullKey().getEventId()
-                        val doknotifikasjonEvent = createDoknotifikasjonFromBeskjed(event.getNonNullKey(), event.value())
+                        val doknotifikasjonEvent = DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(event.getNonNullKey(), event.value())
                         successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonKey, doknotifikasjonEvent))
-                        countSuccessfulEventForProducer(event.systembruker)
+                        countSuccessfulEventForProducer(event.getNonNullKey().getSystembruker())
                     }
                 } catch (nne: NokkelNullException) {
                     countFailedEventForProducer("NoProducerSpecified")
                     log.warn("Beskjed-eventet manglet nøkkel. Topic: ${event.topic()}, Partition: ${event.partition()}, Offset: ${event.offset()}", nne)
                 } catch (fve: FieldValidationException) {
-                    countFailedEventForProducer(event.systembruker)
+                    countFailedEventForProducer(event.getNonNullKey().getSystembruker())
                     val eventId = event.getNonNullKey().getEventId()
                     log.warn("Eventet kan ikke brukes fordi det inneholder valideringsfeil, beskjed-eventet vil bli forkastet. EventId: $eventId, context: ${fve.context}", fve)
 
                 } catch (e: Exception) {
-                    countFailedEventForProducer(event.systembruker)
+                    countFailedEventForProducer(event.getNonNullKey().getSystembruker())
                     problematicEvents.add(event)
                     log.warn("Validering av beskjed-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
                 }

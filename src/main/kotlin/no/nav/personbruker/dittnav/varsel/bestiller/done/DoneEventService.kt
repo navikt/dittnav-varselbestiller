@@ -11,7 +11,7 @@ import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.Unvalidata
 import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.serializer.getNonNullKey
 import no.nav.personbruker.dittnav.varsel.bestiller.config.EventType.DONE
 import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonStoppProducer
-import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.createDoknotifikasjonStoppFromDone
+import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonTransformer
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsProbe
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory
 class DoneEventService(
         private val doknotifikasjonStoppProducer: DoknotifikasjonStoppProducer,
         private val eventMetricsProbe: EventMetricsProbe
-) : EventBatchProcessorService<Done> {
+) : EventBatchProcessorService<Nokkel, Done> {
 
     private val log: Logger = LoggerFactory.getLogger(DoneEventService::class.java)
 
@@ -35,20 +35,20 @@ class DoneEventService(
                 try {
                     if(harBestiltEksternVarsling(event.value())) {
                         val doknotifikasjonStoppKey = event.getNonNullKey().getEventId()
-                        val doknotifikasjonStoppEvent = createDoknotifikasjonStoppFromDone(event.getNonNullKey(), event.value())
+                        val doknotifikasjonStoppEvent = DoknotifikasjonTransformer.createDoknotifikasjonStopp(event.getNonNullKey())
                         successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonStoppKey, doknotifikasjonStoppEvent))
-                        countSuccessfulEventForProducer(event.systembruker)
+                        countSuccessfulEventForProducer(event.getNonNullKey().getSystembruker())
                     }
                 } catch (e: NokkelNullException) {
                     countFailedEventForProducer("NoProducerSpecified")
                     log.warn("Done-eventet manglet nøkkel. Topic: ${event.topic()}, Partition: ${event.partition()}, Offset: ${event.offset()}", e)
 
                 } catch (e: FieldValidationException) {
-                    countFailedEventForProducer(event.systembruker)
+                    countFailedEventForProducer(event.getNonNullKey().getSystembruker())
                     log.warn("Eventet kan ikke brukes fordi det inneholder valideringsfeil, done-eventet vil bli forkastet. EventId: ${event.getNonNullKey().getEventId()}", e)
 
                 } catch (e: Exception) {
-                    countFailedEventForProducer(event.systembruker)
+                    countFailedEventForProducer(event.getNonNullKey().getSystembruker())
                     problematicEvents.add(event)
                     log.warn("Validering av done-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
                 }
@@ -59,7 +59,8 @@ class DoneEventService(
     }
 
     private fun harBestiltEksternVarsling(value: Done): Boolean {
-        return false;
+        return false
+        TODO("Skal legge til sjekk på om brukernotifikasjonen tilhørende Done-eventet faktisk har bestilt eksternt varsel")
     }
 
     private fun kastExceptionHvisMislykkedValidering(problematicEvents: MutableList<ConsumerRecord<Nokkel, Done>>) {

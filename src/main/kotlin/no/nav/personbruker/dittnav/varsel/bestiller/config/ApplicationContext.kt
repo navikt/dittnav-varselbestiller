@@ -2,6 +2,7 @@ package no.nav.personbruker.dittnav.varsel.bestiller.config
 
 import no.nav.brukernotifikasjon.schemas.Beskjed
 import no.nav.brukernotifikasjon.schemas.Done
+import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.brukernotifikasjon.schemas.Oppgave
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
@@ -26,10 +27,8 @@ class ApplicationContext {
 
     val eventMetricsProbe = buildEventMetricsProbe(environment, database)
 
-    private val kafkaProducerDoknotifikasjon = KafkaProducerWrapper(Kafka.doknotifikasjonTopicName, KafkaProducer<String, Doknotifikasjon>(Kafka.producerProps(environment, EventType.DOKNOTIFIKASJON)))
-    private val kafkaProducerDoknotifikasjonStop = KafkaProducerWrapper(Kafka.doknotifikasjonStopTopicName, KafkaProducer<String, DoknotifikasjonStopp>(Kafka.producerProps(environment, EventType.DOKNOTIFIKASJON_STOPP)))
-    private val doknotifikasjonProducer = DoknotifikasjonProducer(kafkaProducerDoknotifikasjon)
-    private val doknotifikasjonStopProducer = DoknotifikasjonStoppProducer(kafkaProducerDoknotifikasjonStop)
+    private val doknotifikasjonProducer = initializeDoknotifikasjonProducer()
+    private val doknotifikasjonStopProducer = initializeDoknotifikasjonStoppProducer()
 
     private val beskjedKafkaProps = Kafka.consumerProps(environment, EventType.BESKJED)
     private val beskjedEventService = BeskjedEventService(doknotifikasjonProducer, eventMetricsProbe)
@@ -45,16 +44,32 @@ class ApplicationContext {
 
     val healthService = HealthService(this)
 
-    private fun initializeBeskjedConsumer(): Consumer<Beskjed> {
+    private fun initializeBeskjedConsumer(): Consumer<Nokkel, Beskjed> {
         return KafkaConsumerSetup.setupConsumerForTheBeskjedTopic(beskjedKafkaProps, beskjedEventService)
     }
 
-    private fun initializeOppgaveConsumer(): Consumer<Oppgave> {
+    private fun initializeOppgaveConsumer(): Consumer<Nokkel, Oppgave> {
         return KafkaConsumerSetup.setupConsumerForTheOppgaveTopic(oppgaveKafkaProps, oppgaveEventService)
     }
 
-    private fun initializeDoneConsumer(): Consumer<Done> {
+    private fun initializeDoneConsumer(): Consumer<Nokkel, Done> {
         return KafkaConsumerSetup.setupConsumerForTheDoneTopic(doneKafkaProps, doneEventService)
+    }
+
+    private fun initializeDoknotifikasjonProducer(): DoknotifikasjonProducer {
+        val producerProps = Kafka.producerProps(environment, EventType.DOKNOTIFIKASJON)
+        val kafkaProducer = KafkaProducer<String, Doknotifikasjon>(producerProps)
+        kafkaProducer.initTransactions()
+        val kafkaProducerDoknotifikasjon = KafkaProducerWrapper(Kafka.doknotifikasjonTopicName, kafkaProducer)
+        return DoknotifikasjonProducer(kafkaProducerDoknotifikasjon)
+    }
+
+    private fun initializeDoknotifikasjonStoppProducer(): DoknotifikasjonStoppProducer {
+        val producerProps = Kafka.producerProps(environment, EventType.DOKNOTIFIKASJON_STOPP)
+        val kafkaProducer = KafkaProducer<String, DoknotifikasjonStopp>(producerProps)
+        kafkaProducer.initTransactions()
+        val kafkaProducerDoknotifikasjonStopp = KafkaProducerWrapper(Kafka.doknotifikasjonStopTopicName, kafkaProducer)
+        return DoknotifikasjonStoppProducer(kafkaProducerDoknotifikasjonStopp)
     }
 
     fun reinitializeConsumers() {
