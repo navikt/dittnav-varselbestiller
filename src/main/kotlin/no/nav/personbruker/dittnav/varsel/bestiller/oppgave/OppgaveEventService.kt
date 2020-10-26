@@ -32,19 +32,19 @@ class OppgaveEventService(
             events.forEach { event ->
                 try {
                     if(skalVarsleEksternt(event.value())) {
-                        val doknotifikasjonKey = event.getNonNullKey().getEventId()
+                        val doknotifikasjonKey = event.eventId
                         val doknotifikasjonEvent = DoknotifikasjonTransformer.createDoknotifikasjonFromOppgave(event.getNonNullKey(), event.value())
                         successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonKey, doknotifikasjonEvent))
-                        countSuccessfulEventForProducer(event.getNonNullKey().getSystembruker())
+                        countSuccessfulEventForProducer(event.systembruker)
                     }
                 } catch (e: NokkelNullException) {
                     countFailedEventForProducer("NoProducerSpecified")
                     log.warn("Oppgave-eventet manglet nøkkel. Topic: ${event.topic()}, Partition: ${event.partition()}, Offset: ${event.offset()}", e)
                 } catch (e: FieldValidationException) {
-                    countFailedEventForProducer(event.getNonNullKey().getSystembruker())
-                    log.warn("Eventet kan ikke brukes fordi det inneholder valideringsfeil, oppgave-eventet vil bli forkastet. EventId: ${event.getNonNullKey().getEventId()}", e)
+                    countFailedEventForProducer(event.systembruker)
+                    log.warn("Eventet kan ikke brukes fordi det inneholder valideringsfeil, oppgave-eventet vil bli forkastet. EventId: ${event.eventId}", e)
                 } catch (e: Exception) {
-                    countFailedEventForProducer(event.getNonNullKey().getSystembruker())
+                    countFailedEventForProducer(event.systembruker)
                     problematicEvents.add(event)
                     log.warn("Validering av oppgave-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
                 }

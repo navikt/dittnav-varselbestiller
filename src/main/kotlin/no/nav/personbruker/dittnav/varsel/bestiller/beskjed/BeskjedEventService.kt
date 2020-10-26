@@ -33,21 +33,19 @@ class BeskjedEventService(
             events.forEach { event ->
                 try {
                     if (skalVarsleEksternt(event.value())) {
-                        val doknotifikasjonKey = event.getNonNullKey().getEventId()
+                        val doknotifikasjonKey = event.eventId
                         val doknotifikasjonEvent = DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(event.getNonNullKey(), event.value())
                         successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonKey, doknotifikasjonEvent))
-                        countSuccessfulEventForProducer(event.getNonNullKey().getSystembruker())
+                        countSuccessfulEventForProducer(event.systembruker)
                     }
                 } catch (nne: NokkelNullException) {
                     countFailedEventForProducer("NoProducerSpecified")
                     log.warn("Beskjed-eventet manglet nøkkel. Topic: ${event.topic()}, Partition: ${event.partition()}, Offset: ${event.offset()}", nne)
                 } catch (fve: FieldValidationException) {
-                    countFailedEventForProducer(event.getNonNullKey().getSystembruker())
-                    val eventId = event.getNonNullKey().getEventId()
-                    log.warn("Eventet kan ikke brukes fordi det inneholder valideringsfeil, beskjed-eventet vil bli forkastet. EventId: $eventId, context: ${fve.context}", fve)
-
+                    countFailedEventForProducer(event.systembruker)
+                    log.warn("Eventet kan ikke brukes fordi det inneholder valideringsfeil, beskjed-eventet vil bli forkastet. EventId: ${event.eventId}, context: ${fve.context}", fve)
                 } catch (e: Exception) {
-                    countFailedEventForProducer(event.getNonNullKey().getSystembruker())
+                    countFailedEventForProducer(event.systembruker)
                     problematicEvents.add(event)
                     log.warn("Validering av beskjed-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
                 }
