@@ -1,7 +1,7 @@
 package no.nav.personbruker.dittnav.varsel.bestiller.common.kafka
 
 import kotlinx.coroutines.*
-import no.nav.brukernotifikasjon.schemas.Nokkel
+import no.nav.personbruker.dittnav.common.util.kafka.consumer.rollbackToLastCommitted
 import no.nav.personbruker.dittnav.varsel.bestiller.common.EventBatchProcessorService
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.RetriableDatabaseException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.RetriableKafkaException
@@ -19,10 +19,10 @@ import java.time.Duration
 import java.time.temporal.ChronoUnit
 import kotlin.coroutines.CoroutineContext
 
-class Consumer<T>(
+class Consumer<K, V>(
         val topic: String,
-        val kafkaConsumer: KafkaConsumer<Nokkel, T>,
-        val eventBatchProcessorService: EventBatchProcessorService<T>,
+        val kafkaConsumer: KafkaConsumer<K, V>,
+        val eventBatchProcessorService: EventBatchProcessorService<K, V>,
         val job: Job = Job()
 ) : CoroutineScope, HealthCheck {
 
@@ -95,7 +95,7 @@ class Consumer<T>(
         }
     }
 
-    fun ConsumerRecords<Nokkel, T>.containsEvents() = count() > 0
+    fun ConsumerRecords<K, V>.containsEvents() = count() > 0
 
     private suspend fun rollbackOffset() {
         withContext(Dispatchers.IO) {

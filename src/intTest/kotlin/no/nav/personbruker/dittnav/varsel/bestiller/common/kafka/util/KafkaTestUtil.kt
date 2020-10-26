@@ -5,6 +5,7 @@ import no.nav.common.JAASCredential
 import no.nav.common.KafkaEnvironment
 import no.nav.personbruker.dittnav.varsel.bestiller.config.Environment
 import org.apache.avro.generic.GenericRecord
+import java.util.*
 
 object KafkaTestUtil {
 
@@ -16,7 +17,11 @@ object KafkaTestUtil {
                 topicNames = topics,
                 withSecurity = true,
                 withSchemaRegistry = true,
-                users = listOf(JAASCredential(username, password))
+                users = listOf(JAASCredential(username, password)),
+                brokerConfigOverrides = Properties().apply {
+                    put("KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR", "1")
+                    put("KAFKA_TRANSACTION_STATE_LOG_MIN_ISR", "1")
+                }
         )
     }
 
