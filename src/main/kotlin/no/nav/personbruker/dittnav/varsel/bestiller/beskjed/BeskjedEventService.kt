@@ -36,7 +36,7 @@ class BeskjedEventService(
                         val doknotifikasjonKey = event.getNonNullKey().getEventId()
                         val doknotifikasjonEvent = DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(event.getNonNullKey(), event.value())
                         successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonKey, doknotifikasjonEvent))
-                        countSuccessfulEventForProducer(event.getNonNullKey().getSystembruker())
+                        countSuccessfulEventForProducer(event.systembruker)
                     }
                 } catch (nne: NokkelNullException) {
                     countFailedEventForProducer("NoProducerSpecified")
