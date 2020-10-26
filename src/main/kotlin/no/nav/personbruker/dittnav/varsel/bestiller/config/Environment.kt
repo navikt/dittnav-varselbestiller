@@ -15,7 +15,7 @@ data class Environment(val bootstrapServers: String = getEnvVar("KAFKA_BOOTSTRAP
                        val namespace: String = getEnvVar("NAIS_NAMESPACE"),
                        val sensuHost: String = getEnvVar("SENSU_HOST"),
                        val sensuPort: String = getEnvVar("SENSU_PORT"),
-                       val applicationName: String = "dittnav-varsel-bestiller",
+                       val applicationName: String = "dittnav-varselbestiller",
                        val sensuBatchingEnabled: Boolean = getEnvVar("SENSU_BATCHING_ENABLED", "true").toBoolean(),
                        val sensuBatchesPerSecond: Int = getEnvVar("SENSU_BATCHING_ENABLED", "3").toInt(),
 )

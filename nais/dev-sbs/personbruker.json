@@ -3,6 +3,6 @@
   "cluster": "preprod",
   "environment": "dev",
   "ingresses": [
-    "https://dittnav-varsel-bestiller.personbruker.nais.oera-q.local"
+    "https://dittnav-varselbestiller.personbruker.nais.oera-q.local"
   ]
 }

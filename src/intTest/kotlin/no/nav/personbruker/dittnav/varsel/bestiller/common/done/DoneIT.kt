@@ -64,19 +64,19 @@ class DoneIT {
     }
 
     @Test
-    fun `Should read Done-events and send to varsel-bestiller-topic`() {
+    fun `Should read Done-events and send to varselbestiller-topic`() {
         runBlocking {
             KafkaTestUtil.produceEvents(testEnvironment, Kafka.doneTopicName, doneEvents)
         } shouldBeEqualTo true
 
-        `Read all Done-events from our topic and verify that they have been sent to varsel-bestiller-topic`()
+        `Read all Done-events from our topic and verify that they have been sent to varselbestiller-topic`()
 
         doneEvents.all {
             capturedDoknotifikasjonStopRecords.contains(RecordKeyValueWrapper(it.key, it.value))
         }
     }
 
-    fun `Read all Done-events from our topic and verify that they have been sent to varsel-bestiller-topic`() {
+    fun `Read all Done-events from our topic and verify that they have been sent to varselbestiller-topic`() {
         val consumerProps = Kafka.consumerProps(testEnvironment, EventType.DONE, true)
         val kafkaConsumer = KafkaConsumer<Nokkel, Done>(consumerProps)
 
