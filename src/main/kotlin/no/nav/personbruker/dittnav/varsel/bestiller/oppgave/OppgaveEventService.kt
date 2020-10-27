@@ -60,7 +60,7 @@ class OppgaveEventService(
 
     private fun kastExceptionHvisMislykkedValidering(problematicEvents: MutableList<ConsumerRecord<Nokkel, Oppgave>>) {
         if (problematicEvents.isNotEmpty()) {
-            val message = "En eller flere oppgave-eventer kunne ikke sendes til varsel-bestiller fordi validering feilet."
+            val message = "En eller flere oppgave-eventer kunne ikke sendes til varselbestiller fordi validering feilet."
             val exception = UnvalidatableRecordException(message)
             exception.addContext("antallMislykkedValidering", problematicEvents.size)
             throw exception

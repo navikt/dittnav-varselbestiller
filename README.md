@@ -1,11 +1,11 @@
-# dittnav-varsel-bestiller
+# dittnav-varselbestiller
 
 Microservice som brukes for å lese inn eventer fra DittNAV sine kafka-topics, 
 appen filtrerer på ekstern-varslings-event og sender disse videre til varsling/dokument topic-en. 
 De varsler bruker enten på epost eller SMS.
 
 # Kom i gang
-1. Bygge dittnav-varsel-bestiller:
+1. Bygge dittnav-varselbestiller:
     * bygge og kjøre enhetstester: `gradle clean test`
     * bygge og kjøre integrasjonstester: `gradle clean build`
 2. Start lokal instans av Kafka og Postgres ved å kjøre `docker-compose up -d`

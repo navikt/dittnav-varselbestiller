@@ -27,7 +27,7 @@ private fun resolveMetricsReporter(environment: Environment): MetricsReporter {
                 hostPort = environment.sensuPort.toInt(),
                 clusterName = environment.clusterName,
                 namespace = environment.namespace,
-                eventsTopLevelName = "dittnav-varsel-bestiller",
+                eventsTopLevelName = "dittnav-varselbestiller",
                 enableEventBatching = environment.sensuBatchingEnabled,
                 eventBatchesPerSecond = environment.sensuBatchesPerSecond)
         InfluxMetricsReporter(sensuConfig)
