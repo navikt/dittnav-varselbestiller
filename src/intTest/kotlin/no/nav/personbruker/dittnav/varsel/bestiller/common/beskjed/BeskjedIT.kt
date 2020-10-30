@@ -62,19 +62,19 @@ class BeskjedIT {
     }
 
     @Test
-    fun `Should read Beskjed-events and send to varsel-bestiller-topic`() {
+    fun `Should read Beskjed-events and send to varselbestiller-topic`() {
         runBlocking {
             KafkaTestUtil.produceEvents(testEnvironment, Kafka.beskjedTopicName, beskjedEvents)
         } shouldBeEqualTo true
 
-        `Read all Beskjed-events from our topic and verify that they have been sent to varsel-bestiller-topic`()
+        `Read all Beskjed-events from our topic and verify that they have been sent to varselbestiller-topic`()
 
         beskjedEvents.all {
             capturedDoknotifikasjonRecords.contains(RecordKeyValueWrapper(it.key, it.value))
         }
     }
 
-    fun `Read all Beskjed-events from our topic and verify that they have been sent to varsel-bestiller-topic`() {
+    fun `Read all Beskjed-events from our topic and verify that they have been sent to varselbestiller-topic`() {
         val consumerProps = Kafka.consumerProps(testEnvironment, EventType.BESKJED, true)
         val kafkaConsumer = KafkaConsumer<Nokkel, Beskjed>(consumerProps)
 

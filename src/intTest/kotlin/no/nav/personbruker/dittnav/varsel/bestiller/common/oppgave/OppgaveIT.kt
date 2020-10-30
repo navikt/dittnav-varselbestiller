@@ -62,19 +62,19 @@ class OppgaveIT {
     }
 
     @Test
-    fun `Should read Oppgave-events and send to varsel-bestiller-topic`() {
+    fun `Should read Oppgave-events and send to varselbestiller-topic`() {
         runBlocking {
             KafkaTestUtil.produceEvents(testEnvironment, Kafka.oppgaveTopicName, oppgaveEvents)
         } shouldBeEqualTo true
 
-        `Read all Oppgave-events from our topic and verify that they have been sent to varsel-bestiller-topic`()
+        `Read all Oppgave-events from our topic and verify that they have been sent to varselbestiller-topic`()
 
         oppgaveEvents.all {
             capturedDoknotifikasjonRecords.contains(RecordKeyValueWrapper(it.key, it.value))
         }
     }
 
-    fun `Read all Oppgave-events from our topic and verify that they have been sent to varsel-bestiller-topic`() {
+    fun `Read all Oppgave-events from our topic and verify that they have been sent to varselbestiller-topic`() {
         val consumerProps = Kafka.consumerProps(testEnvironment, EventType.OPPGAVE, true)
         val kafkaConsumer = KafkaConsumer<Nokkel, Oppgave>(consumerProps)
 

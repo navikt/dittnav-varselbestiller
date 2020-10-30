@@ -88,7 +88,7 @@ tasks {
         environment("KAFKA_SCHEMAREGISTRY_SERVERS", "http://localhost:8081")
         environment("SERVICEUSER_USERNAME", "username")
         environment("SERVICEUSER_PASSWORD", "password")
-        environment("GROUP_ID", "dittnav_varsel-bestiller")
+        environment("GROUP_ID", "dittnav_varselbestiller")
         environment("DB_HOST", "localhost:5432")
         environment("DB_NAME", "dittnav-event-cache-preprod")
         environment("DB_PASSWORD", "testpassword")

@@ -21,7 +21,7 @@ object Kafka {
 
     private val log: Logger = LoggerFactory.getLogger(Kafka::class.java)
 
-    val transactionIdName = "dittnav-varsel-bestiller-transaction"
+    val transactionIdName = "dittnav-varselbestiller-transaction"
 
     val doneTopicName = "aapen-brukernotifikasjon-done-v1"
     val beskjedTopicName = "aapen-brukernotifikasjon-nyBeskjed-v1"
