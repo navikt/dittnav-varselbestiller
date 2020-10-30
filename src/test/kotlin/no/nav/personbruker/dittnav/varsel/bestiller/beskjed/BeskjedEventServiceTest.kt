@@ -113,21 +113,4 @@ class BeskjedEventServiceTest {
         confirmVerified(doknotifikasjonProducer)
     }
 
-    @Test
-    fun `Skal rapportere hvert vellykket event`() {
-        val numberOfRecords = 5
-
-        val records = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords, "beskjed")
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
-
-        coEvery { metricsProbe.runWithMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
-        }
-
-        runBlocking {
-            eventService.processEvents(records)
-        }
-
-        coVerify(exactly = numberOfRecords) { metricsSession.countSuccessfulEventForProducer(any()) }
-    }
 }

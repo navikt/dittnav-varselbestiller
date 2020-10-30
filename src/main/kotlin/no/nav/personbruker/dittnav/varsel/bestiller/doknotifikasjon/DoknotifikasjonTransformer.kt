@@ -6,14 +6,16 @@ import no.nav.brukernotifikasjon.schemas.Oppgave
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
 import no.nav.doknotifikasjon.schemas.PrefererteKanal
+import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.FieldValidationException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.validation.validateFodselsnummer
 import no.nav.personbruker.dittnav.varsel.bestiller.common.validation.validateNonNullFieldMaxLength
+import no.nav.personbruker.dittnav.varsel.bestiller.config.EventType
 
 object DoknotifikasjonTransformer {
 
     fun createDoknotifikasjonFromBeskjed(nokkel: Nokkel, beskjed: Beskjed): Doknotifikasjon {
         val doknotifikasjonBuilder = Doknotifikasjon.newBuilder()
-                .setBestillingsId(createDoknotifikasjonKeyForBeskjed(nokkel))
+                .setBestillingsId(createDoknotifikasjonKey(nokkel, EventType.BESKJED))
                 .setBestillerId(validateNonNullFieldMaxLength(nokkel.getSystembruker(), "systembruker", 100))
                 .setFodselsnummer(validateFodselsnummer(beskjed.getFodselsnummer()))
                 .setTittel("Du har fått en beskjed fra NAV")
@@ -23,15 +25,20 @@ object DoknotifikasjonTransformer {
         return doknotifikasjonBuilder.build()
     }
 
-    fun createDoknotifikasjonKeyForBeskjed(nokkel: Nokkel): String {
+    fun createDoknotifikasjonKey(nokkel: Nokkel, eventType: EventType): String {
         val eventId = validateNonNullFieldMaxLength(nokkel.getEventId(), "eventId", 50)
         val systembruker = validateNonNullFieldMaxLength(nokkel.getSystembruker(), "systembruker", 100)
-        return "B-$eventId-$systembruker"
+        return when(eventType) {
+            EventType.BESKJED -> "B-$eventId-$systembruker"
+            EventType.OPPGAVE -> "O-$eventId-$systembruker"
+            EventType.DONE -> "D-$eventId-$systembruker"
+            else -> throw FieldValidationException("$eventType er ugyldig type for å generere Doknotifikasjon-key")
+        }
     }
 
     fun createDoknotifikasjonFromOppgave(nokkel: Nokkel, oppgave: Oppgave): Doknotifikasjon {
         val doknotifikasjonBuilder = Doknotifikasjon.newBuilder()
-                .setBestillingsId(createDoknotifikasjonKeyForOppgave(nokkel))
+                .setBestillingsId(createDoknotifikasjonKey(nokkel, EventType.OPPGAVE))
                 .setBestillerId(validateNonNullFieldMaxLength(nokkel.getSystembruker(), "systembruker", 100))
                 .setFodselsnummer(validateFodselsnummer(oppgave.getFodselsnummer()))
                 .setTittel("Du har fått en oppgave fra NAV")
@@ -39,12 +46,6 @@ object DoknotifikasjonTransformer {
                 .setSmsTekst("Her er SMS-teksten")
                 .setPrefererteKanaler(listOf(PrefererteKanal.EPOST, PrefererteKanal.SMS))
         return doknotifikasjonBuilder.build()
-    }
-
-    fun createDoknotifikasjonKeyForOppgave(nokkel: Nokkel): String {
-        val eventId = validateNonNullFieldMaxLength(nokkel.getEventId(), "eventId", 50)
-        val systembruker = validateNonNullFieldMaxLength(nokkel.getSystembruker(), "systembruker", 100)
-        return "O-$eventId-$systembruker"
     }
 
     fun createDoknotifikasjonStopp(nokkel: Nokkel): DoknotifikasjonStopp {

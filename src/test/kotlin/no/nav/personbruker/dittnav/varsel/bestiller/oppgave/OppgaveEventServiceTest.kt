@@ -58,7 +58,6 @@ class OppgaveEventServiceTest {
 
         capturedNumberOfEntities.captured.size `should be` 0
 
-        coVerify(exactly = 1) { metricsSession.countFailedEventForProducer(any()) }
     }
 
 
@@ -110,28 +109,9 @@ class OppgaveEventServiceTest {
         }
 
         coVerify(exactly = 1) { doknotifikasjonProducer.produceDoknotifikasjon(any()) }
-        coVerify(exactly = numberOfFailedTransformations) { metricsSession.countFailedEventForProducer(any()) }
         capturedListOfEntities.captured.size `should be` numberOfSuccessfulTransformations
 
         confirmVerified(doknotifikasjonProducer)
-    }
-
-    @Test
-    fun `Skal rapportere hvert vellykket event`() {
-        val numberOfRecords = 5
-
-        val records = ConsumerRecordsObjectMother.giveMeANumberOfOppgaveRecords(numberOfRecords, "oppgave")
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
-
-        coEvery { metricsProbe.runWithMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
-        }
-
-        runBlocking {
-            eventService.processEvents(records)
-        }
-
-        coVerify(exactly = numberOfRecords) { metricsSession.countSuccessfulEventForProducer(any()) }
     }
 
 }

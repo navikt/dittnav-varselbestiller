@@ -9,7 +9,7 @@ import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.FieldValid
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.NokkelNullException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.UnvalidatableRecordException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.serializer.getNonNullKey
-import no.nav.personbruker.dittnav.varsel.bestiller.config.EventType.BESKJED
+import no.nav.personbruker.dittnav.varsel.bestiller.config.EventType
 import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonTransformer
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsProbe
@@ -28,30 +28,25 @@ class BeskjedEventService(
     override suspend fun processEvents(events: ConsumerRecords<Nokkel, Beskjed>) {
         val successfullyValidatedEvents = mutableListOf<RecordKeyValueWrapper<String, Doknotifikasjon>>()
         val problematicEvents = mutableListOf<ConsumerRecord<Nokkel, Beskjed>>()
-
-        metricsProbe.runWithMetrics(eventType = BESKJED) {
-            events.forEach { event ->
-                try {
-                    if (skalVarsleEksternt(event.value())) {
-                        log.info("Ekstern varsling true " + event.value().getEksternVarsling())
-                        log.info("eventid " + event.key().getEventId())
-                        val doknotifikasjonKey = DoknotifikasjonTransformer.createDoknotifikasjonKeyForBeskjed(event.getNonNullKey())
-                        val doknotifikasjonEvent = DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(event.getNonNullKey(), event.value())
-                        successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonKey, doknotifikasjonEvent))
-                        countSuccessfulEventForProducer(event.systembruker)
-                    }
-                } catch (nne: NokkelNullException) {
-                    countFailedEventForProducer("NoProducerSpecified")
-                    log.warn("Beskjed-eventet manglet nøkkel. Topic: ${event.topic()}, Partition: ${event.partition()}, Offset: ${event.offset()}", nne)
-                } catch (fve: FieldValidationException) {
-                    log.warn("Eventet kan ikke brukes fordi det inneholder valideringsfeil, beskjed-eventet vil bli forkastet. EventId: ${event.eventId}, context: ${fve.context}", fve)
-                } catch (e: Exception) {
-                    problematicEvents.add(event)
-                    log.warn("Validering av beskjed-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
+        events.forEach { event ->
+            try {
+                if (skalVarsleEksternt(event.value())) {
+                    val beskjedKey = event.getNonNullKey()
+                    val beskjed = event.value()
+                    val doknotifikasjonKey = DoknotifikasjonTransformer.createDoknotifikasjonKey(beskjedKey, EventType.BESKJED)
+                    val doknotifikasjon = DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(beskjedKey, beskjed)
+                    successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonKey, doknotifikasjon))
                 }
+            } catch (nne: NokkelNullException) {
+                log.warn("Beskjed-eventet manglet nøkkel. Topic: ${event.topic()}, Partition: ${event.partition()}, Offset: ${event.offset()}", nne)
+            } catch (fve: FieldValidationException) {
+                log.warn("Eventet kan ikke brukes fordi det inneholder valideringsfeil, beskjed-eventet vil bli forkastet. EventId: ${event.eventId}, context: ${fve.context}", fve)
+            } catch (e: Exception) {
+                problematicEvents.add(event)
+                log.warn("Validering av beskjed-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
             }
-            doknotifikasjonProducer.produceDoknotifikasjon(successfullyValidatedEvents)
         }
+        doknotifikasjonProducer.produceDoknotifikasjon(successfullyValidatedEvents)
         kastExceptionHvisMislykkedValidering(problematicEvents)
     }
 

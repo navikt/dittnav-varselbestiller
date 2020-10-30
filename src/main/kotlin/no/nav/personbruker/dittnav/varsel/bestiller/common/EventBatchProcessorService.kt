@@ -9,9 +9,9 @@ interface EventBatchProcessorService<K, V> {
 
     suspend fun processEvents(events: ConsumerRecords<K, V>)
 
-    val ConsumerRecord<Nokkel, V>.systembruker : String get() = key().getSystembruker()
+    val ConsumerRecord<Nokkel, V>.systembruker : String? get() = key().getSystembruker()
 
-    val ConsumerRecord<Nokkel, V>.eventId : String get() = key().getEventId()
+    val ConsumerRecord<Nokkel, V>.eventId : String? get() = key().getEventId()
 
     fun ConsumerRecords<K, V>.asWrapperList() : List<RecordKeyValueWrapper<K, V>> = map { record ->
         RecordKeyValueWrapper(record.key(), record.value())

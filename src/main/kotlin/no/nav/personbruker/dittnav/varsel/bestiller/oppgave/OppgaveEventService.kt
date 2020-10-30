@@ -9,7 +9,7 @@ import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.FieldValid
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.NokkelNullException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.UnvalidatableRecordException
 import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.serializer.getNonNullKey
-import no.nav.personbruker.dittnav.varsel.bestiller.config.EventType.OPPGAVE
+import no.nav.personbruker.dittnav.varsel.bestiller.config.EventType
 import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonTransformer
 import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsProbe
@@ -27,35 +27,30 @@ class OppgaveEventService(
     override suspend fun processEvents(events: ConsumerRecords<Nokkel, Oppgave>) {
         val successfullyValidatedEvents = mutableListOf<RecordKeyValueWrapper<String, Doknotifikasjon>>()
         val problematicEvents = mutableListOf<ConsumerRecord<Nokkel, Oppgave>>()
-
-        metricsProbe.runWithMetrics(eventType = OPPGAVE) {
-            events.forEach { event ->
-                try {
-                    if(skalVarsleEksternt(event.value())) {
-                        val doknotifikasjonKey = DoknotifikasjonTransformer.createDoknotifikasjonKeyForOppgave(event.getNonNullKey())
-                        val doknotifikasjonEvent = DoknotifikasjonTransformer.createDoknotifikasjonFromOppgave(event.getNonNullKey(), event.value())
-                        successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonKey, doknotifikasjonEvent))
-                        countSuccessfulEventForProducer(event.systembruker)
-                    }
-                } catch (e: NokkelNullException) {
-                    countFailedEventForProducer("NoProducerSpecified")
-                    log.warn("Oppgave-eventet manglet nøkkel. Topic: ${event.topic()}, Partition: ${event.partition()}, Offset: ${event.offset()}", e)
-                } catch (e: FieldValidationException) {
-                    countFailedEventForProducer(event.systembruker)
-                    log.warn("Eventet kan ikke brukes fordi det inneholder valideringsfeil, oppgave-eventet vil bli forkastet. EventId: ${event.eventId}", e)
-                } catch (e: Exception) {
-                    countFailedEventForProducer(event.systembruker)
-                    problematicEvents.add(event)
-                    log.warn("Validering av oppgave-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
+        events.forEach { event ->
+            try {
+                if(skalVarsleEksternt(event.value())) {
+                    val oppgaveKey = event.getNonNullKey()
+                    val oppgave = event.value()
+                    val doknotifikasjonKey = DoknotifikasjonTransformer.createDoknotifikasjonKey(oppgaveKey, EventType.OPPGAVE)
+                    val doknotifikasjonEvent = DoknotifikasjonTransformer.createDoknotifikasjonFromOppgave(oppgaveKey, oppgave)
+                    successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonKey, doknotifikasjonEvent))
                 }
+            } catch (e: NokkelNullException) {
+                log.warn("Oppgave-eventet manglet nøkkel. Topic: ${event.topic()}, Partition: ${event.partition()}, Offset: ${event.offset()}", e)
+            } catch (e: FieldValidationException) {
+                log.warn("Eventet kan ikke brukes fordi det inneholder valideringsfeil, oppgave-eventet vil bli forkastet. EventId: ${event.eventId}, context: ${e.context}", e)
+            } catch (e: Exception) {
+                problematicEvents.add(event)
+                log.warn("Validering av oppgave-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
             }
-            doknotifikasjonProducer.produceDoknotifikasjon(successfullyValidatedEvents)
         }
+        doknotifikasjonProducer.produceDoknotifikasjon(successfullyValidatedEvents)
         kastExceptionHvisMislykkedValidering(problematicEvents)
     }
 
-    private fun skalVarsleEksternt(event: Oppgave): Boolean {
-        return event.getEksternVarsling()
+    private fun skalVarsleEksternt(event: Oppgave?): Boolean {
+        return event != null && event.getEksternVarsling()
     }
 
     private fun kastExceptionHvisMislykkedValidering(problematicEvents: MutableList<ConsumerRecord<Nokkel, Oppgave>>) {
