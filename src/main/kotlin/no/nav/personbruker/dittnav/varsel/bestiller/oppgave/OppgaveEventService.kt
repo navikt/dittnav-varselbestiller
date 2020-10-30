@@ -32,7 +32,7 @@ class OppgaveEventService(
             events.forEach { event ->
                 try {
                     if(skalVarsleEksternt(event.value())) {
-                        val doknotifikasjonKey = event.eventId
+                        val doknotifikasjonKey = DoknotifikasjonTransformer.createDoknotifikasjonKeyForOppgave(event.getNonNullKey())
                         val doknotifikasjonEvent = DoknotifikasjonTransformer.createDoknotifikasjonFromOppgave(event.getNonNullKey(), event.value())
                         successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonKey, doknotifikasjonEvent))
                         countSuccessfulEventForProducer(event.systembruker)

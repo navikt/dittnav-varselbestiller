@@ -33,7 +33,7 @@ class BeskjedEventService(
             events.forEach { event ->
                 try {
                     if (skalVarsleEksternt(event.value())) {
-                        val doknotifikasjonKey = event.eventId
+                        val doknotifikasjonKey = DoknotifikasjonTransformer.createDoknotifikasjonKeyForBeskjed(event.getNonNullKey())
                         val doknotifikasjonEvent = DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(event.getNonNullKey(), event.value())
                         successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonKey, doknotifikasjonEvent))
                         countSuccessfulEventForProducer(event.systembruker)

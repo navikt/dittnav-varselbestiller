@@ -13,7 +13,7 @@ object DoknotifikasjonTransformer {
 
     fun createDoknotifikasjonFromBeskjed(nokkel: Nokkel, beskjed: Beskjed): Doknotifikasjon {
         val doknotifikasjonBuilder = Doknotifikasjon.newBuilder()
-                .setBestillingsId(validateNonNullFieldMaxLength(nokkel.getEventId(), "eventId", 50))
+                .setBestillingsId(createDoknotifikasjonKeyForBeskjed(nokkel))
                 .setBestillerId(validateNonNullFieldMaxLength(nokkel.getSystembruker(), "systembruker", 100))
                 .setFodselsnummer(validateFodselsnummer(beskjed.getFodselsnummer()))
                 .setTittel("Du har fått en beskjed fra NAV")
@@ -23,16 +23,28 @@ object DoknotifikasjonTransformer {
         return doknotifikasjonBuilder.build()
     }
 
+    fun createDoknotifikasjonKeyForBeskjed(nokkel: Nokkel): String {
+        val eventId = validateNonNullFieldMaxLength(nokkel.getEventId(), "eventId", 50)
+        val systembruker = validateNonNullFieldMaxLength(nokkel.getSystembruker(), "systembruker", 100)
+        return "B-$eventId-$systembruker"
+    }
+
     fun createDoknotifikasjonFromOppgave(nokkel: Nokkel, oppgave: Oppgave): Doknotifikasjon {
         val doknotifikasjonBuilder = Doknotifikasjon.newBuilder()
-                .setBestillingsId(validateNonNullFieldMaxLength(nokkel.getEventId(), "eventId", 50))
-                .setBestillerId(nokkel.getSystembruker())
+                .setBestillingsId(createDoknotifikasjonKeyForOppgave(nokkel))
+                .setBestillerId(validateNonNullFieldMaxLength(nokkel.getSystembruker(), "systembruker", 100))
                 .setFodselsnummer(validateFodselsnummer(oppgave.getFodselsnummer()))
                 .setTittel("Du har fått en oppgave fra NAV")
                 .setEpostTekst("Her er e-postteksten")
                 .setSmsTekst("Her er SMS-teksten")
                 .setPrefererteKanaler(listOf(PrefererteKanal.EPOST, PrefererteKanal.SMS))
         return doknotifikasjonBuilder.build()
+    }
+
+    fun createDoknotifikasjonKeyForOppgave(nokkel: Nokkel): String {
+        val eventId = validateNonNullFieldMaxLength(nokkel.getEventId(), "eventId", 50)
+        val systembruker = validateNonNullFieldMaxLength(nokkel.getSystembruker(), "systembruker", 100)
+        return "O-$eventId-$systembruker"
     }
 
     fun createDoknotifikasjonStopp(nokkel: Nokkel): DoknotifikasjonStopp {
