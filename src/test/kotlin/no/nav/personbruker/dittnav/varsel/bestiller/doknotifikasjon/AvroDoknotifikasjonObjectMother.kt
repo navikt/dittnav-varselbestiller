@@ -1,6 +1,7 @@
 package no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon
 
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
+import no.nav.doknotifikasjon.schemas.PrefererteKanal
 
 object AvroDoknotifikasjonObjectMother {
 
@@ -10,7 +11,7 @@ object AvroDoknotifikasjonObjectMother {
     private val defaultTittel = "Dette er Beskjed til brukeren"
     private val defaultEpostTekst = "E-posttekst"
     private val defaultSmsTekst = "SMS-tekst"
-    private val defaultPreferertKanal = "EPOST"
+    private val defaultPrefererteKanaler = listOf(PrefererteKanal.EPOST)
 
     fun giveMeANumberOfDoknotifikasjoner(numberOfEvents: Int): List<Doknotifikasjon> {
         val doknotifikasjoner = mutableListOf<Doknotifikasjon>()
@@ -21,10 +22,10 @@ object AvroDoknotifikasjonObjectMother {
     }
 
     fun createDoknotifikasjon(bestillingsId: String): Doknotifikasjon {
-        return Doknotifikasjon(bestillingsId, defaultBestillerId, defaultFodselsnr, 1, 1, defaultTittel, defaultEpostTekst, defaultSmsTekst, defaultPreferertKanal)
+        return Doknotifikasjon(bestillingsId, defaultBestillerId, defaultFodselsnr, 1, 1, defaultTittel, defaultEpostTekst, defaultSmsTekst, defaultPrefererteKanaler)
     }
 
     fun createDoknotifikasjon(): Doknotifikasjon {
-        return Doknotifikasjon(defaultBestillingsId, defaultBestillerId, defaultFodselsnr, 1, 1, defaultTittel, defaultEpostTekst, defaultSmsTekst, defaultPreferertKanal)
+        return Doknotifikasjon(defaultBestillingsId, defaultBestillerId, defaultFodselsnr, 1, 1, defaultTittel, defaultEpostTekst, defaultSmsTekst, defaultPrefererteKanaler)
     }
 }

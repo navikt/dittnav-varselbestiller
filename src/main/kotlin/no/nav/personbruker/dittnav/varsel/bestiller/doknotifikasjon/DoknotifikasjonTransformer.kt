@@ -5,6 +5,7 @@ import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.brukernotifikasjon.schemas.Oppgave
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
+import no.nav.doknotifikasjon.schemas.PrefererteKanal
 import no.nav.personbruker.dittnav.varsel.bestiller.common.validation.validateFodselsnummer
 import no.nav.personbruker.dittnav.varsel.bestiller.common.validation.validateNonNullFieldMaxLength
 
@@ -18,7 +19,7 @@ object DoknotifikasjonTransformer {
                 .setTittel("Du har fått en beskjed fra NAV")
                 .setEpostTekst("Her er e-postteksten")
                 .setSmsTekst("Her er SMS-teksten")
-                .setPrefererteKanaler("EPOST,SMS")
+                .setPrefererteKanaler(listOf(PrefererteKanal.EPOST, PrefererteKanal.SMS))
         return doknotifikasjonBuilder.build()
     }
 
@@ -30,7 +31,7 @@ object DoknotifikasjonTransformer {
                 .setTittel("Du har fått en oppgave fra NAV")
                 .setEpostTekst("Her er e-postteksten")
                 .setSmsTekst("Her er SMS-teksten")
-                .setPrefererteKanaler("EPOST,SMS")
+                .setPrefererteKanaler(listOf(PrefererteKanal.EPOST, PrefererteKanal.SMS))
         return doknotifikasjonBuilder.build()
     }
 
