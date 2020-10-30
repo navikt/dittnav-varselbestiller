@@ -33,6 +33,8 @@ class BeskjedEventService(
             events.forEach { event ->
                 try {
                     if (skalVarsleEksternt(event.value())) {
+                        log.info("Ekstern varsling true " + event.value().getEksternVarsling())
+                        log.info("eventid " + event.key().getEventId())
                         val doknotifikasjonKey = DoknotifikasjonTransformer.createDoknotifikasjonKeyForBeskjed(event.getNonNullKey())
                         val doknotifikasjonEvent = DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(event.getNonNullKey(), event.value())
                         successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonKey, doknotifikasjonEvent))
@@ -42,10 +44,8 @@ class BeskjedEventService(
                     countFailedEventForProducer("NoProducerSpecified")
                     log.warn("Beskjed-eventet manglet nøkkel. Topic: ${event.topic()}, Partition: ${event.partition()}, Offset: ${event.offset()}", nne)
                 } catch (fve: FieldValidationException) {
-                    countFailedEventForProducer(event.systembruker)
                     log.warn("Eventet kan ikke brukes fordi det inneholder valideringsfeil, beskjed-eventet vil bli forkastet. EventId: ${event.eventId}, context: ${fve.context}", fve)
                 } catch (e: Exception) {
-                    countFailedEventForProducer(event.systembruker)
                     problematicEvents.add(event)
                     log.warn("Validering av beskjed-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
                 }
@@ -55,8 +55,8 @@ class BeskjedEventService(
         kastExceptionHvisMislykkedValidering(problematicEvents)
     }
 
-    private fun skalVarsleEksternt(event: Beskjed): Boolean {
-        return event.getEksternVarsling()
+    private fun skalVarsleEksternt(event: Beskjed?): Boolean {
+        return event != null && event.getEksternVarsling()
     }
 
     private fun kastExceptionHvisMislykkedValidering(problematicEvents: MutableList<ConsumerRecord<Nokkel, Beskjed>>) {

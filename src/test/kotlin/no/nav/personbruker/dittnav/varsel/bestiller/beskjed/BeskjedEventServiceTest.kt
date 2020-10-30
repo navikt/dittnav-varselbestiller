@@ -58,7 +58,6 @@ class BeskjedEventServiceTest {
 
         capturedNumberOfEntities.captured.size `should be` 0
 
-        coVerify(exactly = 1) { metricsSession.countFailedEventForProducer(any()) }
     }
 
     @Test
@@ -109,7 +108,6 @@ class BeskjedEventServiceTest {
         }
 
         coVerify(exactly = 1) { doknotifikasjonProducer.produceDoknotifikasjon(any()) }
-        coVerify(exactly = numberOfFailedTransformations) { metricsSession.countFailedEventForProducer(any()) }
         capturedListOfEntities.captured.size `should be` numberOfSuccessfulTransformations
 
         confirmVerified(doknotifikasjonProducer)
