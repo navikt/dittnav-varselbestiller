@@ -1,5 +1,8 @@
 package no.nav.personbruker.dittnav.varsel.bestiller.config
 
+import no.nav.personbruker.dittnav.common.util.config.StringEnvVar.getEnvVar
+import no.nav.personbruker.dittnav.common.util.config.StringEnvVar.getOptionalEnvVar
+
 data class Environment(val bootstrapServers: String = getEnvVar("KAFKA_BOOTSTRAP_SERVERS"),
                        val schemaRegistryUrl: String = getEnvVar("KAFKA_SCHEMAREGISTRY_SERVERS"),
                        val username: String = getEnvVar("SERVICEUSER_USERNAME"),
@@ -20,10 +23,10 @@ data class Environment(val bootstrapServers: String = getEnvVar("KAFKA_BOOTSTRAP
                        val sensuBatchesPerSecond: Int = getEnvVar("SENSU_BATCHING_ENABLED", "3").toInt(),
 )
 
-fun getEnvVar(varName: String, default: String? = null): String {
-    return System.getenv(varName)
-            ?: default
-            ?: throw IllegalArgumentException("Appen kan ikke starte uten at miljøvariabelen $varName er satt.")
-}
-
 fun isOtherEnvironmentThanProd() = System.getenv("NAIS_CLUSTER_NAME") != "prod-sbs"
+
+fun shouldPollBeskjedToDoknotifikasjon() = getOptionalEnvVar("POLL_BESKJED_TO_DOKNOTIFIKASJON", "false").toBoolean()
+
+fun shouldPollOppgaveToDoknotifikasjon() = getOptionalEnvVar("POLL_OPPGAVE_TO_DOKNOTIFIKASJON", "false").toBoolean()
+
+fun shouldPollDoneToDoknotifikasjonStopp() = getOptionalEnvVar("POLL_DONE_TO_DOKNOTIFIKASJON_STOPP", "false").toBoolean()

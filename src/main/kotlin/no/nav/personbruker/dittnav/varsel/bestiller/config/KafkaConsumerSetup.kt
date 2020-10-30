@@ -13,17 +13,38 @@ object KafkaConsumerSetup {
     private val log: Logger = LoggerFactory.getLogger(KafkaConsumerSetup::class.java)
 
     fun startAllKafkaPollers(appContext: ApplicationContext) {
-        appContext.beskjedConsumer.startPolling()
-        appContext.oppgaveConsumer.startPolling()
-        appContext.doneConsumer.startPolling()
+        if(shouldPollBeskjedToDoknotifikasjon()) {
+            appContext.beskjedConsumer.startPolling()
+        } else {
+            log.info("Unnlater å starte polling av beskjed til doknotifikasjon.")
+        }
+
+        if(shouldPollOppgaveToDoknotifikasjon()) {
+            appContext.oppgaveConsumer.startPolling()
+        } else {
+            log.info("Unnlater å starte polling av oppgave til doknotifikasjon.")
+        }
+
+        if(shouldPollDoneToDoknotifikasjonStopp()) {
+            appContext.doneConsumer.startPolling()
+        } else {
+            log.info("Unnlater å starte polling av done til doknotifikasjon-stopp.")
+        }
     }
 
     suspend fun stopAllKafkaConsumers(appContext: ApplicationContext) {
         log.info("Begynner å stoppe kafka-pollerne...")
-        appContext.beskjedConsumer.stopPolling()
-        appContext.oppgaveConsumer.stopPolling()
-        appContext.doneConsumer.stopPolling()
+        if(shouldPollBeskjedToDoknotifikasjon()) {
+            appContext.beskjedConsumer.stopPolling()
+        }
 
+        if(shouldPollOppgaveToDoknotifikasjon()) {
+            appContext.oppgaveConsumer.stopPolling()
+        }
+
+        if(shouldPollDoneToDoknotifikasjonStopp()) {
+            appContext.doneConsumer.stopPolling()
+        }
         log.info("...ferdig med å stoppe kafka-pollerne.")
     }
 
