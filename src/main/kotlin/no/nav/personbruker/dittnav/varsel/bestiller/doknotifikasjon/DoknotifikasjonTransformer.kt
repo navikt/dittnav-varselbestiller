@@ -29,9 +29,9 @@ object DoknotifikasjonTransformer {
         val eventId = validateNonNullFieldMaxLength(nokkel.getEventId(), "eventId", 50)
         val systembruker = validateNonNullFieldMaxLength(nokkel.getSystembruker(), "systembruker", 100)
         return when(eventType) {
-            EventType.BESKJED -> "B-$eventId-$systembruker"
-            EventType.OPPGAVE -> "O-$eventId-$systembruker"
-            EventType.DONE -> "D-$eventId-$systembruker"
+            EventType.BESKJED -> "B-$systembruker-$eventId"
+            EventType.OPPGAVE -> "O-$systembruker-$eventId"
+            EventType.DONE -> "D-$systembruker-$eventId"
             else -> throw FieldValidationException("$eventType er ugyldig type for å generere Doknotifikasjon-key")
         }
     }
