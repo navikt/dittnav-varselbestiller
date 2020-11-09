@@ -10,6 +10,7 @@ import no.nav.personbruker.dittnav.common.util.kafka.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.common.util.kafka.producer.KafkaProducerWrapper
 import no.nav.personbruker.dittnav.varselbestiller.CapturingEventProcessor
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Consumer
+import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaEmbed
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaTestUtil
 import no.nav.personbruker.dittnav.varselbestiller.config.EventType
 import no.nav.personbruker.dittnav.varselbestiller.config.Kafka
@@ -61,7 +62,7 @@ class BeskjedIT {
     }
 
     fun `Read all Beskjed-events from our topic and verify that they have been sent to varselbestiller-topic`() {
-        val consumerProps = Kafka.consumerProps(testEnvironment, EventType.BESKJED, true)
+        val consumerProps = KafkaEmbed.consumerProps(testEnvironment, EventType.BESKJED, true)
         val kafkaConsumer = KafkaConsumer<Nokkel, Beskjed>(consumerProps)
 
         val producerProps = Kafka.producerProps(testEnvironment, EventType.DOKNOTIFIKASJON, true)
@@ -83,7 +84,7 @@ class BeskjedIT {
     }
 
     private fun `Wait until all beskjed events have been received by target topic`() {
-        val targetConsumerProps = Kafka.consumerProps(testEnvironment, EventType.DOKNOTIFIKASJON, true)
+        val targetConsumerProps = KafkaEmbed.consumerProps(testEnvironment, EventType.DOKNOTIFIKASJON, true)
         val targetKafkaConsumer = KafkaConsumer<String, Doknotifikasjon>(targetConsumerProps)
         val capturingProcessor = CapturingEventProcessor<String, Doknotifikasjon>()
 

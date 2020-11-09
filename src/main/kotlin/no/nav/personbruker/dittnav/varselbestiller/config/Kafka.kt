@@ -21,14 +21,14 @@ object Kafka {
 
     private val log: Logger = LoggerFactory.getLogger(Kafka::class.java)
 
-    val transactionIdName = "dittnav-varselbestiller-transaction"
+    private const val transactionIdName = "dittnav-varselbestiller-transaction"
 
-    val doneTopicName = "aapen-brukernotifikasjon-done-v1"
-    val beskjedTopicName = "aapen-brukernotifikasjon-nyBeskjed-v1"
-    val oppgaveTopicName = "aapen-brukernotifikasjon-nyOppgave-v1"
+    const val doneTopicName = "aapen-brukernotifikasjon-done-v1"
+    const val beskjedTopicName = "aapen-brukernotifikasjon-nyBeskjed-v1"
+    const val oppgaveTopicName = "aapen-brukernotifikasjon-nyOppgave-v1"
 
-    val doknotifikasjonTopicName = "privat-dok-notifikasjon"
-    val doknotifikasjonStopTopicName = "privat-dok-notifikasjon-stopp"
+    const val doknotifikasjonTopicName = "privat-dok-notifikasjon"
+    const val doknotifikasjonStopTopicName = "privat-dok-notifikasjon-stopp"
 
     private fun credentialProps(env: Environment): Properties {
         return Properties().apply {
