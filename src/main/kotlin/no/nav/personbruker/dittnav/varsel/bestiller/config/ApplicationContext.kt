@@ -14,7 +14,6 @@ import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.Doknotifikas
 import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varsel.bestiller.done.DoneEventService
 import no.nav.personbruker.dittnav.varsel.bestiller.health.HealthService
-import no.nav.personbruker.dittnav.varsel.bestiller.metrics.buildEventMetricsProbe
 import no.nav.personbruker.dittnav.varsel.bestiller.oppgave.OppgaveEventService
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.slf4j.LoggerFactory
@@ -25,21 +24,19 @@ class ApplicationContext {
     private val environment = Environment()
     val database: Database = PostgresDatabase(environment)
 
-    val eventMetricsProbe = buildEventMetricsProbe(environment, database)
-
     private val doknotifikasjonProducer = initializeDoknotifikasjonProducer()
     private val doknotifikasjonStopProducer = initializeDoknotifikasjonStoppProducer()
 
     private val beskjedKafkaProps = Kafka.consumerProps(environment, EventType.BESKJED)
-    private val beskjedEventService = BeskjedEventService(doknotifikasjonProducer, eventMetricsProbe)
+    private val beskjedEventService = BeskjedEventService(doknotifikasjonProducer)
     var beskjedConsumer = initializeBeskjedConsumer()
 
     private val oppgaveKafkaProps = Kafka.consumerProps(environment, EventType.OPPGAVE)
-    val oppgaveEventService = OppgaveEventService(doknotifikasjonProducer, eventMetricsProbe)
+    val oppgaveEventService = OppgaveEventService(doknotifikasjonProducer)
     var oppgaveConsumer = initializeOppgaveConsumer()
 
     private val doneKafkaProps = Kafka.consumerProps(environment, EventType.DONE)
-    private val doneEventService = DoneEventService(doknotifikasjonStopProducer, eventMetricsProbe)
+    private val doneEventService = DoneEventService(doknotifikasjonStopProducer)
     var doneConsumer = initializeDoneConsumer()
 
     val healthService = HealthService(this)

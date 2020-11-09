@@ -12,15 +12,13 @@ import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.serializer.getN
 import no.nav.personbruker.dittnav.varsel.bestiller.config.EventType
 import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonTransformer
-import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsProbe
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class BeskjedEventService(
-        private val doknotifikasjonProducer: DoknotifikasjonProducer,
-        private val metricsProbe: EventMetricsProbe
+        private val doknotifikasjonProducer: DoknotifikasjonProducer
 ) : EventBatchProcessorService<Nokkel, Beskjed> {
 
     private val log: Logger = LoggerFactory.getLogger(BeskjedEventService::class.java)
@@ -46,8 +44,12 @@ class BeskjedEventService(
                 log.warn("Validering av beskjed-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
             }
         }
-        doknotifikasjonProducer.produceDoknotifikasjon(successfullyValidatedEvents)
-        kastExceptionHvisMislykkedValidering(problematicEvents)
+        if(successfullyValidatedEvents.isNotEmpty()) {
+            doknotifikasjonProducer.produceDoknotifikasjon(successfullyValidatedEvents)
+        }
+        if(problematicEvents.isNotEmpty()) {
+            kastExceptionHvisMislykkedValidering(problematicEvents)
+        }
     }
 
     private fun skalVarsleEksternt(event: Beskjed?): Boolean {
@@ -55,11 +57,9 @@ class BeskjedEventService(
     }
 
     private fun kastExceptionHvisMislykkedValidering(problematicEvents: MutableList<ConsumerRecord<Nokkel, Beskjed>>) {
-        if (problematicEvents.isNotEmpty()) {
-            val message = "En eller flere beskjed-eventer kunne ikke sendes til varselbestiller fordi validering feilet."
-            val exception = UnvalidatableRecordException(message)
-            exception.addContext("antallMislykkedValidering", problematicEvents.size)
-            throw exception
-        }
+        val message = "En eller flere beskjed-eventer kunne ikke sendes til varselbestiller fordi validering feilet."
+        val exception = UnvalidatableRecordException(message)
+        exception.addContext("antallMislykkedValidering", problematicEvents.size)
+        throw exception
     }
 }

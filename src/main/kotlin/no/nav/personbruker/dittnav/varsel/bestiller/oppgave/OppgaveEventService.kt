@@ -12,14 +12,12 @@ import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.serializer.getN
 import no.nav.personbruker.dittnav.varsel.bestiller.config.EventType
 import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonTransformer
-import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsProbe
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.slf4j.LoggerFactory
 
 class OppgaveEventService(
-        private val doknotifikasjonProducer: DoknotifikasjonProducer,
-        private val metricsProbe: EventMetricsProbe
+        private val doknotifikasjonProducer: DoknotifikasjonProducer
 ) : EventBatchProcessorService<Nokkel, Oppgave> {
 
     private val log = LoggerFactory.getLogger(OppgaveEventService::class.java)
@@ -45,20 +43,22 @@ class OppgaveEventService(
                 log.warn("Validering av oppgave-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
             }
         }
-        doknotifikasjonProducer.produceDoknotifikasjon(successfullyValidatedEvents)
-        kastExceptionHvisMislykkedValidering(problematicEvents)
+        if(successfullyValidatedEvents.isNotEmpty()) {
+            doknotifikasjonProducer.produceDoknotifikasjon(successfullyValidatedEvents)
+        }
+        if(problematicEvents.isNotEmpty()) {
+            kastExceptionVedMislykkedValidering(problematicEvents)
+        }
     }
 
     private fun skalVarsleEksternt(event: Oppgave?): Boolean {
         return event != null && event.getEksternVarsling()
     }
 
-    private fun kastExceptionHvisMislykkedValidering(problematicEvents: MutableList<ConsumerRecord<Nokkel, Oppgave>>) {
-        if (problematicEvents.isNotEmpty()) {
-            val message = "En eller flere oppgave-eventer kunne ikke sendes til varselbestiller fordi validering feilet."
-            val exception = UnvalidatableRecordException(message)
-            exception.addContext("antallMislykkedValidering", problematicEvents.size)
-            throw exception
-        }
+    private fun kastExceptionVedMislykkedValidering(problematicEvents: MutableList<ConsumerRecord<Nokkel, Oppgave>>) {
+        val message = "En eller flere oppgave-eventer kunne ikke sendes til varselbestiller fordi validering feilet."
+        val exception = UnvalidatableRecordException(message)
+        exception.addContext("antallMislykkedValidering", problematicEvents.size)
+        throw exception
     }
 }

@@ -7,12 +7,10 @@ import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.personbruker.dittnav.common.util.kafka.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.varsel.bestiller.common.exceptions.FieldValidationException
-import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varsel.bestiller.common.objectmother.ConsumerRecordsObjectMother
 import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.AvroDoknotifikasjonObjectMother
+import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonTransformer
-import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsProbe
-import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsSession
 import org.amshove.kluent.`should be`
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
@@ -21,16 +19,12 @@ import org.junit.jupiter.api.Test
 class BeskjedEventServiceTest {
 
     private val doknotifikasjonProducer = mockk<DoknotifikasjonProducer>(relaxed = true)
-    private val metricsProbe = mockk<EventMetricsProbe>(relaxed = true)
-    private val metricsSession = mockk<EventMetricsSession>(relaxed = true)
-    private val eventService = BeskjedEventService(doknotifikasjonProducer, metricsProbe)
+    private val eventService = BeskjedEventService(doknotifikasjonProducer)
 
     @BeforeEach
     private fun resetMocks() {
         mockkObject(DoknotifikasjonTransformer)
         clearMocks(doknotifikasjonProducer)
-        clearMocks(metricsProbe)
-        clearMocks(metricsSession)
     }
 
     @AfterAll
@@ -40,37 +34,43 @@ class BeskjedEventServiceTest {
 
     @Test
     fun `skal forkaste eventer som mangler fodselsnummer`() {
-        val beskjedWithoutFodselsnummer = AvroBeskjedObjectMother.createBeskjedWithFodselsnummer("")
+        val beskjedWithoutFodselsnummer = AvroBeskjedObjectMother.createBeskjedWithFodselsnummerOgEksternVarsling(1,"", true)
         val cr = ConsumerRecordsObjectMother.createConsumerRecord("beskjed", beskjedWithoutFodselsnummer)
         val records = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(cr)
-
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
-        coEvery { metricsProbe.runWithMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
-        }
-
-        val capturedNumberOfEntities = slot<List<RecordKeyValueWrapper<String, Doknotifikasjon>>>()
-        coEvery { doknotifikasjonProducer.produceDoknotifikasjon(capture(capturedNumberOfEntities)) } returns Unit
 
         runBlocking {
             eventService.processEvents(records)
         }
 
-        capturedNumberOfEntities.captured.size `should be` 0
-
+        coVerify(exactly = 0) { doknotifikasjonProducer.produceDoknotifikasjon(allAny()) }
+        confirmVerified(doknotifikasjonProducer)
     }
 
     @Test
-    fun `Skal skrive alle eventer til ny kafka-topic`() {
-        val beskjedRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(5, "dummyTopic")
+    fun `Skal skrive kun eventer som skal varsles eksternt til Doknotifikasjon-topic`() {
+        val beskjedWithEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords = 4, topicName = "dummyTopic", withEksternVarsling = true)
+        val beskjedWithoutEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords = 6, topicName = "dummyTopic", withEksternVarsling = false)
         val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, Doknotifikasjon>>>()
 
         coEvery { doknotifikasjonProducer.produceDoknotifikasjon(capture(capturedListOfEntities)) } returns Unit
-
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
-        coEvery { metricsProbe.runWithMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
+        runBlocking {
+            eventService.processEvents(beskjedWithEksternVarslingRecords)
+            eventService.processEvents(beskjedWithoutEksternVarslingRecords)
         }
+
+        verify(exactly = beskjedWithEksternVarslingRecords.count()) { DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(ofType(Nokkel::class), ofType(Beskjed::class)) }
+        coVerify(exactly = 1) { doknotifikasjonProducer.produceDoknotifikasjon(allAny()) }
+        capturedListOfEntities.captured.size `should be` beskjedWithEksternVarslingRecords.count()
+
+        confirmVerified(doknotifikasjonProducer)
+    }
+
+    @Test
+    fun `Skal skrive alle eventer som skal varsles eksternt til ny kafka-topic`() {
+        val beskjedRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords = 5, topicName = "dummyTopic", withEksternVarsling = true)
+        val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, Doknotifikasjon>>>()
+
+        coEvery { doknotifikasjonProducer.produceDoknotifikasjon(capture(capturedListOfEntities)) } returns Unit
 
         runBlocking {
             eventService.processEvents(beskjedRecords)
@@ -89,19 +89,13 @@ class BeskjedEventServiceTest {
         val numberOfFailedTransformations = 1
         val numberOfSuccessfulTransformations = totalNumberOfRecords - numberOfFailedTransformations
 
-        val beskjedRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(totalNumberOfRecords, "dummyTopic")
+        val beskjedRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords = totalNumberOfRecords, topicName = "dummyTopic", withEksternVarsling = true)
         val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, Doknotifikasjon>>>()
         coEvery { doknotifikasjonProducer.produceDoknotifikasjon(capture(capturedListOfEntities)) } returns Unit
 
         val fieldValidationException = FieldValidationException("Simulert feil i en test")
         val doknotifikasjoner = AvroDoknotifikasjonObjectMother.giveMeANumberOfDoknotifikasjoner(5)
         every { DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(ofType(Nokkel::class), ofType(Beskjed::class)) } throws fieldValidationException andThenMany doknotifikasjoner
-
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
-
-        coEvery { metricsProbe.runWithMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
-        }
 
         runBlocking {
             eventService.processEvents(beskjedRecords)
@@ -112,5 +106,4 @@ class BeskjedEventServiceTest {
 
         confirmVerified(doknotifikasjonProducer)
     }
-
 }

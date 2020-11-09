@@ -3,7 +3,7 @@ package no.nav.personbruker.dittnav.varsel.bestiller.common.objectmother
 import no.nav.brukernotifikasjon.schemas.*
 import no.nav.personbruker.dittnav.varsel.bestiller.beskjed.AvroBeskjedObjectMother
 import no.nav.personbruker.dittnav.varsel.bestiller.done.AvroDoneObjectMother
-import no.nav.personbruker.dittnav.varsel.bestiller.nokkel.createNokkelWithEventId
+import no.nav.personbruker.dittnav.varsel.bestiller.nokkel.AvroNokkelObjectMother
 import no.nav.personbruker.dittnav.varsel.bestiller.oppgave.AvroOppgaveObjectMother
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
@@ -17,18 +17,18 @@ object ConsumerRecordsObjectMother {
         return ConsumerRecords(records)
     }
 
-    fun giveMeANumberOfBeskjedRecords(numberOfRecords: Int, topicName: String): ConsumerRecords<Nokkel, Beskjed> {
+    fun giveMeANumberOfBeskjedRecords(numberOfRecords: Int, topicName: String, withEksternVarsling: Boolean = false): ConsumerRecords<Nokkel, Beskjed> {
         val records = mutableMapOf<TopicPartition, List<ConsumerRecord<Nokkel, Beskjed>>>()
-        val recordsForSingleTopic = createBeskjedRecords(topicName, numberOfRecords)
+        val recordsForSingleTopic = createBeskjedRecords(topicName, numberOfRecords, withEksternVarsling)
         records[TopicPartition(topicName, numberOfRecords)] = recordsForSingleTopic
         return ConsumerRecords(records)
     }
 
-    private fun createBeskjedRecords(topicName: String, totalNumber: Int): List<ConsumerRecord<Nokkel, Beskjed>> {
+    private fun createBeskjedRecords(topicName: String, totalNumber: Int, withEksternVarsling: Boolean): List<ConsumerRecord<Nokkel, Beskjed>> {
         val allRecords = mutableListOf<ConsumerRecord<Nokkel, Beskjed>>()
         for (i in 0 until totalNumber) {
-            val schemaRecord = AvroBeskjedObjectMother.createBeskjed(i)
-            val nokkel = createNokkelWithEventId(i)
+            val schemaRecord = AvroBeskjedObjectMother.createBeskjedWithEksternVarsling(i, withEksternVarsling)
+            val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(i)
 
             allRecords.add(ConsumerRecord(topicName, i, i.toLong(), nokkel, schemaRecord))
         }
@@ -36,7 +36,7 @@ object ConsumerRecordsObjectMother {
     }
 
     fun <T> createConsumerRecord(topicName: String, actualEvent: T): ConsumerRecord<Nokkel, T> {
-        val nokkel = createNokkelWithEventId(1)
+        val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(1)
         return ConsumerRecord(topicName, 1, 0, nokkel, actualEvent)
     }
 
@@ -51,24 +51,24 @@ object ConsumerRecordsObjectMother {
         val allRecords = mutableListOf<ConsumerRecord<Nokkel, Done>>()
         for (i in 0 until totalNumber) {
             val schemaRecord = AvroDoneObjectMother.createDone("$i")
-            val nokkel = createNokkelWithEventId(i)
+            val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(i)
             allRecords.add(ConsumerRecord(topicName, i, i.toLong(), nokkel, schemaRecord))
         }
         return allRecords
     }
 
-    fun giveMeANumberOfOppgaveRecords(numberOfRecords: Int, topicName: String): ConsumerRecords<Nokkel, Oppgave> {
+    fun giveMeANumberOfOppgaveRecords(numberOfRecords: Int, topicName: String, withEksternVarsling: Boolean = false): ConsumerRecords<Nokkel, Oppgave> {
         val records = mutableMapOf<TopicPartition, List<ConsumerRecord<Nokkel, Oppgave>>>()
-        val recordsForSingleTopic = createOppgaveRecords(topicName, numberOfRecords)
+        val recordsForSingleTopic = createOppgaveRecords(topicName, numberOfRecords, withEksternVarsling)
         records[TopicPartition(topicName, numberOfRecords)] = recordsForSingleTopic
         return ConsumerRecords(records)
     }
 
-    private fun createOppgaveRecords(topicName: String, totalNumber: Int): List<ConsumerRecord<Nokkel, Oppgave>> {
+    private fun createOppgaveRecords(topicName: String, totalNumber: Int, withEksternVarsling: Boolean): List<ConsumerRecord<Nokkel, Oppgave>> {
         val allRecords = mutableListOf<ConsumerRecord<Nokkel, Oppgave>>()
         for (i in 0 until totalNumber) {
-            val schemaRecord = AvroOppgaveObjectMother.createOppgave(i)
-            val nokkel = createNokkelWithEventId(i)
+            val schemaRecord = AvroOppgaveObjectMother.createOppgaveWithEksternVarsling(i, withEksternVarsling)
+            val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(i)
             allRecords.add(ConsumerRecord(topicName, i, i.toLong(), nokkel, schemaRecord))
         }
         return allRecords

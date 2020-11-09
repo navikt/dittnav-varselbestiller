@@ -19,8 +19,8 @@ object DoknotifikasjonTransformer {
                 .setBestillerId(validateNonNullFieldMaxLength(nokkel.getSystembruker(), "systembruker", 100))
                 .setFodselsnummer(validateFodselsnummer(beskjed.getFodselsnummer()))
                 .setTittel("Du har fått en beskjed fra NAV")
-                .setEpostTekst("Her er e-postteksten")
-                .setSmsTekst("Her er SMS-teksten")
+                .setEpostTekst("Beskjed fra NAV på e-post")
+                .setSmsTekst("Beskjed fra NAV på SMS")
                 .setPrefererteKanaler(listOf(PrefererteKanal.EPOST, PrefererteKanal.SMS))
         return doknotifikasjonBuilder.build()
     }
@@ -42,8 +42,8 @@ object DoknotifikasjonTransformer {
                 .setBestillerId(validateNonNullFieldMaxLength(nokkel.getSystembruker(), "systembruker", 100))
                 .setFodselsnummer(validateFodselsnummer(oppgave.getFodselsnummer()))
                 .setTittel("Du har fått en oppgave fra NAV")
-                .setEpostTekst("Her er e-postteksten")
-                .setSmsTekst("Her er SMS-teksten")
+                .setEpostTekst("Oppgave fra NAV på e-post")
+                .setSmsTekst("Oppgave fra NAV på SMS")
                 .setPrefererteKanaler(listOf(PrefererteKanal.EPOST, PrefererteKanal.SMS))
         return doknotifikasjonBuilder.build()
     }

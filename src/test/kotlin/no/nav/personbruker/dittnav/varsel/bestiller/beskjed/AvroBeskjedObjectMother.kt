@@ -7,16 +7,16 @@ object AvroBeskjedObjectMother {
 
     private val defaultLopenummer = 1
     private val defaultFodselsnr = "1234"
-    private val defaultText = "Dette er Beskjed til brukeren"
+    private val defaultTekst = "Dette er Beskjed til brukeren"
     private val defaultSikkerhetsnivaa = 4
-    private val defaultEksternVarsling = true
+    private val defaultEksternVarsling = false
 
     fun createBeskjed(lopenummer: Int): Beskjed {
-        return createBeskjed(lopenummer, defaultFodselsnr, defaultText, defaultSikkerhetsnivaa, defaultEksternVarsling)
+        return createBeskjed(lopenummer, defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling)
     }
 
     fun createBeskjedWithFodselsnummer(fodselsnummer: String): Beskjed {
-        return createBeskjed(defaultLopenummer, fodselsnummer, defaultText, defaultSikkerhetsnivaa, defaultEksternVarsling)
+        return createBeskjed(defaultLopenummer, fodselsnummer, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling)
     }
 
     fun createBeskjedWithText(text: String): Beskjed {
@@ -24,11 +24,15 @@ object AvroBeskjedObjectMother {
     }
 
     fun createBeskjedWithSikkerhetsnivaa(nivaa: Int): Beskjed {
-        return createBeskjed(defaultLopenummer, defaultFodselsnr, defaultText, nivaa, defaultEksternVarsling)
+        return createBeskjed(defaultLopenummer, defaultFodselsnr, defaultTekst, nivaa, defaultEksternVarsling)
     }
 
-    fun createBeskjedWithEksternVarsling(eksternVarsling: Boolean): Beskjed {
-        return createBeskjed(defaultLopenummer, defaultFodselsnr, defaultText, defaultSikkerhetsnivaa, eksternVarsling)
+    fun createBeskjedWithEksternVarsling(lopenummer: Int, eksternVarsling: Boolean): Beskjed {
+        return createBeskjedWithFodselsnummerOgEksternVarsling(lopenummer, defaultFodselsnr, eksternVarsling)
+    }
+
+    fun createBeskjedWithFodselsnummerOgEksternVarsling(lopenummer: Int, fodselsnummer: String, eksternVarsling: Boolean): Beskjed {
+        return createBeskjed(lopenummer, fodselsnummer, defaultTekst, defaultSikkerhetsnivaa, eksternVarsling)
     }
 
     fun createBeskjed(lopenummer: Int, fodselsnummer: String, text: String, sikkerhetsnivaa: Int, eksternVarsling: Boolean): Beskjed {

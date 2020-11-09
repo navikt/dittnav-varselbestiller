@@ -11,8 +11,6 @@ import no.nav.personbruker.dittnav.varsel.bestiller.common.objectmother.Consumer
 import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.AvroDoknotifikasjonObjectMother
 import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonTransformer
-import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsProbe
-import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsSession
 import org.amshove.kluent.`should be`
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
@@ -21,16 +19,12 @@ import org.junit.jupiter.api.Test
 class OppgaveEventServiceTest {
 
     private val doknotifikasjonProducer = mockk<DoknotifikasjonProducer>(relaxed = true)
-    private val metricsProbe = mockk<EventMetricsProbe>(relaxed = true)
-    private val metricsSession = mockk<EventMetricsSession>(relaxed = true)
-    private val eventService = OppgaveEventService(doknotifikasjonProducer, metricsProbe)
+    private val eventService = OppgaveEventService(doknotifikasjonProducer)
 
     @BeforeEach
     private fun resetMocks() {
         mockkObject(DoknotifikasjonTransformer)
         clearMocks(doknotifikasjonProducer)
-        clearMocks(metricsProbe)
-        clearMocks(metricsSession)
     }
 
     @AfterAll
@@ -39,39 +33,45 @@ class OppgaveEventServiceTest {
     }
 
     @Test
-    fun `skal forkaste eventer som mangler fodselsnummer`() {
-        val oppgaveWithoutFodselsnummer = AvroOppgaveObjectMother.createOppgaveWithFodselsnummer(1, "")
+    fun `Skal forkaste eventer som mangler fodselsnummer`() {
+        val oppgaveWithoutFodselsnummer = AvroOppgaveObjectMother.createOppgaveWithFodselsnummerOgEksternVarsling(1, "", true)
         val cr = ConsumerRecordsObjectMother.createConsumerRecord("oppgave", oppgaveWithoutFodselsnummer)
         val records = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(cr)
-
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
-        coEvery { metricsProbe.runWithMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
-        }
-
-        val capturedNumberOfEntities = slot<List<RecordKeyValueWrapper<String, Doknotifikasjon>>>()
-        coEvery { doknotifikasjonProducer.produceDoknotifikasjon(capture(capturedNumberOfEntities)) } returns Unit
 
         runBlocking {
             eventService.processEvents(records)
         }
 
-        capturedNumberOfEntities.captured.size `should be` 0
+        coVerify(exactly = 0) { doknotifikasjonProducer.produceDoknotifikasjon(allAny()) }
+        confirmVerified(doknotifikasjonProducer)
 
     }
 
-
     @Test
-    fun `Skal skrive alle eventer til ny kafka-topic`() {
-        val oppgaveRecords = ConsumerRecordsObjectMother.giveMeANumberOfOppgaveRecords(5, "dummyTopic")
+    fun `Skal skrive kun eventer som skal varsles eksternt til Doknotifikasjon-topic`() {
+        val oppgaveWithEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfOppgaveRecords(numberOfRecords = 4, topicName = "dummyTopic", withEksternVarsling = true)
+        val oppgaveWithoutEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfOppgaveRecords(numberOfRecords = 6, topicName = "dummyTopic", withEksternVarsling = false)
         val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, Doknotifikasjon>>>()
 
         coEvery { doknotifikasjonProducer.produceDoknotifikasjon(capture(capturedListOfEntities)) } returns Unit
-
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
-        coEvery { metricsProbe.runWithMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
+        runBlocking {
+            eventService.processEvents(oppgaveWithEksternVarslingRecords)
+            eventService.processEvents(oppgaveWithoutEksternVarslingRecords)
         }
+
+        verify(exactly = oppgaveWithEksternVarslingRecords.count()) { DoknotifikasjonTransformer.createDoknotifikasjonFromOppgave(ofType(Nokkel::class), ofType(Oppgave::class)) }
+        coVerify(exactly = 1) { doknotifikasjonProducer.produceDoknotifikasjon(allAny()) }
+        capturedListOfEntities.captured.size `should be` oppgaveWithEksternVarslingRecords.count()
+
+        confirmVerified(doknotifikasjonProducer)
+    }
+
+    @Test
+    fun `Skal skrive alle eventer som skal varsles eksternt til Doknotifikasjon-topic`() {
+        val oppgaveRecords = ConsumerRecordsObjectMother.giveMeANumberOfOppgaveRecords(numberOfRecords = 5, topicName = "dummyTopic", withEksternVarsling = true)
+        val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, Doknotifikasjon>>>()
+
+        coEvery { doknotifikasjonProducer.produceDoknotifikasjon(capture(capturedListOfEntities)) } returns Unit
 
         runBlocking {
             eventService.processEvents(oppgaveRecords)
@@ -90,19 +90,13 @@ class OppgaveEventServiceTest {
         val numberOfFailedTransformations = 1
         val numberOfSuccessfulTransformations = totalNumberOfRecords - numberOfFailedTransformations
 
-        val oppgaveRecords = ConsumerRecordsObjectMother.giveMeANumberOfOppgaveRecords(totalNumberOfRecords, "dummyTopic")
+        val oppgaveRecords = ConsumerRecordsObjectMother.giveMeANumberOfOppgaveRecords(numberOfRecords = totalNumberOfRecords, topicName = "dummyTopic", withEksternVarsling = true)
         val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, Doknotifikasjon>>>()
         coEvery { doknotifikasjonProducer.produceDoknotifikasjon(capture(capturedListOfEntities)) } returns Unit
 
         val fieldValidationException = FieldValidationException("Simulert feil i en test")
         val doknotifikasjoner = AvroDoknotifikasjonObjectMother.giveMeANumberOfDoknotifikasjoner(5)
         every { DoknotifikasjonTransformer.createDoknotifikasjonFromOppgave(ofType(Nokkel::class), ofType(Oppgave::class)) } throws fieldValidationException andThenMany doknotifikasjoner
-
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
-
-        coEvery { metricsProbe.runWithMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
-        }
 
         runBlocking {
             eventService.processEvents(oppgaveRecords)
@@ -113,5 +107,4 @@ class OppgaveEventServiceTest {
 
         confirmVerified(doknotifikasjonProducer)
     }
-
 }

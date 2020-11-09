@@ -12,15 +12,13 @@ import no.nav.personbruker.dittnav.varsel.bestiller.common.kafka.serializer.getN
 import no.nav.personbruker.dittnav.varsel.bestiller.config.EventType
 import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varsel.bestiller.doknotifikasjon.DoknotifikasjonTransformer
-import no.nav.personbruker.dittnav.varsel.bestiller.metrics.EventMetricsProbe
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class DoneEventService(
-        private val doknotifikasjonStoppProducer: DoknotifikasjonStoppProducer,
-        private val eventMetricsProbe: EventMetricsProbe
+        private val doknotifikasjonStoppProducer: DoknotifikasjonStoppProducer
 ) : EventBatchProcessorService<Nokkel, Done> {
 
     private val log: Logger = LoggerFactory.getLogger(DoneEventService::class.java)
