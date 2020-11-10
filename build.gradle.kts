@@ -38,6 +38,7 @@ configurations["intTestRuntimeOnly"].extendsFrom(configurations.testRuntimeOnly.
 
 dependencies {
     implementation(Brukernotifikasjon.schemas)
+    implementation(DittNAV.Common.utils)
     implementation(Doknotifikasjon.schemas)
     implementation(Hikari.cp)
     implementation(Influxdb.java)
@@ -52,8 +53,6 @@ dependencies {
     implementation(Prometheus.common)
     implementation(Prometheus.hotspot)
     implementation(Prometheus.logback)
-    implementation(DittNAV.Common.metrics)
-    implementation(DittNAV.Common.utils)
 
 
     testImplementation(H2Database.h2)

@@ -1,0 +1,7 @@
+{
+  "vault_namespace": "prod",
+  "vault_secrets_root": "prod",
+  "ingresses": [
+    "https://dittnav-varselbestiller.nais.oera.no"
+  ]
+}

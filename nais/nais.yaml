@@ -2,7 +2,7 @@ apiVersion: "nais.io/v1alpha1"
 kind: "Application"
 metadata:
   name: dittnav-varselbestiller
-  namespace: {{namespace}}
+  namespace: personbruker
   labels:
     team: personbruker
 spec:
@@ -27,9 +27,9 @@ spec:
   vault:
     enabled: true
     paths:
-      - kvPath: /kv/{{cluster}}/sbs/dittnav-varselbestiller/{{namespace}}
+      - kvPath: /kv/{{vault_secrets_root}}/sbs/dittnav-varselbestiller/personbruker
         mountPath: /var/run/secrets/nais.io/vault
-      - kvPath: /serviceuser/data/{{environment}}/srvdittnav-varsel-b
+      - kvPath: /serviceuser/data/{{vault_namespace}}/srvdittnav-varsel-b
         mountPath: /secret/serviceuser
   resources:
     limits:
