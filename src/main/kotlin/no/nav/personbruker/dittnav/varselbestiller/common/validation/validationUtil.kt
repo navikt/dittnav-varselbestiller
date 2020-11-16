@@ -4,7 +4,6 @@ import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.FieldValida
 
 private val fodselsnummerRegEx = """[\d]{1,11}""".toRegex()
 
-
 fun validateFodselsnummer(field: String): String {
     validateNonNullField(field, "fødselsnummer")
     if (isNotValidFodselsnummer(field)) {
