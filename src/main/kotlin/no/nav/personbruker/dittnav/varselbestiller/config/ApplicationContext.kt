@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory
 class ApplicationContext {
 
     private val log = LoggerFactory.getLogger(ApplicationContext::class.java)
-    private val environment = Environment()
+    val environment = Environment()
     val database: Database = PostgresDatabase(environment)
 
     private val doknotifikasjonProducer = initializeDoknotifikasjonProducer()
