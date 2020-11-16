@@ -1,4 +1,4 @@
-package no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon
+package no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp
 
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
 

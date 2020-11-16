@@ -47,13 +47,4 @@ object DoknotifikasjonTransformer {
                 .setPrefererteKanaler(listOf(PrefererteKanal.EPOST, PrefererteKanal.SMS))
         return doknotifikasjonBuilder.build()
     }
-
-    fun createDoknotifikasjonStopp(nokkel: Nokkel): DoknotifikasjonStopp {
-        val doknotifikasjonStoppBuilder = DoknotifikasjonStopp.newBuilder()
-                .setBestillingsId(validateNonNullFieldMaxLength(nokkel.getEventId(), "eventId", 50))
-                .setBestillerId(validateNonNullFieldMaxLength(nokkel.getSystembruker(), "systembruker", 100))
-        return doknotifikasjonStoppBuilder.build()
-
-    }
-
 }
