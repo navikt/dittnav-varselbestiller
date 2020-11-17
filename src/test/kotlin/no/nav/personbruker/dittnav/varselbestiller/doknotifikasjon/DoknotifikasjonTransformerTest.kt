@@ -20,6 +20,7 @@ class DoknotifikasjonTransformerTest {
 
         doknotifikasjon.getBestillingsId() `should be equal to` "B-${nokkel.getSystembruker()}-${nokkel.getEventId()}"
         doknotifikasjon.getBestillerId() `should be equal to` nokkel.getSystembruker()
+        doknotifikasjon.getSikkerhetsnivaa() `should be equal to` 4
         doknotifikasjon.getFodselsnummer() `should be equal to` beskjed.getFodselsnummer()
         doknotifikasjon.getTittel().`should not be null or empty`()
         doknotifikasjon.getEpostTekst().`should not be null or empty`()
@@ -36,6 +37,7 @@ class DoknotifikasjonTransformerTest {
 
         doknotifikasjon.getBestillingsId() `should be equal to` "O-${nokkel.getSystembruker()}-${nokkel.getEventId()}"
         doknotifikasjon.getBestillerId() `should be equal to` nokkel.getSystembruker()
+        doknotifikasjon.getSikkerhetsnivaa() `should be equal to` 4
         doknotifikasjon.getFodselsnummer() `should be equal to` oppgave.getFodselsnummer()
         doknotifikasjon.getTittel().`should not be null or empty`()
         doknotifikasjon.getEpostTekst().`should not be null or empty`()
@@ -74,6 +76,15 @@ class DoknotifikasjonTransformerTest {
     }
 
     @Test
+    fun `should throw FieldValidationException when sikkerhetsnivaa for Beskjed is too low`() {
+        val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(3)
+        val beskjed = AvroBeskjedObjectMother.createBeskjedWithSikkerhetsnivaa(2)
+        invoking {
+            DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
+        } `should throw` FieldValidationException::class
+    }
+
+    @Test
     fun `should throw FieldValidationException if eventId field for Oppgave is too long`() {
         val tooLongEventId = "1".repeat(51)
         val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(tooLongEventId)
@@ -100,6 +111,15 @@ class DoknotifikasjonTransformerTest {
         val event = createOppgaveWithFodselsnummer(1, fodselsnummerEmpty)
         invoking {
             DoknotifikasjonTransformer.createDoknotifikasjonFromOppgave(nokkel, event)
+        } `should throw` FieldValidationException::class
+    }
+
+    @Test
+    fun `should throw FieldValidationException when sikkerhetsnivaa for Oppgave is too low`() {
+        val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(3)
+        val oppgave = AvroOppgaveObjectMother.createOppgaveWithSikkerhetsnivaa(2)
+        invoking {
+            DoknotifikasjonTransformer.createDoknotifikasjonFromOppgave(nokkel, oppgave)
         } `should throw` FieldValidationException::class
     }
 
