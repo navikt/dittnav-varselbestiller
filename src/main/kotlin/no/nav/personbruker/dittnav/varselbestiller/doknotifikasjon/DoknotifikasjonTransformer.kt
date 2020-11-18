@@ -9,6 +9,7 @@ import no.nav.doknotifikasjon.schemas.PrefererteKanal
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.FieldValidationException
 import no.nav.personbruker.dittnav.varselbestiller.common.validation.validateFodselsnummer
 import no.nav.personbruker.dittnav.varselbestiller.common.validation.validateNonNullFieldMaxLength
+import no.nav.personbruker.dittnav.varselbestiller.common.validation.validateSikkerhetsnivaa
 import no.nav.personbruker.dittnav.varselbestiller.config.EventType
 
 object DoknotifikasjonTransformer {
@@ -17,6 +18,7 @@ object DoknotifikasjonTransformer {
         val doknotifikasjonBuilder = Doknotifikasjon.newBuilder()
                 .setBestillingsId(createDoknotifikasjonKey(nokkel, EventType.BESKJED))
                 .setBestillerId(validateNonNullFieldMaxLength(nokkel.getSystembruker(), "systembruker", 100))
+                .setSikkerhetsnivaa(validateSikkerhetsnivaa(beskjed.getSikkerhetsnivaa()))
                 .setFodselsnummer(validateFodselsnummer(beskjed.getFodselsnummer()))
                 .setTittel("Du har fått en beskjed fra NAV")
                 .setEpostTekst("Beskjed fra NAV på e-post")
@@ -40,6 +42,7 @@ object DoknotifikasjonTransformer {
         val doknotifikasjonBuilder = Doknotifikasjon.newBuilder()
                 .setBestillingsId(createDoknotifikasjonKey(nokkel, EventType.OPPGAVE))
                 .setBestillerId(validateNonNullFieldMaxLength(nokkel.getSystembruker(), "systembruker", 100))
+                .setSikkerhetsnivaa(validateSikkerhetsnivaa(oppgave.getSikkerhetsnivaa()))
                 .setFodselsnummer(validateFodselsnummer(oppgave.getFodselsnummer()))
                 .setTittel("Du har fått en oppgave fra NAV")
                 .setEpostTekst("Oppgave fra NAV på e-post")
