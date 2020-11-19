@@ -82,9 +82,9 @@ object Kafka {
     }
 
     private fun buildGroupIdIncludingEventType(env: Environment, eventtypeToConsume: Eventtype) =
-            env.groupId + eventtypeToConsume.eventType
+            env.groupId + eventtypeToConsume.eventtype
 
     private fun buildTransactionIdName(eventtype: Eventtype) =
-            "$transactionIdName-${eventtype.eventType}"
+            "$transactionIdName-${eventtype.eventtype}"
 
 }

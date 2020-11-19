@@ -9,7 +9,8 @@ import no.nav.personbruker.dittnav.varselbestiller.common.validation.validateFod
 import no.nav.personbruker.dittnav.varselbestiller.common.validation.validateNonNullFieldMaxLength
 import no.nav.personbruker.dittnav.varselbestiller.common.validation.validateSikkerhetsnivaa
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
-import java.time.ZonedDateTime
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 object DoknotifikasjonTransformer {
 
@@ -55,7 +56,7 @@ object DoknotifikasjonTransformer {
                 bestillingsid = externalValue.getBestillingsId(),
                 eventtype = eventtype,
                 systembruker = externalValue.getBestillerId(),
-                eventtidspunkt = ZonedDateTime.now()
+                eventtidspunkt = LocalDateTime.now(ZoneId.of("UTC"))
         )
     }
 }

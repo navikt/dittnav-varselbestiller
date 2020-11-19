@@ -5,10 +5,11 @@ import no.nav.personbruker.dittnav.common.util.database.persisting.ListPersistAc
 import no.nav.personbruker.dittnav.common.util.database.persisting.executeBatchPersistQuery
 import no.nav.personbruker.dittnav.common.util.database.persisting.toBatchPersistResult
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
-import java.sql.*
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.util.*
+import java.sql.Connection
+import java.sql.PreparedStatement
+import java.sql.ResultSet
+import java.sql.Types
+import java.time.LocalDateTime
 
 fun Connection.createDoknotifikasjoner(doknotifikasjoner: List<Doknotifikasjon>): ListPersistActionResult<Doknotifikasjon> =
         executeBatchPersistQuery("""INSERT INTO doknotifikasjon (bestillingsid, eventtype, systembruker, eventtidspunkt) 
@@ -26,20 +27,20 @@ fun Connection.getDoknotifikasjonForBestillingsid(bestillingsid: String): Doknot
                     it.executeQuery().mapSingleResult { toDoknotifikasjon() }
                 }
 
+fun ResultSet.toDoknotifikasjon(): Doknotifikasjon {
+    return Doknotifikasjon(
+            bestillingsid = getString("bestillingsid"),
+            eventtype = Eventtype.valueOf(getString("eventtype").toUpperCase()),
+            systembruker = getString("systembruker"),
+            eventtidspunkt = getUtcDateTime("eventtidspunkt")
+    )
+}
+
 private fun PreparedStatement.buildStatementForSingleRow(doknotifikasjon: Doknotifikasjon) {
         setString(1, doknotifikasjon.bestillingsid)
-        setString(2, doknotifikasjon.eventtype.eventType)
+        setObject(2, doknotifikasjon.eventtype.eventtype)
         setString(3, doknotifikasjon.systembruker)
         setObject(4, doknotifikasjon.eventtidspunkt, Types.TIMESTAMP)
 }
 
-private fun ResultSet.toDoknotifikasjon(): Doknotifikasjon {
-    return Doknotifikasjon(
-            bestillingsid = getString("bestillingsid"),
-            eventtype = Eventtype.valueOf(getString("eventtype")),
-            systembruker = getString("systembruker"),
-            eventtidspunkt = ZonedDateTime.ofInstant(getUtcTimeStamp("eventTidspunkt").toInstant(), ZoneId.of("Europe/Oslo"))
-    )
-}
-
-private fun ResultSet.getUtcTimeStamp(label: String): Timestamp = getTimestamp(label, Calendar.getInstance(TimeZone.getTimeZone("UTC")))
+private fun ResultSet.getUtcDateTime(columnLabel: String): LocalDateTime = getTimestamp(columnLabel).toLocalDateTime()
