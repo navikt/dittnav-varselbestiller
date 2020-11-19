@@ -9,8 +9,9 @@ import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.FieldValida
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.NokkelNullException
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UnvalidatableRecordException
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.serializer.getNonNullKey
-import no.nav.personbruker.dittnav.varselbestiller.config.EventType
+import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
+import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonRepository
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonTransformer
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
@@ -18,7 +19,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class BeskjedEventService(
-        private val doknotifikasjonProducer: DoknotifikasjonProducer
+        private val doknotifikasjonProducer: DoknotifikasjonProducer,
+        private val doknotifikasjonRepository: DoknotifikasjonRepository
 ) : EventBatchProcessorService<Nokkel, Beskjed> {
 
     private val log: Logger = LoggerFactory.getLogger(BeskjedEventService::class.java)
@@ -31,7 +33,7 @@ class BeskjedEventService(
                 if (skalVarsleEksternt(event.value())) {
                     val beskjedKey = event.getNonNullKey()
                     val beskjed = event.value()
-                    val doknotifikasjonKey = DoknotifikasjonTransformer.createDoknotifikasjonKey(beskjedKey, EventType.BESKJED)
+                    val doknotifikasjonKey = DoknotifikasjonTransformer.createDoknotifikasjonKey(beskjedKey, Eventtype.BESKJED)
                     val doknotifikasjon = DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(beskjedKey, beskjed)
                     successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonKey, doknotifikasjon))
                 }
@@ -45,11 +47,17 @@ class BeskjedEventService(
             }
         }
         if(successfullyValidatedEvents.isNotEmpty()) {
-            doknotifikasjonProducer.produceDoknotifikasjon(successfullyValidatedEvents)
+            produceDoknotifikasjonerAndPersistToDB(successfullyValidatedEvents)
         }
         if(problematicEvents.isNotEmpty()) {
             kastExceptionHvisMislykkedValidering(problematicEvents)
         }
+    }
+
+    private suspend fun produceDoknotifikasjonerAndPersistToDB(successfullyValidatedEvents: MutableList<RecordKeyValueWrapper<String, Doknotifikasjon>>) {
+        doknotifikasjonProducer.produceDoknotifikasjon(successfullyValidatedEvents)
+        val doknotifikasjoner = successfullyValidatedEvents.map { DoknotifikasjonTransformer.toInternal(Eventtype.BESKJED, it.value) }
+        doknotifikasjonRepository.createInOneBatch(doknotifikasjoner)
     }
 
     private fun skalVarsleEksternt(event: Beskjed?): Boolean {

@@ -45,8 +45,8 @@ object Kafka {
         }
     }
 
-    fun consumerProps(env: Environment, eventTypeToConsume: EventType, enableSecurity: Boolean = isCurrentlyRunningOnNais()): Properties {
-        val groupIdAndEventType = buildGroupIdIncludingEventType(env, eventTypeToConsume)
+    fun consumerProps(env: Environment, eventtypeToConsume: Eventtype, enableSecurity: Boolean = isCurrentlyRunningOnNais()): Properties {
+        val groupIdAndEventType = buildGroupIdIncludingEventType(env, eventtypeToConsume)
         return Properties().apply {
             put(ConsumerConfig.GROUP_ID_CONFIG, groupIdAndEventType)
             put(ConsumerConfig.CLIENT_ID_CONFIG, groupIdAndEventType + getHostname(InetSocketAddress(0)))
@@ -54,7 +54,7 @@ object Kafka {
         }
     }
 
-    fun producerProps(env: Environment, type: EventType, enableSecurity: Boolean = isCurrentlyRunningOnNais()): Properties {
+    fun producerProps(env: Environment, type: Eventtype, enableSecurity: Boolean = isCurrentlyRunningOnNais()): Properties {
         return Properties().apply {
             put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, env.bootstrapServers)
             put(KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG, env.schemaRegistryUrl)
@@ -81,10 +81,10 @@ object Kafka {
         }
     }
 
-    private fun buildGroupIdIncludingEventType(env: Environment, eventTypeToConsume: EventType) =
-            env.groupId + eventTypeToConsume.eventType
+    private fun buildGroupIdIncludingEventType(env: Environment, eventtypeToConsume: Eventtype) =
+            env.groupId + eventtypeToConsume.eventType
 
-    private fun buildTransactionIdName(eventType: EventType) =
-            "$transactionIdName-${eventType.eventType}"
+    private fun buildTransactionIdName(eventtype: Eventtype) =
+            "$transactionIdName-${eventtype.eventType}"
 
 }

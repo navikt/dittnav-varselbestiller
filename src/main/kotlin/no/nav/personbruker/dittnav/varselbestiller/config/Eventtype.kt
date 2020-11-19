@@ -1,6 +1,6 @@
 package no.nav.personbruker.dittnav.varselbestiller.config
 
-enum class EventType(val eventType: String) {
+enum class Eventtype(val eventType: String) {
     OPPGAVE("oppgave"),
     BESKJED("beskjed"),
     DONE("done"),

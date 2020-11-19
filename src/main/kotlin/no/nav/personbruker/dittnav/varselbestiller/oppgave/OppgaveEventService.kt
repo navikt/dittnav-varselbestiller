@@ -9,15 +9,17 @@ import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.FieldValida
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.NokkelNullException
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UnvalidatableRecordException
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.serializer.getNonNullKey
-import no.nav.personbruker.dittnav.varselbestiller.config.EventType
+import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
+import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonRepository
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonTransformer
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.slf4j.LoggerFactory
 
 class OppgaveEventService(
-        private val doknotifikasjonProducer: DoknotifikasjonProducer
+        private val doknotifikasjonProducer: DoknotifikasjonProducer,
+        private val doknotifikasjonRepository: DoknotifikasjonRepository
 ) : EventBatchProcessorService<Nokkel, Oppgave> {
 
     private val log = LoggerFactory.getLogger(OppgaveEventService::class.java)
@@ -30,7 +32,7 @@ class OppgaveEventService(
                 if(skalVarsleEksternt(event.value())) {
                     val oppgaveKey = event.getNonNullKey()
                     val oppgave = event.value()
-                    val doknotifikasjonKey = DoknotifikasjonTransformer.createDoknotifikasjonKey(oppgaveKey, EventType.OPPGAVE)
+                    val doknotifikasjonKey = DoknotifikasjonTransformer.createDoknotifikasjonKey(oppgaveKey, Eventtype.OPPGAVE)
                     val doknotifikasjonEvent = DoknotifikasjonTransformer.createDoknotifikasjonFromOppgave(oppgaveKey, oppgave)
                     successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonKey, doknotifikasjonEvent))
                 }
@@ -44,11 +46,17 @@ class OppgaveEventService(
             }
         }
         if(successfullyValidatedEvents.isNotEmpty()) {
-            doknotifikasjonProducer.produceDoknotifikasjon(successfullyValidatedEvents)
+            produceDoknotifikasjonerAndPersistToDB(successfullyValidatedEvents)
         }
         if(problematicEvents.isNotEmpty()) {
             kastExceptionVedMislykkedValidering(problematicEvents)
         }
+    }
+
+    private suspend fun produceDoknotifikasjonerAndPersistToDB(successfullyValidatedEvents: MutableList<RecordKeyValueWrapper<String, Doknotifikasjon>>) {
+        doknotifikasjonProducer.produceDoknotifikasjon(successfullyValidatedEvents)
+        val doknotifikasjoner = successfullyValidatedEvents.map { DoknotifikasjonTransformer.toInternal(Eventtype.OPPGAVE, it.value) }
+        doknotifikasjonRepository.createInOneBatch(doknotifikasjoner)
     }
 
     private fun skalVarsleEksternt(event: Oppgave?): Boolean {

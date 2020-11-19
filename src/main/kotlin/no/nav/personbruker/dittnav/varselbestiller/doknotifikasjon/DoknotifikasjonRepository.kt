@@ -1,15 +1,13 @@
 package no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon
 
-import kotlinx.html.Entities
-import no.nav.doknotifikasjon.schemas.Doknotifikasjon
+import no.nav.personbruker.dittnav.common.util.database.persisting.ListPersistActionResult
 import no.nav.personbruker.dittnav.varselbestiller.common.database.Database
-
 
 class DoknotifikasjonRepository(private val database: Database) {
 
-    suspend fun saveDoknotifikasjon(entities: List<Doknotifikasjon>) {
+    suspend fun createInOneBatch(entities: List<Doknotifikasjon>): ListPersistActionResult<Doknotifikasjon> {
         return database.queryWithExceptionTranslation {
-
+            createDoknotifikasjoner(entities)
         }
     }
 }

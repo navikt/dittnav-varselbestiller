@@ -10,6 +10,7 @@ import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.FieldValida
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.ConsumerRecordsObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.AvroDoknotifikasjonObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
+import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonRepository
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonTransformer
 import org.amshove.kluent.`should be`
 import org.junit.jupiter.api.AfterAll
@@ -19,7 +20,8 @@ import org.junit.jupiter.api.Test
 class BeskjedEventServiceTest {
 
     private val doknotifikasjonProducer = mockk<DoknotifikasjonProducer>(relaxed = true)
-    private val eventService = BeskjedEventService(doknotifikasjonProducer)
+    private val doknotifikasjonRepository = mockk<DoknotifikasjonRepository>(relaxed = true)
+    private val eventService = BeskjedEventService(doknotifikasjonProducer, doknotifikasjonRepository)
 
     @BeforeEach
     private fun resetMocks() {

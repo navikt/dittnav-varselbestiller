@@ -7,6 +7,7 @@ import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
 import no.nav.personbruker.dittnav.common.util.kafka.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.FieldValidationException
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.ConsumerRecordsObjectMother
+import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonRepository
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonTransformer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.AvroDoknotifikasjonStoppObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
@@ -21,7 +22,8 @@ import org.junit.jupiter.api.Test
 class DoneEventServiceTest {
 
     private val doknotifikasjonStoppProducer = mockk<DoknotifikasjonStoppProducer>(relaxed = true)
-    private val eventService = DoneEventService(doknotifikasjonStoppProducer)
+    private val doknotifikasjonRepository = mockk<DoknotifikasjonRepository>(relaxed = true)
+    private val eventService = DoneEventService(doknotifikasjonStoppProducer, doknotifikasjonRepository)
 
     @BeforeEach
     private fun resetMocks() {

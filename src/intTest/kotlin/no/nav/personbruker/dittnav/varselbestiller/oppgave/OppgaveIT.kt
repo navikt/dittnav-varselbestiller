@@ -9,12 +9,14 @@ import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.personbruker.dittnav.common.util.kafka.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.common.util.kafka.producer.KafkaProducerWrapper
 import no.nav.personbruker.dittnav.varselbestiller.CapturingEventProcessor
+import no.nav.personbruker.dittnav.varselbestiller.common.database.H2Database
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Consumer
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaEmbed
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaTestUtil
-import no.nav.personbruker.dittnav.varselbestiller.config.EventType
+import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.config.Kafka
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
+import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonRepository
 import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelObjectMother
 import org.amshove.kluent.`should be equal to`
 import org.amshove.kluent.shouldBeEqualTo
@@ -28,6 +30,8 @@ class OppgaveIT {
 
     private val embeddedEnv = KafkaTestUtil.createDefaultKafkaEmbeddedInstance(listOf(Kafka.oppgaveTopicName, Kafka.doknotifikasjonTopicName))
     private val testEnvironment = KafkaTestUtil.createEnvironmentForEmbeddedKafka(embeddedEnv)
+
+    private val database = H2Database()
 
     private val oppgaveEvents = (1..10).map { AvroNokkelObjectMother.createNokkelWithEventId(it) to AvroOppgaveObjectMother.createOppgaveWithEksternVarsling(it, eksternVarsling = true) }.toMap()
 
@@ -62,15 +66,16 @@ class OppgaveIT {
     }
 
     fun `Read all Oppgave-events from our topic and verify that they have been sent to varselbestiller-topic`() {
-        val consumerProps = KafkaEmbed.consumerProps(testEnvironment, EventType.OPPGAVE, true)
+        val consumerProps = KafkaEmbed.consumerProps(testEnvironment, Eventtype.OPPGAVE, true)
         val kafkaConsumer = KafkaConsumer<Nokkel, Oppgave>(consumerProps)
 
-        val producerProps = Kafka.producerProps(testEnvironment, EventType.DOKNOTIFIKASJON, true)
+        val producerProps = Kafka.producerProps(testEnvironment, Eventtype.DOKNOTIFIKASJON, true)
         val kafkaProducer = KafkaProducer<String, Doknotifikasjon>(producerProps)
         val kafkaProducerWrapper = KafkaProducerWrapper(Kafka.doknotifikasjonTopicName, kafkaProducer)
         val doknotifikasjonProducer = DoknotifikasjonProducer(kafkaProducerWrapper)
+        val doknotifikasjonRepository = DoknotifikasjonRepository(database)
 
-        val eventService = OppgaveEventService(doknotifikasjonProducer)
+        val eventService = OppgaveEventService(doknotifikasjonProducer, doknotifikasjonRepository)
         val consumer = Consumer(Kafka.oppgaveTopicName, kafkaConsumer, eventService)
 
         kafkaProducer.initTransactions()
@@ -84,7 +89,7 @@ class OppgaveIT {
     }
 
     private fun `Wait until all oppgave events have been received by target topic`() {
-        val targetConsumerProps = KafkaEmbed.consumerProps(testEnvironment, EventType.DOKNOTIFIKASJON, true)
+        val targetConsumerProps = KafkaEmbed.consumerProps(testEnvironment, Eventtype.DOKNOTIFIKASJON, true)
         val targetKafkaConsumer = KafkaConsumer<String, Doknotifikasjon>(targetConsumerProps)
         val capturingProcessor = CapturingEventProcessor<String, Doknotifikasjon>()
 

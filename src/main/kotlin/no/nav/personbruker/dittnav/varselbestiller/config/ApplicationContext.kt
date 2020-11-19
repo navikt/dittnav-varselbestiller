@@ -11,6 +11,7 @@ import no.nav.personbruker.dittnav.varselbestiller.beskjed.BeskjedEventService
 import no.nav.personbruker.dittnav.varselbestiller.common.database.Database
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Consumer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
+import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonRepository
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.done.DoneEventService
 import no.nav.personbruker.dittnav.varselbestiller.health.HealthService
@@ -26,17 +27,18 @@ class ApplicationContext {
 
     private val doknotifikasjonProducer = initializeDoknotifikasjonProducer()
     private val doknotifikasjonStopProducer = initializeDoknotifikasjonStoppProducer()
+    private val doknotifikasjonRepository = DoknotifikasjonRepository(database)
 
-    private val beskjedKafkaProps = Kafka.consumerProps(environment, EventType.BESKJED)
-    private val beskjedEventService = BeskjedEventService(doknotifikasjonProducer)
+    private val beskjedKafkaProps = Kafka.consumerProps(environment, Eventtype.BESKJED)
+    private val beskjedEventService = BeskjedEventService(doknotifikasjonProducer, doknotifikasjonRepository)
     var beskjedConsumer = initializeBeskjedConsumer()
 
-    private val oppgaveKafkaProps = Kafka.consumerProps(environment, EventType.OPPGAVE)
-    val oppgaveEventService = OppgaveEventService(doknotifikasjonProducer)
+    private val oppgaveKafkaProps = Kafka.consumerProps(environment, Eventtype.OPPGAVE)
+    val oppgaveEventService = OppgaveEventService(doknotifikasjonProducer, doknotifikasjonRepository)
     var oppgaveConsumer = initializeOppgaveConsumer()
 
-    private val doneKafkaProps = Kafka.consumerProps(environment, EventType.DONE)
-    private val doneEventService = DoneEventService(doknotifikasjonStopProducer)
+    private val doneKafkaProps = Kafka.consumerProps(environment, Eventtype.DONE)
+    private val doneEventService = DoneEventService(doknotifikasjonStopProducer, doknotifikasjonRepository)
     var doneConsumer = initializeDoneConsumer()
 
     val healthService = HealthService(this)
@@ -54,7 +56,7 @@ class ApplicationContext {
     }
 
     private fun initializeDoknotifikasjonProducer(): DoknotifikasjonProducer {
-        val producerProps = Kafka.producerProps(environment, EventType.DOKNOTIFIKASJON)
+        val producerProps = Kafka.producerProps(environment, Eventtype.DOKNOTIFIKASJON)
         val kafkaProducer = KafkaProducer<String, Doknotifikasjon>(producerProps)
         kafkaProducer.initTransactions()
         val kafkaProducerDoknotifikasjon = KafkaProducerWrapper(Kafka.doknotifikasjonTopicName, kafkaProducer)
@@ -62,7 +64,7 @@ class ApplicationContext {
     }
 
     private fun initializeDoknotifikasjonStoppProducer(): DoknotifikasjonStoppProducer {
-        val producerProps = Kafka.producerProps(environment, EventType.DOKNOTIFIKASJON_STOPP)
+        val producerProps = Kafka.producerProps(environment, Eventtype.DOKNOTIFIKASJON_STOPP)
         val kafkaProducer = KafkaProducer<String, DoknotifikasjonStopp>(producerProps)
         kafkaProducer.initTransactions()
         val kafkaProducerDoknotifikasjonStopp = KafkaProducerWrapper(Kafka.doknotifikasjonStopTopicName, kafkaProducer)
