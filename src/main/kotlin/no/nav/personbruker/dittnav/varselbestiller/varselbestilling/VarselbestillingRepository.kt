@@ -10,4 +10,12 @@ class VarselbestillingRepository(private val database: Database) {
             createVarselbestillinger(entities)
         }
     }
+
+    suspend fun fetchVarselbestilling(eventId: String, systembruker: String, fodselsnummer: String): Varselbestilling? {
+        var resultat: Varselbestilling? = null
+        database.queryWithExceptionTranslation {
+            resultat = getVarselbestillingForEvent(eventId = eventId, systembruker = systembruker, fodselsnummer = fodselsnummer)
+        }
+        return resultat
+    }
 }

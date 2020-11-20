@@ -26,6 +26,15 @@ fun Connection.getVarselbestillingForBestillingsId(bestillingsId: String): Varse
                     it.executeQuery().mapSingleResult { toVarselbestilling() }
                 }
 
+fun Connection.getVarselbestillingForEvent(eventId: String, systembruker: String, fodselsnummer: String) =
+        prepareStatement("""SELECT varselbestilling.* FROM varselbestilling WHERE eventid = ? AND systembruker = ? AND fodselsnummer = ?""")
+                .use {
+                    it.setString(1, eventId)
+                    it.setString(2, systembruker)
+                    it.setString(3, fodselsnummer)
+                    it.executeQuery().mapSingleResult { toVarselbestilling() }
+                }
+
 fun ResultSet.toVarselbestilling(): Varselbestilling {
     return Varselbestilling(
             bestillingsId = getString("bestillingsid"),

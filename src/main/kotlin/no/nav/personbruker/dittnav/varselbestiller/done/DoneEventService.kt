@@ -14,6 +14,7 @@ import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestil
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonTransformer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppTransformer
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.slf4j.Logger
@@ -32,7 +33,8 @@ class DoneEventService(
 
         events.forEach { event ->
             try {
-                if(harBestiltEksternVarsling(event.value())) {
+                val varselbestilling: Varselbestilling? = fetchVarselbestilling(event)
+                if(varselbestilling != null) {
                     val doneKey = event.getNonNullKey()
                     val doknotifikasjonStoppKey = DoknotifikasjonTransformer.createDoknotifikasjonKey(doneKey, Eventtype.DONE)
                     val doknotifikasjonStoppEvent = DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(doneKey)
@@ -51,9 +53,12 @@ class DoneEventService(
         kastExceptionHvisMislykkedValidering(problematicEvents)
     }
 
-    private fun harBestiltEksternVarsling(value: Done): Boolean {
-        // Legge til en sjekk på om brukernotifikasjonen tilhørende Done-eventet faktisk har bestilt eksternt varsel
-        return false
+    private suspend fun fetchVarselbestilling(event: ConsumerRecord<Nokkel, Done>): Varselbestilling? {
+        val doneKey = event.getNonNullKey()
+        val doneValue = event.value()
+        val varselbestilling = varselbestillingRepository.fetchVarselbestilling(
+                eventId = doneKey.getEventId(), systembruker = doneKey.getSystembruker(), fodselsnummer = doneValue.getFodselsnummer())
+        return varselbestilling
     }
 
     private fun kastExceptionHvisMislykkedValidering(problematicEvents: MutableList<ConsumerRecord<Nokkel, Done>>) {
