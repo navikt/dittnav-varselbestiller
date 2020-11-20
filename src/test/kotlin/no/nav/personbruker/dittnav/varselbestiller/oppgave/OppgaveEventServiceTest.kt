@@ -4,14 +4,13 @@ import io.mockk.*
 import kotlinx.coroutines.runBlocking
 import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.brukernotifikasjon.schemas.Oppgave
-import no.nav.doknotifikasjon.schemas.Doknotifikasjon
+import no.nav.personbruker.dittnav.common.util.database.persisting.ListPersistActionResult
 import no.nav.personbruker.dittnav.common.util.kafka.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.FieldValidationException
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.ConsumerRecordsObjectMother
-import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.AvroDoknotifikasjonObjectMother
-import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
-import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonRepository
-import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonTransformer
+import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.*
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import org.amshove.kluent.`should be`
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
@@ -20,13 +19,14 @@ import org.junit.jupiter.api.Test
 class OppgaveEventServiceTest {
 
     private val doknotifikasjonProducer = mockk<DoknotifikasjonProducer>(relaxed = true)
-    private val doknotifikasjonRepository = mockk<DoknotifikasjonRepository>(relaxed = true)
+    private val doknotifikasjonRepository = mockk<VarselbestillingRepository>(relaxed = true)
     private val eventService = OppgaveEventService(doknotifikasjonProducer, doknotifikasjonRepository)
 
     @BeforeEach
     private fun resetMocks() {
         mockkObject(DoknotifikasjonTransformer)
         clearMocks(doknotifikasjonProducer)
+        clearMocks(doknotifikasjonRepository)
     }
 
     @AfterAll
@@ -50,10 +50,10 @@ class OppgaveEventServiceTest {
     }
 
     @Test
-    fun `Skal skrive kun eventer som skal varsles eksternt til Doknotifikasjon-topic`() {
+    fun `Skal skrive kun eventer som har ekstern varsling til Doknotifikasjon-topic`() {
         val oppgaveWithEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfOppgaveRecords(numberOfRecords = 4, topicName = "dummyTopic", withEksternVarsling = true)
         val oppgaveWithoutEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfOppgaveRecords(numberOfRecords = 6, topicName = "dummyTopic", withEksternVarsling = false)
-        val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, Doknotifikasjon>>>()
+        val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, no.nav.doknotifikasjon.schemas.Doknotifikasjon>>>()
 
         coEvery { doknotifikasjonProducer.produceDoknotifikasjon(capture(capturedListOfEntities)) } returns Unit
         runBlocking {
@@ -69,9 +69,9 @@ class OppgaveEventServiceTest {
     }
 
     @Test
-    fun `Skal skrive alle eventer som skal varsles eksternt til Doknotifikasjon-topic`() {
+    fun `Skal skrive alle eventer som har ekstern varsling til Doknotifikasjon-topic`() {
         val oppgaveRecords = ConsumerRecordsObjectMother.giveMeANumberOfOppgaveRecords(numberOfRecords = 5, topicName = "dummyTopic", withEksternVarsling = true)
-        val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, Doknotifikasjon>>>()
+        val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, no.nav.doknotifikasjon.schemas.Doknotifikasjon>>>()
 
         coEvery { doknotifikasjonProducer.produceDoknotifikasjon(capture(capturedListOfEntities)) } returns Unit
 
@@ -87,13 +87,31 @@ class OppgaveEventServiceTest {
     }
 
     @Test
+    fun `Skal skrive Doknotifikasjon til database for Beskjeder som har ekstern varsling`() {
+        val oppgaveWithEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfOppgaveRecords(numberOfRecords = 4, topicName = "dummyTopic", withEksternVarsling = true)
+        val oppgaveWithoutEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfOppgaveRecords(numberOfRecords = 6, topicName = "dummyTopic", withEksternVarsling = false)
+        val capturedListOfEntities = slot<List<Varselbestilling>>()
+
+        coEvery { doknotifikasjonRepository.persistInOneBatch(capture(capturedListOfEntities)) } returns ListPersistActionResult.emptyInstance()
+        runBlocking {
+            eventService.processEvents(oppgaveWithEksternVarslingRecords)
+            eventService.processEvents(oppgaveWithoutEksternVarslingRecords)
+        }
+
+        coVerify(exactly = 1) { doknotifikasjonRepository.persistInOneBatch(allAny()) }
+        capturedListOfEntities.captured.size `should be` oppgaveWithEksternVarslingRecords.count()
+
+        confirmVerified(doknotifikasjonRepository)
+    }
+
+    @Test
     fun `Skal haandtere at enkelte valideringer feiler og fortsette aa validere resten av batch-en`() {
         val totalNumberOfRecords = 5
         val numberOfFailedTransformations = 1
         val numberOfSuccessfulTransformations = totalNumberOfRecords - numberOfFailedTransformations
 
         val oppgaveRecords = ConsumerRecordsObjectMother.giveMeANumberOfOppgaveRecords(numberOfRecords = totalNumberOfRecords, topicName = "dummyTopic", withEksternVarsling = true)
-        val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, Doknotifikasjon>>>()
+        val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, no.nav.doknotifikasjon.schemas.Doknotifikasjon>>>()
         coEvery { doknotifikasjonProducer.produceDoknotifikasjon(capture(capturedListOfEntities)) } returns Unit
 
         val fieldValidationException = FieldValidationException("Simulert feil i en test")

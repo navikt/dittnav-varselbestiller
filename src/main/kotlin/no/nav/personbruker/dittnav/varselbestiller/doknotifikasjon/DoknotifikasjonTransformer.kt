@@ -50,13 +50,4 @@ object DoknotifikasjonTransformer {
                 .setPrefererteKanaler(listOf(PrefererteKanal.EPOST, PrefererteKanal.SMS))
         return doknotifikasjonBuilder.build()
     }
-
-    fun toInternal(eventtype: Eventtype, externalValue: no.nav.doknotifikasjon.schemas.Doknotifikasjon): Doknotifikasjon {
-        return Doknotifikasjon(
-                bestillingsid = externalValue.getBestillingsId(),
-                eventtype = eventtype,
-                systembruker = externalValue.getBestillerId(),
-                eventtidspunkt = LocalDateTime.now(ZoneId.of("UTC"))
-        )
-    }
 }

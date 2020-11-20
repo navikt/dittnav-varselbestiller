@@ -6,7 +6,7 @@ import org.amshove.kluent.`should throw`
 import org.amshove.kluent.invoking
 import org.junit.jupiter.api.Test
 
-class DoknotifikasjonStoppTransformerTest {
+class VarselbestillingStoppTransformerTest {
 
     @Test
     fun `should throw FieldValidationException when eventId field for Done is too long`() {

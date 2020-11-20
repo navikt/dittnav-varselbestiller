@@ -11,7 +11,7 @@ import no.nav.personbruker.dittnav.varselbestiller.beskjed.BeskjedEventService
 import no.nav.personbruker.dittnav.varselbestiller.common.database.Database
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Consumer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
-import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonRepository
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.done.DoneEventService
 import no.nav.personbruker.dittnav.varselbestiller.health.HealthService
@@ -27,7 +27,7 @@ class ApplicationContext {
 
     private val doknotifikasjonProducer = initializeDoknotifikasjonProducer()
     private val doknotifikasjonStopProducer = initializeDoknotifikasjonStoppProducer()
-    private val doknotifikasjonRepository = DoknotifikasjonRepository(database)
+    private val doknotifikasjonRepository = VarselbestillingRepository(database)
 
     private val beskjedKafkaProps = Kafka.consumerProps(environment, Eventtype.BESKJED)
     private val beskjedEventService = BeskjedEventService(doknotifikasjonProducer, doknotifikasjonRepository)

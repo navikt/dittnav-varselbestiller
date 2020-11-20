@@ -16,7 +16,7 @@ import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaTestUtil
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.config.Kafka
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
-import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonRepository
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelObjectMother
 import org.amshove.kluent.`should be equal to`
 import org.amshove.kluent.shouldBeEqualTo
@@ -73,7 +73,7 @@ class OppgaveIT {
         val kafkaProducer = KafkaProducer<String, Doknotifikasjon>(producerProps)
         val kafkaProducerWrapper = KafkaProducerWrapper(Kafka.doknotifikasjonTopicName, kafkaProducer)
         val doknotifikasjonProducer = DoknotifikasjonProducer(kafkaProducerWrapper)
-        val doknotifikasjonRepository = DoknotifikasjonRepository(database)
+        val doknotifikasjonRepository = VarselbestillingRepository(database)
 
         val eventService = OppgaveEventService(doknotifikasjonProducer, doknotifikasjonRepository)
         val consumer = Consumer(Kafka.oppgaveTopicName, kafkaConsumer, eventService)

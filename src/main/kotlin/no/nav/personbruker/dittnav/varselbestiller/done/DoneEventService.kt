@@ -10,7 +10,7 @@ import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.NokkelNullE
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UnvalidatableRecordException
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.serializer.getNonNullKey
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
-import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonRepository
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonTransformer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppTransformer
@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory
 
 class DoneEventService(
         private val doknotifikasjonStoppProducer: DoknotifikasjonStoppProducer,
-        private val doknotifikasjonRepository: DoknotifikasjonRepository
+        private val varselbestillingRepository: VarselbestillingRepository
 ) : EventBatchProcessorService<Nokkel, Done> {
 
     private val log: Logger = LoggerFactory.getLogger(DoneEventService::class.java)

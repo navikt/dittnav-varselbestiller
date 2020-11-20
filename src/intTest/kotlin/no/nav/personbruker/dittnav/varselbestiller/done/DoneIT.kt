@@ -15,7 +15,7 @@ import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaEmbed
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaTestUtil
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.config.Kafka
-import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonRepository
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelObjectMother
 import org.amshove.kluent.`should be equal to`
@@ -75,7 +75,7 @@ class DoneIT {
         val kafkaProducer = KafkaProducer<String, DoknotifikasjonStopp>(producerProps)
         val kafkaProducerWrapper = KafkaProducerWrapper(Kafka.doknotifikasjonStopTopicName, kafkaProducer)
         val doknotifikasjonStoppProducer = DoknotifikasjonStoppProducer(kafkaProducerWrapper)
-        val doknotifikasjonRepository = DoknotifikasjonRepository(database)
+        val doknotifikasjonRepository = VarselbestillingRepository(database)
 
         val eventService = DoneEventService(doknotifikasjonStoppProducer, doknotifikasjonRepository)
         val consumer = Consumer(Kafka.doneTopicName, kafkaConsumer, eventService)
