@@ -2,12 +2,9 @@ package no.nav.personbruker.dittnav.varselbestiller.varselbestilling
 
 import kotlinx.coroutines.runBlocking
 import no.nav.personbruker.dittnav.varselbestiller.common.database.H2Database
-import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
-import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.*
 import org.amshove.kluent.*
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Test
-import java.sql.SQLException
 
 class varselbestillingQueriesTest {
 
@@ -17,13 +14,13 @@ class varselbestillingQueriesTest {
     private val varselbestillingOppgave: Varselbestilling = VarselbestillingObjectMother.createVarselbestilling(bestillingsId = "O-test-001", eventId = "001", fodselsnummer = "123")
 
     init {
-        createDoknotifikasjoner(listOf(varselbestillingBeskjed, varselbestillingOppgave))
+        createVarselbestillinger(listOf(varselbestillingBeskjed, varselbestillingOppgave))
     }
 
-    private fun createDoknotifikasjoner(doknotifikasjoner: List<Varselbestilling>) {
+    private fun createVarselbestillinger(varselbestillinger: List<Varselbestilling>) {
         runBlocking {
             database.dbQuery {
-                createVarselbestillinger(doknotifikasjoner)
+                createVarselbestillinger(varselbestillinger)
             }
         }
     }

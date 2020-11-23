@@ -15,7 +15,7 @@ class VarselbestillingTeardownQueriesTest {
     private val varselbestilling3 = VarselbestillingObjectMother.createVarselbestilling(bestillingsId = "O-test-001", eventId = "001", fodselsnummer = "234")
 
     @Test
-    fun `Skal slette alle rader i doknotifikasjon-tabellen`() {
+    fun `Skal slette alle rader i varselbestilling-tabellen`() {
         runBlocking {
             createVarselbestillinger(listOf(varselbestilling1, varselbestilling2, varselbestilling3))
             var result = database.dbQuery { getAllVarselbestilling() }

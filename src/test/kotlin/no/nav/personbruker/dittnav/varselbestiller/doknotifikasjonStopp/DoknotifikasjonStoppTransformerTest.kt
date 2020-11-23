@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 class DoknotifikasjonStoppTransformerTest {
 
     @Test
-    fun `should throw FieldValidationException when eventId field for Done is too long`() {
+    fun `Skal kaste FieldValidationException hvis eventId for Done er for lang`() {
         val tooLongEventId = "1".repeat(51)
         val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(tooLongEventId)
         invoking {
@@ -18,7 +18,7 @@ class DoknotifikasjonStoppTransformerTest {
     }
 
     @Test
-    fun `should throw FieldValidationException when systembruker field for Done is too long`() {
+    fun `should throw FieldValidationException when systembruker for Done er for lang`() {
         val tooLongSystembruker = "1".repeat(101)
         val nokkel = AvroNokkelObjectMother.createNokkelWithSystembruker(tooLongSystembruker)
         invoking {
