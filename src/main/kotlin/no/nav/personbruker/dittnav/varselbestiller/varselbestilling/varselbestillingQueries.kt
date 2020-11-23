@@ -1,38 +1,34 @@
 package no.nav.personbruker.dittnav.varselbestiller.varselbestilling
 
-import no.nav.personbruker.dittnav.common.util.database.fetching.mapSingleResult
 import no.nav.personbruker.dittnav.common.util.database.persisting.ListPersistActionResult
 import no.nav.personbruker.dittnav.common.util.database.persisting.executeBatchPersistQuery
 import no.nav.personbruker.dittnav.common.util.database.persisting.toBatchPersistResult
-import java.sql.Connection
-import java.sql.PreparedStatement
-import java.sql.ResultSet
-import java.sql.Types
+import java.sql.*
 import java.time.LocalDateTime
 
-fun Connection.createVarselbestillinger(doknotifikasjoner: List<Varselbestilling>): ListPersistActionResult<Varselbestilling> =
+fun Connection.createVarselbestillinger(varselbestillinger: List<Varselbestilling>): ListPersistActionResult<Varselbestilling> =
         executeBatchPersistQuery("""INSERT INTO varselbestilling (bestillingsid, eventid, fodselsnummer, systembruker, eventtidspunkt) 
                                     |VALUES (?, ?, ?, ?, ?)""".trimMargin()) {
-                doknotifikasjoner.forEach { doknotifikasjon ->
-                        buildStatementForSingleRow(doknotifikasjon)
+                varselbestillinger.forEach { varselbestilling ->
+                        buildStatementForSingleRow(varselbestilling)
                         addBatch()
                 }
-        }.toBatchPersistResult(doknotifikasjoner)
+        }.toBatchPersistResult(varselbestillinger)
 
-fun Connection.getVarselbestillingForBestillingsId(bestillingsId: String): Varselbestilling =
+fun Connection.getVarselbestillingForBestillingsId(bestillingsId: String): Varselbestilling? =
         prepareStatement("""SELECT varselbestilling.* FROM varselbestilling WHERE bestillingsid = ?""")
                 .use {
                     it.setString(1, bestillingsId)
-                    it.executeQuery().mapSingleResult { toVarselbestilling() }
+                    it.executeQuery().mapSingleResultNullable { toVarselbestilling() }
                 }
 
-fun Connection.getVarselbestillingForEvent(eventId: String, systembruker: String, fodselsnummer: String) =
+fun Connection.getVarselbestillingForEvent(eventId: String, systembruker: String, fodselsnummer: String): Varselbestilling? =
         prepareStatement("""SELECT varselbestilling.* FROM varselbestilling WHERE eventid = ? AND systembruker = ? AND fodselsnummer = ?""")
                 .use {
                     it.setString(1, eventId)
                     it.setString(2, systembruker)
                     it.setString(3, fodselsnummer)
-                    it.executeQuery().mapSingleResult { toVarselbestilling() }
+                    it.executeQuery().mapSingleResultNullable { toVarselbestilling() }
                 }
 
 fun ResultSet.toVarselbestilling(): Varselbestilling {
@@ -54,3 +50,10 @@ private fun PreparedStatement.buildStatementForSingleRow(varselbestilling: Varse
 }
 
 private fun ResultSet.getUtcDateTime(columnLabel: String): LocalDateTime = getTimestamp(columnLabel).toLocalDateTime()
+
+private fun <T> ResultSet.mapSingleResultNullable(result: ResultSet.() -> T): T? =
+        if (next()) {
+            result()
+        } else {
+            null
+        }

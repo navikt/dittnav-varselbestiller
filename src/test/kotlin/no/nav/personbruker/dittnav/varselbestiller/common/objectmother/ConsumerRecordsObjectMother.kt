@@ -17,6 +17,12 @@ object ConsumerRecordsObjectMother {
         return ConsumerRecords(records)
     }
 
+    fun <T> giveMeConsumerRecordsWithThisConsumerRecord(concreteRecords: List<ConsumerRecord<Nokkel, T>>): ConsumerRecords<Nokkel, T> {
+        val records = mutableMapOf<TopicPartition, List<ConsumerRecord<Nokkel, T>>>()
+        records[TopicPartition(concreteRecords[0].topic(), 1)] = concreteRecords
+        return ConsumerRecords(records)
+    }
+
     fun giveMeANumberOfBeskjedRecords(numberOfRecords: Int, topicName: String, withEksternVarsling: Boolean = false): ConsumerRecords<Nokkel, Beskjed> {
         val records = mutableMapOf<TopicPartition, List<ConsumerRecord<Nokkel, Beskjed>>>()
         val recordsForSingleTopic = createBeskjedRecords(topicName, numberOfRecords, withEksternVarsling)
@@ -38,6 +44,10 @@ object ConsumerRecordsObjectMother {
     fun <T> createConsumerRecord(topicName: String, actualEvent: T): ConsumerRecord<Nokkel, T> {
         val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(1)
         return ConsumerRecord(topicName, 1, 0, nokkel, actualEvent)
+    }
+
+    fun <K, V> createConsumerRecordWithKey(topicName: String, actualKey: K?, actualEvent: V): ConsumerRecord<K, V> {
+        return ConsumerRecord(topicName, 1, 0, actualKey, actualEvent)
     }
 
     fun giveMeANumberOfDoneRecords(numberOfRecords: Int, topicName: String): ConsumerRecords<Nokkel, Done> {

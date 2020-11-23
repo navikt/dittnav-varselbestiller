@@ -6,14 +6,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import no.nav.brukernotifikasjon.schemas.Beskjed
 import no.nav.brukernotifikasjon.schemas.Nokkel
+import no.nav.personbruker.dittnav.common.util.database.exception.RetriableDatabaseException
+import no.nav.personbruker.dittnav.common.util.database.exception.UnretriableDatabaseException
 import no.nav.personbruker.dittnav.varselbestiller.common.EventBatchProcessorService
-import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.RetriableDatabaseException
-import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UnretriableDatabaseException
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UnvalidatableRecordException
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.ConsumerRecordsObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.health.Status
 import org.amshove.kluent.`should be equal to`
-import org.amshove.kluent.`should equal`
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.errors.DisconnectException
 import org.junit.jupiter.api.BeforeEach

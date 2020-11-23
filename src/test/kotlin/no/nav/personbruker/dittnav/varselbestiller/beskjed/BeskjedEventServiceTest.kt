@@ -35,7 +35,7 @@ class BeskjedEventServiceTest {
     }
 
     @Test
-    fun `skal forkaste eventer som mangler fodselsnummer`() {
+    fun `Skal forkaste eventer som mangler fodselsnummer`() {
         val beskjedWithoutFodselsnummer = AvroBeskjedObjectMother.createBeskjedWithFodselsnummerOgEksternVarsling(1,"", true)
         val cr = ConsumerRecordsObjectMother.createConsumerRecord("beskjed", beskjedWithoutFodselsnummer)
         val records = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(cr)

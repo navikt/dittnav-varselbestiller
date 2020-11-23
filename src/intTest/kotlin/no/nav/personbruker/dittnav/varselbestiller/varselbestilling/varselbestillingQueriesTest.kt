@@ -4,10 +4,7 @@ import kotlinx.coroutines.runBlocking
 import no.nav.personbruker.dittnav.varselbestiller.common.database.H2Database
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.*
-import org.amshove.kluent.`should be equal to`
-import org.amshove.kluent.`should throw`
-import org.amshove.kluent.`with message`
-import org.amshove.kluent.invoking
+import org.amshove.kluent.*
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Test
 import java.sql.SQLException
@@ -49,11 +46,26 @@ class varselbestillingQueriesTest {
     }
 
     @Test
-    fun `Kaster Exception hvis Varselbestilling med bestillingsId ikke finnes`() {
-        invoking {
-            runBlocking {
-                database.dbQuery { getVarselbestillingForBestillingsId("idFinnesIkke") }
-            }
-        } `should throw` SQLException::class `with message` "Found no rows"
+    fun `Returnerer null hvis Varselbestilling med bestillingsId ikke finnes`() {
+        runBlocking {
+            val result = database.dbQuery { getVarselbestillingForBestillingsId("idFinnesIkke") }
+            result.`should be null`()
+        }
+    }
+
+    @Test
+    fun `Finner Varselbestilling med eventId`() {
+        runBlocking {
+            val result = database.dbQuery { getVarselbestillingForEvent(varselbestillingBeskjed.eventId, varselbestillingBeskjed.systembruker, varselbestillingBeskjed.fodselsnummer) }
+            result `should be equal to` varselbestillingBeskjed
+        }
+    }
+
+    @Test
+    fun `Returnerer null hvis Varselbestilling med eventId ikke finnes`() {
+        runBlocking {
+            val result = database.dbQuery { getVarselbestillingForEvent("idFinnesIkke", varselbestillingBeskjed.systembruker, varselbestillingBeskjed.fodselsnummer) }
+            result.`should be null`()
+        }
     }
 }

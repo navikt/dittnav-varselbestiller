@@ -49,16 +49,19 @@ class DoneEventService(
                 log.warn("Validering av done-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
             }
         }
-        doknotifikasjonStoppProducer.produceDoknotifikasjonStop(successfullyValidatedEvents)
-        kastExceptionHvisMislykkedValidering(problematicEvents)
+        if(successfullyValidatedEvents.isNotEmpty()) {
+            doknotifikasjonStoppProducer.produceDoknotifikasjonStop(successfullyValidatedEvents)
+        }
+        if(problematicEvents.isNotEmpty()) {
+            kastExceptionHvisMislykkedValidering(problematicEvents)
+        }
     }
 
     private suspend fun fetchVarselbestilling(event: ConsumerRecord<Nokkel, Done>): Varselbestilling? {
         val doneKey = event.getNonNullKey()
         val doneValue = event.value()
-        val varselbestilling = varselbestillingRepository.fetchVarselbestilling(
+        return varselbestillingRepository.fetchVarselbestilling(
                 eventId = doneKey.getEventId(), systembruker = doneKey.getSystembruker(), fodselsnummer = doneValue.getFodselsnummer())
-        return varselbestilling
     }
 
     private fun kastExceptionHvisMislykkedValidering(problematicEvents: MutableList<ConsumerRecord<Nokkel, Done>>) {

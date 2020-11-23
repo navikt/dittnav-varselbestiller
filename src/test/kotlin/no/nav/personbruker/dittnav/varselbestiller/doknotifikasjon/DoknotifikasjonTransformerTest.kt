@@ -10,7 +10,7 @@ import no.nav.personbruker.dittnav.varselbestiller.oppgave.AvroOppgaveObjectMoth
 import org.amshove.kluent.*
 import org.junit.jupiter.api.Test
 
-class VarselbestillingTransformerTest {
+class DoknotifikasjonTransformerTest {
 
     @Test
     fun `Skal transformere fra Beskjed til Doknotifikasjon`() {
