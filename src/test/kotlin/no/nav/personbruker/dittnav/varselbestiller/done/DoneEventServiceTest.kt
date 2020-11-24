@@ -8,13 +8,13 @@ import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
 import no.nav.personbruker.dittnav.common.util.kafka.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.FieldValidationException
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.ConsumerRecordsObjectMother
-import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
-import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonTransformer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.AvroDoknotifikasjonStoppObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppTransformer
 import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelObjectMother
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import org.amshove.kluent.`should be`
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.junit.jupiter.api.AfterAll
@@ -110,7 +110,7 @@ class DoneEventServiceTest {
 
         val fieldValidationException = FieldValidationException("Simulert feil i en test")
         val doknotifikasjonStopp = AvroDoknotifikasjonStoppObjectMother.giveMeANumberOfDoknotifikasjonStopp(5)
-        coEvery { DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(ofType(Nokkel::class)) } throws fieldValidationException andThenMany doknotifikasjonStopp
+        coEvery { DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(ofType(Varselbestilling::class)) } throws fieldValidationException andThenMany doknotifikasjonStopp
 
         runBlocking {
             eventService.processEvents(records)

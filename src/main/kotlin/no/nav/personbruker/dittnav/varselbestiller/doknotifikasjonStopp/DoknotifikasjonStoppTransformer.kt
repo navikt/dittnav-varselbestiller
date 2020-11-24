@@ -1,15 +1,15 @@
 package no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp
 
-import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
 import no.nav.personbruker.dittnav.varselbestiller.common.validation.validateNonNullFieldMaxLength
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
 
 object DoknotifikasjonStoppTransformer {
 
-    fun createDoknotifikasjonStopp(nokkel: Nokkel): DoknotifikasjonStopp {
+    fun createDoknotifikasjonStopp(varselbestilling: Varselbestilling): DoknotifikasjonStopp {
         val doknotifikasjonStoppBuilder = DoknotifikasjonStopp.newBuilder()
-                .setBestillingsId(validateNonNullFieldMaxLength(nokkel.getEventId(), "eventId", 50))
-                .setBestillerId(validateNonNullFieldMaxLength(nokkel.getSystembruker(), "systembruker", 100))
+                .setBestillingsId(varselbestilling.bestillingsId)
+                .setBestillerId(varselbestilling.systembruker)
         return doknotifikasjonStoppBuilder.build()
     }
 }

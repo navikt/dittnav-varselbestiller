@@ -10,11 +10,11 @@ import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.NokkelNullE
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UnvalidatableRecordException
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.serializer.getNonNullKey
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
-import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonTransformer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppTransformer
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.slf4j.Logger
@@ -37,7 +37,7 @@ class DoneEventService(
                 if(varselbestilling != null) {
                     val doneKey = event.getNonNullKey()
                     val doknotifikasjonStoppKey = DoknotifikasjonTransformer.createDoknotifikasjonKey(doneKey, Eventtype.DONE)
-                    val doknotifikasjonStoppEvent = DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(doneKey)
+                    val doknotifikasjonStoppEvent = DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(varselbestilling)
                     successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonStoppKey, doknotifikasjonStoppEvent))
                 }
             } catch (e: NokkelNullException) {

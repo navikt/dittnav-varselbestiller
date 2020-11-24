@@ -25,16 +25,17 @@ class ApplicationContext {
     val environment = Environment()
     val database: Database = PostgresDatabase(environment)
 
-    private val doknotifikasjonProducer = initializeDoknotifikasjonProducer()
+    private val doknotifikasjonBeskjedProducer = initializeDoknotifikasjonProducer(Eventtype.BESKJED)
+    private val doknotifikasjonOppgaveProducer = initializeDoknotifikasjonProducer(Eventtype.OPPGAVE)
     private val doknotifikasjonStopProducer = initializeDoknotifikasjonStoppProducer()
     private val doknotifikasjonRepository = VarselbestillingRepository(database)
 
     private val beskjedKafkaProps = Kafka.consumerProps(environment, Eventtype.BESKJED)
-    private val beskjedEventService = BeskjedEventService(doknotifikasjonProducer, doknotifikasjonRepository)
+    private val beskjedEventService = BeskjedEventService(doknotifikasjonBeskjedProducer, doknotifikasjonRepository)
     var beskjedConsumer = initializeBeskjedConsumer()
 
     private val oppgaveKafkaProps = Kafka.consumerProps(environment, Eventtype.OPPGAVE)
-    val oppgaveEventService = OppgaveEventService(doknotifikasjonProducer, doknotifikasjonRepository)
+    val oppgaveEventService = OppgaveEventService(doknotifikasjonOppgaveProducer, doknotifikasjonRepository)
     var oppgaveConsumer = initializeOppgaveConsumer()
 
     private val doneKafkaProps = Kafka.consumerProps(environment, Eventtype.DONE)
@@ -55,8 +56,8 @@ class ApplicationContext {
         return KafkaConsumerSetup.setupConsumerForTheDoneTopic(doneKafkaProps, doneEventService)
     }
 
-    private fun initializeDoknotifikasjonProducer(): DoknotifikasjonProducer {
-        val producerProps = Kafka.producerProps(environment, Eventtype.DOKNOTIFIKASJON)
+    private fun initializeDoknotifikasjonProducer(eventtype: Eventtype): DoknotifikasjonProducer {
+        val producerProps = Kafka.producerProps(environment, eventtype)
         val kafkaProducer = KafkaProducer<String, Doknotifikasjon>(producerProps)
         kafkaProducer.initTransactions()
         val kafkaProducerDoknotifikasjon = KafkaProducerWrapper(Kafka.doknotifikasjonTopicName, kafkaProducer)
