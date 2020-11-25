@@ -35,8 +35,7 @@ class DoneEventService(
             try {
                 val varselbestilling: Varselbestilling? = fetchVarselbestilling(event)
                 if(varselbestilling != null) {
-                    val doneKey = event.getNonNullKey()
-                    val doknotifikasjonStoppKey = DoknotifikasjonTransformer.createDoknotifikasjonKey(doneKey, Eventtype.DONE)
+                    val doknotifikasjonStoppKey = varselbestilling.bestillingsId
                     val doknotifikasjonStoppEvent = DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(varselbestilling)
                     successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonStoppKey, doknotifikasjonStoppEvent))
                 }

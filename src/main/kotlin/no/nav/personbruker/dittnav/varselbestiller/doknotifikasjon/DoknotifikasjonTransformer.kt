@@ -9,8 +9,6 @@ import no.nav.personbruker.dittnav.varselbestiller.common.validation.validateFod
 import no.nav.personbruker.dittnav.varselbestiller.common.validation.validateNonNullFieldMaxLength
 import no.nav.personbruker.dittnav.varselbestiller.common.validation.validateSikkerhetsnivaa
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
-import java.time.LocalDateTime
-import java.time.ZoneId
 
 object DoknotifikasjonTransformer {
 
