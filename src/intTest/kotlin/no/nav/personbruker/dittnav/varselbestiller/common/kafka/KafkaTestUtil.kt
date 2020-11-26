@@ -36,6 +36,7 @@ object KafkaTestUtil {
                 dbHost = "dbHostIkkeIBrukHer",
                 dbMountPath = "dbMountPathIkkeIBrukHer",
                 dbName = "dbNameIkkeIBrukHer",
+                dbAdmin = "dbAdminIkkeIBrukHer",
                 dbUrl = "dbUrlIkkeIBrukHer",
                 dbUser = "dbUserIkkeIBrukHer",
                 clusterName = "clusterNameIkkeIBrukHer",

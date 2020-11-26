@@ -6,7 +6,7 @@ import no.nav.doknotifikasjon.schemas.PrefererteKanal
 object AvroDoknotifikasjonObjectMother {
 
     private val defaultBestillingsId = "1"
-    private val defaultBestillerId = "bestillerid"
+    private val defaultBestillerId = "bestillerId"
     private val defaultSikkerhetsnivaa = 4
     private val defaultFodselsnr = "1234"
     private val defaultTittel = "Dette er Beskjed til brukeren"

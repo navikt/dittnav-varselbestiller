@@ -9,16 +9,20 @@ import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.FieldValida
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.NokkelNullException
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UnvalidatableRecordException
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.serializer.getNonNullKey
-import no.nav.personbruker.dittnav.varselbestiller.config.EventType
-import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonStoppProducer
+import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonTransformer
+import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
+import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppTransformer
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class DoneEventService(
-        private val doknotifikasjonStoppProducer: DoknotifikasjonStoppProducer
+        private val doknotifikasjonStoppProducer: DoknotifikasjonStoppProducer,
+        private val varselbestillingRepository: VarselbestillingRepository
 ) : EventBatchProcessorService<Nokkel, Done> {
 
     private val log: Logger = LoggerFactory.getLogger(DoneEventService::class.java)
@@ -29,10 +33,10 @@ class DoneEventService(
 
         events.forEach { event ->
             try {
-                if(harBestiltEksternVarsling(event.value())) {
-                    val doneKey = event.getNonNullKey()
-                    val doknotifikasjonStoppKey = DoknotifikasjonTransformer.createDoknotifikasjonKey(doneKey, EventType.DONE)
-                    val doknotifikasjonStoppEvent = DoknotifikasjonTransformer.createDoknotifikasjonStopp(doneKey)
+                val varselbestilling: Varselbestilling? = fetchVarselbestilling(event)
+                if(varselbestilling != null) {
+                    val doknotifikasjonStoppKey = varselbestilling.bestillingsId
+                    val doknotifikasjonStoppEvent = DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(varselbestilling)
                     successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonStoppKey, doknotifikasjonStoppEvent))
                 }
             } catch (e: NokkelNullException) {
@@ -44,13 +48,19 @@ class DoneEventService(
                 log.warn("Validering av done-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
             }
         }
-        doknotifikasjonStoppProducer.produceDoknotifikasjonStop(successfullyValidatedEvents)
-        kastExceptionHvisMislykkedValidering(problematicEvents)
+        if(successfullyValidatedEvents.isNotEmpty()) {
+            doknotifikasjonStoppProducer.produceDoknotifikasjonStop(successfullyValidatedEvents)
+        }
+        if(problematicEvents.isNotEmpty()) {
+            kastExceptionHvisMislykkedValidering(problematicEvents)
+        }
     }
 
-    private fun harBestiltEksternVarsling(value: Done): Boolean {
-        // Legge til en sjekk på om brukernotifikasjonen tilhørende Done-eventet faktisk har bestilt eksternt varsel
-        return false
+    private suspend fun fetchVarselbestilling(event: ConsumerRecord<Nokkel, Done>): Varselbestilling? {
+        val doneKey = event.getNonNullKey()
+        val doneValue = event.value()
+        return varselbestillingRepository.fetchVarselbestilling(
+                eventId = doneKey.getEventId(), systembruker = doneKey.getSystembruker(), fodselsnummer = doneValue.getFodselsnummer())
     }
 
     private fun kastExceptionHvisMislykkedValidering(problematicEvents: MutableList<ConsumerRecord<Nokkel, Done>>) {
