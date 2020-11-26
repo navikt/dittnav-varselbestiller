@@ -9,10 +9,13 @@ import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.FieldValida
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.NokkelNullException
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UnvalidatableRecordException
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.serializer.getNonNullKey
-import no.nav.personbruker.dittnav.varselbestiller.config.EventType
+import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonTransformer
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingTransformer
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.slf4j.Logger
@@ -20,6 +23,7 @@ import org.slf4j.LoggerFactory
 
 class BeskjedEventService(
         private val doknotifikasjonProducer: DoknotifikasjonProducer,
+        private val varselbestillingRepository: VarselbestillingRepository,
         private val metricsCollector: MetricsCollector
 ) : EventBatchProcessorService<Nokkel, Beskjed> {
 
@@ -28,16 +32,18 @@ class BeskjedEventService(
     override suspend fun processEvents(events: ConsumerRecords<Nokkel, Beskjed>) {
         val successfullyValidatedEvents = mutableListOf<RecordKeyValueWrapper<String, Doknotifikasjon>>()
         val problematicEvents = mutableListOf<ConsumerRecord<Nokkel, Beskjed>>()
+        val varselbestillinger = mutableListOf<Varselbestilling>()
 
-        metricsCollector.recordMetrics(eventType = EventType.BESKJED) {
+        metricsCollector.recordMetrics(eventType = Eventtype.BESKJED) {
             events.forEach { event ->
                 try {
                     if (skalVarsleEksternt(event.value())) {
                         val beskjedKey = event.getNonNullKey()
                         val beskjed = event.value()
-                        val doknotifikasjonKey = DoknotifikasjonTransformer.createDoknotifikasjonKey(beskjedKey, EventType.BESKJED)
+                        val doknotifikasjonKey = DoknotifikasjonTransformer.createDoknotifikasjonKey(beskjedKey, Eventtype.BESKJED)
                         val doknotifikasjon = DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(beskjedKey, beskjed)
                         successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonKey, doknotifikasjon))
+                        varselbestillinger.add(VarselbestillingTransformer.fromBeskjed(beskjedKey, beskjed, doknotifikasjon))
                         countSuccessfulEventForProducer(beskjedKey.getSystembruker())
                     }
                 } catch (nne: NokkelNullException) {
@@ -52,15 +58,18 @@ class BeskjedEventService(
                     log.warn("Validering av beskjed-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
                 }
             }
+            if (successfullyValidatedEvents.isNotEmpty()) {
+                produceDoknotifikasjonerAndPersistToDB(successfullyValidatedEvents, varselbestillinger)
+            }
+            if (problematicEvents.isNotEmpty()) {
+                kastExceptionHvisMislykkedValidering(problematicEvents)
+            }
+        }
+    }
 
-        }
-
-        if (successfullyValidatedEvents.isNotEmpty()) {
-            doknotifikasjonProducer.produceDoknotifikasjon(successfullyValidatedEvents)
-        }
-        if (problematicEvents.isNotEmpty()) {
-            kastExceptionHvisMislykkedValidering(problematicEvents)
-        }
+    private suspend fun produceDoknotifikasjonerAndPersistToDB(successfullyValidatedEvents: MutableList<RecordKeyValueWrapper<String, Doknotifikasjon>>, varselbestillinger: List<Varselbestilling>) {
+        doknotifikasjonProducer.produceDoknotifikasjon(successfullyValidatedEvents)
+        varselbestillingRepository.persistInOneBatch(varselbestillinger)
     }
 
     private fun skalVarsleEksternt(event: Beskjed?): Boolean {

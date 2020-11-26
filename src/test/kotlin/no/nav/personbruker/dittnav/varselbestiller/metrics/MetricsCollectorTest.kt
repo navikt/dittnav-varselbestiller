@@ -3,7 +3,7 @@ package no.nav.personbruker.dittnav.varselbestiller.metrics
 import io.mockk.*
 import kotlinx.coroutines.runBlocking
 import no.nav.personbruker.dittnav.common.metrics.MetricsReporter
-import no.nav.personbruker.dittnav.varselbestiller.config.EventType
+import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.metrics.influx.KAFKA_EVENTS_FAILED
 import no.nav.personbruker.dittnav.varselbestiller.metrics.influx.KAFKA_EVENTS_PROCESSED
 import no.nav.personbruker.dittnav.varselbestiller.metrics.influx.KAFKA_EVENTS_SEEN
@@ -40,7 +40,7 @@ internal class MetricsCollectorTest {
         every { PrometheusMetricsCollector.registerEventsSeen(any(), any(), capture(producerNameForPrometheus)) } returns Unit
 
         runBlocking {
-            metricsCollector.recordMetrics(EventType.BESKJED) {
+            metricsCollector.recordMetrics(Eventtype.BESKJED) {
                 countSuccessfulEventForProducer(producerName)
             }
         }
@@ -68,7 +68,7 @@ internal class MetricsCollectorTest {
         every { PrometheusMetricsCollector.registerEventsFailed(any(), any(), capture(producerNameForPrometheus)) } returns Unit
 
         runBlocking {
-            metricsCollector.recordMetrics(EventType.BESKJED) {
+            metricsCollector.recordMetrics(Eventtype.BESKJED) {
                 countFailedEventForProducer(producerName)
             }
         }
@@ -97,7 +97,7 @@ internal class MetricsCollectorTest {
         coEvery { metricsReporter.registerDataPoint(KAFKA_EVENTS_FAILED, capture(capturedFieldsForFailed), any()) } returns Unit
 
         runBlocking {
-            metricsCollector.recordMetrics(EventType.BESKJED) {
+            metricsCollector.recordMetrics(Eventtype.BESKJED) {
                 countSuccessfulEventForProducer("producer")
                 countSuccessfulEventForProducer("producer")
                 countFailedEventForProducer("producer")

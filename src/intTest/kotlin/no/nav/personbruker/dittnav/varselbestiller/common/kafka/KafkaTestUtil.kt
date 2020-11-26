@@ -5,6 +5,7 @@ import no.nav.common.JAASCredential
 import no.nav.common.KafkaEnvironment
 import no.nav.personbruker.dittnav.varselbestiller.config.Environment
 import org.apache.avro.generic.GenericRecord
+import java.net.URL
 import java.util.*
 
 object KafkaTestUtil {
@@ -36,12 +37,14 @@ object KafkaTestUtil {
                 dbHost = "dbHostIkkeIBrukHer",
                 dbMountPath = "dbMountPathIkkeIBrukHer",
                 dbName = "dbNameIkkeIBrukHer",
+                dbAdmin = "dbAdminIkkeIBrukHer",
                 dbUrl = "dbUrlIkkeIBrukHer",
                 dbUser = "dbUserIkkeIBrukHer",
                 clusterName = "clusterNameIkkeIBrukHer",
                 namespace = "namespaceIkkeIBrukHer",
                 sensuHost = "sensuHostIkkeIBrukHer",
-                sensuPort = "sensuPortIkkeIBrukHer"
+                sensuPort = "sensuPortIkkeIBrukHer",
+                eventHandlerURL = URL("http://event-handler")
         )
     }
 

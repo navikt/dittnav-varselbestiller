@@ -1,8 +1,8 @@
 package no.nav.personbruker.dittnav.varselbestiller.metrics
 
-import no.nav.personbruker.dittnav.varselbestiller.config.EventType
+import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 
-class EventMetricsSession(val eventType: EventType) {
+class EventMetricsSession(val eventType: Eventtype) {
     private val numberProcessedBySystemUser = HashMap<String, Int>()
     private val numberFailedBySystemUser = HashMap<String, Int>()
     private val numberDuplicateKeysBySystemUser = HashMap<String, Int>()

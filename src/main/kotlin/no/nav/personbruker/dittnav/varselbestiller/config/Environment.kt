@@ -13,6 +13,7 @@ data class Environment(val bootstrapServers: String = getEnvVar("KAFKA_BOOTSTRAP
                        val dbName: String = getEnvVar("DB_NAME"),
                        val dbReadOnlyUser: String = getEnvVar("DB_NAME") + "-readonly",
                        val dbUser: String = getEnvVar("DB_NAME") + "-user",
+                       val dbAdmin: String = getEnvVar("DB_NAME") + "-admin",
                        val dbUrl: String = "jdbc:postgresql://$dbHost/$dbName",
                        val dbMountPath: String = getEnvVar("DB_MOUNT_PATH"),
                        val clusterName: String = getEnvVar("NAIS_CLUSTER_NAME"),

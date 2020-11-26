@@ -1,12 +1,12 @@
 package no.nav.personbruker.dittnav.varselbestiller.common.kafka
 
 import kotlinx.coroutines.*
+import no.nav.personbruker.dittnav.common.util.database.exception.RetriableDatabaseException
+import no.nav.personbruker.dittnav.common.util.database.exception.UnretriableDatabaseException
 import no.nav.personbruker.dittnav.common.util.kafka.consumer.rollbackToLastCommitted
+import no.nav.personbruker.dittnav.common.util.kafka.exception.RetriableKafkaException
+import no.nav.personbruker.dittnav.common.util.kafka.exception.UnretriableKafkaException
 import no.nav.personbruker.dittnav.varselbestiller.common.EventBatchProcessorService
-import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.RetriableDatabaseException
-import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.RetriableKafkaException
-import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UnretriableDatabaseException
-import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UnretriableKafkaException
 import no.nav.personbruker.dittnav.varselbestiller.health.HealthCheck
 import no.nav.personbruker.dittnav.varselbestiller.health.HealthStatus
 import no.nav.personbruker.dittnav.varselbestiller.health.Status

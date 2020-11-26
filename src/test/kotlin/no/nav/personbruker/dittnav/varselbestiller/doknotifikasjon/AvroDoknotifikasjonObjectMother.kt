@@ -6,7 +6,8 @@ import no.nav.doknotifikasjon.schemas.PrefererteKanal
 object AvroDoknotifikasjonObjectMother {
 
     private val defaultBestillingsId = "1"
-    private val defaultBestillerId = "bestillerid"
+    private val defaultBestillerId = "bestillerId"
+    private val defaultSikkerhetsnivaa = 4
     private val defaultFodselsnr = "1234"
     private val defaultTittel = "Dette er Beskjed til brukeren"
     private val defaultEpostTekst = "E-posttekst"
@@ -22,10 +23,10 @@ object AvroDoknotifikasjonObjectMother {
     }
 
     fun createDoknotifikasjon(bestillingsId: String): Doknotifikasjon {
-        return Doknotifikasjon(bestillingsId, defaultBestillerId, defaultFodselsnr, 1, 1, defaultTittel, defaultEpostTekst, defaultSmsTekst, defaultPrefererteKanaler)
+        return Doknotifikasjon(bestillingsId, defaultBestillerId, defaultSikkerhetsnivaa, defaultFodselsnr, 1, 1, defaultTittel, defaultEpostTekst, defaultSmsTekst, defaultPrefererteKanaler)
     }
 
     fun createDoknotifikasjon(): Doknotifikasjon {
-        return Doknotifikasjon(defaultBestillingsId, defaultBestillerId, defaultFodselsnr, 1, 1, defaultTittel, defaultEpostTekst, defaultSmsTekst, defaultPrefererteKanaler)
+        return Doknotifikasjon(defaultBestillingsId, defaultBestillerId, defaultSikkerhetsnivaa, defaultFodselsnr, 1, 1, defaultTittel, defaultEpostTekst, defaultSmsTekst, defaultPrefererteKanaler)
     }
 }

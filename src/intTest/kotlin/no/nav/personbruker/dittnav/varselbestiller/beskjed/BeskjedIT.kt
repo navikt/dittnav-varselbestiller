@@ -1,20 +1,32 @@
 package no.nav.personbruker.dittnav.varselbestiller.beskjed
 
+import io.ktor.client.*
+import io.ktor.client.engine.mock.*
+import io.ktor.client.features.json.*
+import io.ktor.client.request.*
+import io.ktor.http.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import no.nav.brukernotifikasjon.schemas.Beskjed
 import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.common.KafkaEnvironment
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
+import no.nav.personbruker.dittnav.common.metrics.StubMetricsReporter
 import no.nav.personbruker.dittnav.common.util.kafka.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.common.util.kafka.producer.KafkaProducerWrapper
 import no.nav.personbruker.dittnav.varselbestiller.CapturingEventProcessor
+import no.nav.personbruker.dittnav.varselbestiller.common.database.H2Database
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Consumer
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaEmbed
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaTestUtil
-import no.nav.personbruker.dittnav.varselbestiller.config.EventType
+import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.config.Kafka
+import no.nav.personbruker.dittnav.varselbestiller.config.buildJsonSerializer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
+import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
+import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameResolver
+import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameScrubber
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelObjectMother
 import org.amshove.kluent.`should be equal to`
 import org.amshove.kluent.shouldBeEqualTo
@@ -29,9 +41,18 @@ class BeskjedIT {
     private val embeddedEnv = KafkaTestUtil.createDefaultKafkaEmbeddedInstance(listOf(Kafka.beskjedTopicName, Kafka.doknotifikasjonTopicName))
     private val testEnvironment = KafkaTestUtil.createEnvironmentForEmbeddedKafka(embeddedEnv)
 
+    private val database = H2Database()
+
     private val beskjedEvents = (1..10).map { AvroNokkelObjectMother.createNokkelWithEventId(it) to AvroBeskjedObjectMother.createBeskjedWithEksternVarsling(it, eksternVarsling = true) }.toMap()
 
     private val capturedDoknotifikasjonRecords = ArrayList<RecordKeyValueWrapper<String, Doknotifikasjon>>()
+
+    private val client = getClient()
+    private val metricsReporter = StubMetricsReporter()
+    private val nameResolver = ProducerNameResolver(client, testEnvironment.eventHandlerURL)
+    private val nameScrubber = ProducerNameScrubber(nameResolver)
+    private val metricsCollector = MetricsCollector(metricsReporter, nameScrubber)
+    private val producerNameAlias = "dittnav"
 
     @BeforeAll
     fun setup() {
@@ -62,15 +83,16 @@ class BeskjedIT {
     }
 
     fun `Read all Beskjed-events from our topic and verify that they have been sent to varselbestiller-topic`() {
-        val consumerProps = KafkaEmbed.consumerProps(testEnvironment, EventType.BESKJED, true)
+        val consumerProps = KafkaEmbed.consumerProps(testEnvironment, Eventtype.BESKJED, true)
         val kafkaConsumer = KafkaConsumer<Nokkel, Beskjed>(consumerProps)
 
-        val producerProps = Kafka.producerProps(testEnvironment, EventType.DOKNOTIFIKASJON, true)
+        val producerProps = Kafka.producerProps(testEnvironment, Eventtype.DOKNOTIFIKASJON, true)
         val kafkaProducer = KafkaProducer<String, Doknotifikasjon>(producerProps)
         val kafkaProducerWrapper = KafkaProducerWrapper(Kafka.doknotifikasjonTopicName, kafkaProducer)
         val doknotifikasjonProducer = DoknotifikasjonProducer(kafkaProducerWrapper)
+        val doknotifikasjonRepository = VarselbestillingRepository(database)
 
-        val eventService = BeskjedEventService(doknotifikasjonProducer)
+        val eventService = BeskjedEventService(doknotifikasjonProducer, doknotifikasjonRepository, metricsCollector)
         val consumer = Consumer(Kafka.beskjedTopicName, kafkaConsumer, eventService)
 
         kafkaProducer.initTransactions()
@@ -84,7 +106,7 @@ class BeskjedIT {
     }
 
     private fun `Wait until all beskjed events have been received by target topic`() {
-        val targetConsumerProps = KafkaEmbed.consumerProps(testEnvironment, EventType.DOKNOTIFIKASJON, true)
+        val targetConsumerProps = KafkaEmbed.consumerProps(testEnvironment, Eventtype.DOKNOTIFIKASJON, true)
         val targetKafkaConsumer = KafkaConsumer<String, Doknotifikasjon>(targetConsumerProps)
         val capturingProcessor = CapturingEventProcessor<String, Doknotifikasjon>()
 
@@ -107,4 +129,22 @@ class BeskjedIT {
 
         capturedDoknotifikasjonRecords.addAll(capturingProcessor.getEvents())
     }
+
+    private fun getClient(): HttpClient {
+        return HttpClient(MockEngine) {
+            engine {
+                addHandler { request ->
+                    if (request.url.encodedPath.contains("/producer/alias") && request.url.host.contains("event-handler")) {
+                        respond(producerNameAlias, headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()))
+                    } else {
+                        respondError(HttpStatusCode.BadRequest)
+                    }
+                }
+            }
+            install(JsonFeature) {
+                serializer = buildJsonSerializer()
+            }
+        }
+    }
+
 }

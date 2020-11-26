@@ -1,7 +1,7 @@
 package no.nav.personbruker.dittnav.varselbestiller.metrics
 
 import no.nav.personbruker.dittnav.common.metrics.MetricsReporter
-import no.nav.personbruker.dittnav.varselbestiller.config.EventType
+import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.metrics.influx.KAFKA_EVENTS_DUPLICATE_KEY
 import no.nav.personbruker.dittnav.varselbestiller.metrics.influx.KAFKA_EVENTS_FAILED
 import no.nav.personbruker.dittnav.varselbestiller.metrics.influx.KAFKA_EVENTS_PROCESSED
@@ -10,7 +10,7 @@ import no.nav.personbruker.dittnav.varselbestiller.metrics.prometheus.Prometheus
 
 class MetricsCollector(private val metricsReporter: MetricsReporter, private val nameScrubber: ProducerNameScrubber) {
 
-    suspend fun recordMetrics(eventType: EventType, block: suspend EventMetricsSession.() -> Unit) {
+    suspend fun recordMetrics(eventType: Eventtype, block: suspend EventMetricsSession.() -> Unit) {
         val session = EventMetricsSession(eventType)
         block.invoke(session)
 
