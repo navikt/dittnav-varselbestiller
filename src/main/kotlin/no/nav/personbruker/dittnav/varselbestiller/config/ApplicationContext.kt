@@ -6,6 +6,10 @@ import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.brukernotifikasjon.schemas.Oppgave
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
+import no.nav.personbruker.dittnav.common.metrics.MetricsReporter
+import no.nav.personbruker.dittnav.common.metrics.StubMetricsReporter
+import no.nav.personbruker.dittnav.common.metrics.influx.InfluxMetricsReporter
+import no.nav.personbruker.dittnav.common.metrics.influx.SensuConfig
 import no.nav.personbruker.dittnav.common.util.kafka.producer.KafkaProducerWrapper
 import no.nav.personbruker.dittnav.varselbestiller.beskjed.BeskjedEventService
 import no.nav.personbruker.dittnav.varselbestiller.common.database.Database
@@ -14,21 +18,32 @@ import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.Doknotifikasj
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.done.DoneEventService
 import no.nav.personbruker.dittnav.varselbestiller.health.HealthService
+import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
+import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameResolver
+import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameScrubber
 import no.nav.personbruker.dittnav.varselbestiller.oppgave.OppgaveEventService
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.slf4j.LoggerFactory
 
+
 class ApplicationContext {
+
+    val httpClient = HttpClientBuilder.build()
 
     private val log = LoggerFactory.getLogger(ApplicationContext::class.java)
     private val environment = Environment()
     val database: Database = PostgresDatabase(environment)
 
+    val nameResolver = ProducerNameResolver(httpClient, environment.eventHandlerURL)
+    val nameScrubber = ProducerNameScrubber(nameResolver)
+    val metricsReporter = resolveMetricsReporter(environment)
+    val metricsCollector = MetricsCollector(metricsReporter, nameScrubber)
+
     private val doknotifikasjonProducer = initializeDoknotifikasjonProducer()
     private val doknotifikasjonStopProducer = initializeDoknotifikasjonStoppProducer()
 
     private val beskjedKafkaProps = Kafka.consumerProps(environment, EventType.BESKJED)
-    private val beskjedEventService = BeskjedEventService(doknotifikasjonProducer)
+    private val beskjedEventService = BeskjedEventService(doknotifikasjonProducer, metricsCollector)
     var beskjedConsumer = initializeBeskjedConsumer()
 
     private val oppgaveKafkaProps = Kafka.consumerProps(environment, EventType.OPPGAVE)
@@ -89,6 +104,25 @@ class ApplicationContext {
             log.info("doneConsumer har blitt reinstansiert.")
         } else {
             log.warn("doneConsumer kunne ikke bli reinstansiert fordi den fortsatt er aktiv.")
+        }
+    }
+
+    private fun resolveMetricsReporter(environment: Environment): MetricsReporter {
+        return if (environment.sensuHost == "" || environment.sensuHost == "stub") {
+            StubMetricsReporter()
+        } else {
+            val sensuConfig = SensuConfig(
+                    applicationName = environment.applicationName,
+                    hostName = environment.sensuHost,
+                    hostPort = environment.sensuPort.toInt(),
+                    clusterName = environment.clusterName,
+                    namespace = environment.namespace,
+                    eventsTopLevelName = "personbruker-innloggingsstatus",
+                    enableEventBatching = environment.sensuBatchingEnabled,
+                    eventBatchesPerSecond = environment.sensuBatchesPerSecond
+            )
+
+            InfluxMetricsReporter(sensuConfig)
         }
     }
 }

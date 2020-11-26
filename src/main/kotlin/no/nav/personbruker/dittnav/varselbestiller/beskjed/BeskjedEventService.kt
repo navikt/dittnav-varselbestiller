@@ -12,13 +12,15 @@ import no.nav.personbruker.dittnav.varselbestiller.common.kafka.serializer.getNo
 import no.nav.personbruker.dittnav.varselbestiller.config.EventType
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonTransformer
+import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class BeskjedEventService(
-        private val doknotifikasjonProducer: DoknotifikasjonProducer
+        private val doknotifikasjonProducer: DoknotifikasjonProducer,
+        private val metricsCollector: MetricsCollector
 ) : EventBatchProcessorService<Nokkel, Beskjed> {
 
     private val log: Logger = LoggerFactory.getLogger(BeskjedEventService::class.java)
@@ -26,28 +28,37 @@ class BeskjedEventService(
     override suspend fun processEvents(events: ConsumerRecords<Nokkel, Beskjed>) {
         val successfullyValidatedEvents = mutableListOf<RecordKeyValueWrapper<String, Doknotifikasjon>>()
         val problematicEvents = mutableListOf<ConsumerRecord<Nokkel, Beskjed>>()
-        events.forEach { event ->
-            try {
-                if (skalVarsleEksternt(event.value())) {
-                    val beskjedKey = event.getNonNullKey()
-                    val beskjed = event.value()
-                    val doknotifikasjonKey = DoknotifikasjonTransformer.createDoknotifikasjonKey(beskjedKey, EventType.BESKJED)
-                    val doknotifikasjon = DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(beskjedKey, beskjed)
-                    successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonKey, doknotifikasjon))
+
+        metricsCollector.recordMetrics(eventType = EventType.BESKJED) {
+            events.forEach { event ->
+                try {
+                    if (skalVarsleEksternt(event.value())) {
+                        val beskjedKey = event.getNonNullKey()
+                        val beskjed = event.value()
+                        val doknotifikasjonKey = DoknotifikasjonTransformer.createDoknotifikasjonKey(beskjedKey, EventType.BESKJED)
+                        val doknotifikasjon = DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(beskjedKey, beskjed)
+                        successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonKey, doknotifikasjon))
+                        countSuccessfulEventForProducer(beskjedKey.getSystembruker())
+                    }
+                } catch (nne: NokkelNullException) {
+                    countFailedEventForProducer("NoProducerSpecified")
+                    log.warn("Beskjed-eventet manglet nøkkel. Topic: ${event.topic()}, Partition: ${event.partition()}, Offset: ${event.offset()}", nne)
+                } catch (fve: FieldValidationException) {
+                    countFailedEventForProducer(event.systembruker ?: "NoProducerSpecified")
+                    log.warn("Eventet kan ikke brukes fordi det inneholder valideringsfeil, beskjed-eventet vil bli forkastet. EventId: ${event.eventId}, context: ${fve.context}", fve)
+                } catch (e: Exception) {
+                    countFailedEventForProducer(event.systembruker ?: "NoProducerSpecified")
+                    problematicEvents.add(event)
+                    log.warn("Validering av beskjed-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
                 }
-            } catch (nne: NokkelNullException) {
-                log.warn("Beskjed-eventet manglet nøkkel. Topic: ${event.topic()}, Partition: ${event.partition()}, Offset: ${event.offset()}", nne)
-            } catch (fve: FieldValidationException) {
-                log.warn("Eventet kan ikke brukes fordi det inneholder valideringsfeil, beskjed-eventet vil bli forkastet. EventId: ${event.eventId}, context: ${fve.context}", fve)
-            } catch (e: Exception) {
-                problematicEvents.add(event)
-                log.warn("Validering av beskjed-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
             }
+
         }
-        if(successfullyValidatedEvents.isNotEmpty()) {
+
+        if (successfullyValidatedEvents.isNotEmpty()) {
             doknotifikasjonProducer.produceDoknotifikasjon(successfullyValidatedEvents)
         }
-        if(problematicEvents.isNotEmpty()) {
+        if (problematicEvents.isNotEmpty()) {
             kastExceptionHvisMislykkedValidering(problematicEvents)
         }
     }

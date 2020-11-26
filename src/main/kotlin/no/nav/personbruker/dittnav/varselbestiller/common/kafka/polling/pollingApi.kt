@@ -1,4 +1,4 @@
-package no.nav.personbruker.dittnav.varselbestiller.metrics.kafka
+package no.nav.personbruker.dittnav.varselbestiller.common.kafka.polling
 
 import io.ktor.application.call
 import io.ktor.http.ContentType

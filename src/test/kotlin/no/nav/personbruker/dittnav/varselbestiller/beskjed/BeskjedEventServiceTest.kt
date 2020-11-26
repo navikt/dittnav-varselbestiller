@@ -11,6 +11,7 @@ import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.ConsumerR
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.AvroDoknotifikasjonObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonTransformer
+import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import org.amshove.kluent.`should be`
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
@@ -19,12 +20,14 @@ import org.junit.jupiter.api.Test
 class BeskjedEventServiceTest {
 
     private val doknotifikasjonProducer = mockk<DoknotifikasjonProducer>(relaxed = true)
-    private val eventService = BeskjedEventService(doknotifikasjonProducer)
+    private val metricsCollector = mockk<MetricsCollector>(relaxed = true)
+    private val eventService = BeskjedEventService(doknotifikasjonProducer, metricsCollector)
 
     @BeforeEach
     private fun resetMocks() {
         mockkObject(DoknotifikasjonTransformer)
         clearMocks(doknotifikasjonProducer)
+        clearMocks(metricsCollector)
     }
 
     @AfterAll
