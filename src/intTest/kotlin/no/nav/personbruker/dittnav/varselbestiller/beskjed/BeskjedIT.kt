@@ -1,10 +1,5 @@
 package no.nav.personbruker.dittnav.varselbestiller.beskjed
 
-import io.ktor.client.*
-import io.ktor.client.engine.mock.*
-import io.ktor.client.features.json.*
-import io.ktor.client.request.*
-import io.ktor.http.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import no.nav.brukernotifikasjon.schemas.Beskjed
@@ -16,18 +11,18 @@ import no.nav.personbruker.dittnav.common.util.kafka.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.common.util.kafka.producer.KafkaProducerWrapper
 import no.nav.personbruker.dittnav.varselbestiller.CapturingEventProcessor
 import no.nav.personbruker.dittnav.varselbestiller.common.database.H2Database
+import no.nav.personbruker.dittnav.varselbestiller.common.getClient
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Consumer
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaEmbed
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaTestUtil
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.config.Kafka
-import no.nav.personbruker.dittnav.varselbestiller.config.buildJsonSerializer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameResolver
 import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameScrubber
-import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelObjectMother
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import org.amshove.kluent.`should be equal to`
 import org.amshove.kluent.shouldBeEqualTo
 import org.apache.kafka.clients.consumer.KafkaConsumer
@@ -47,12 +42,12 @@ class BeskjedIT {
 
     private val capturedDoknotifikasjonRecords = ArrayList<RecordKeyValueWrapper<String, Doknotifikasjon>>()
 
-    private val client = getClient()
+    private val producerNameAlias = "dittnav"
+    private val client = getClient(producerNameAlias)
     private val metricsReporter = StubMetricsReporter()
     private val nameResolver = ProducerNameResolver(client, testEnvironment.eventHandlerURL)
     private val nameScrubber = ProducerNameScrubber(nameResolver)
     private val metricsCollector = MetricsCollector(metricsReporter, nameScrubber)
-    private val producerNameAlias = "dittnav"
 
     @BeforeAll
     fun setup() {
@@ -129,22 +124,4 @@ class BeskjedIT {
 
         capturedDoknotifikasjonRecords.addAll(capturingProcessor.getEvents())
     }
-
-    private fun getClient(): HttpClient {
-        return HttpClient(MockEngine) {
-            engine {
-                addHandler { request ->
-                    if (request.url.encodedPath.contains("/producer/alias") && request.url.host.contains("event-handler")) {
-                        respond(producerNameAlias, headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()))
-                    } else {
-                        respondError(HttpStatusCode.BadRequest)
-                    }
-                }
-            }
-            install(JsonFeature) {
-                serializer = buildJsonSerializer()
-            }
-        }
-    }
-
 }

@@ -3,6 +3,7 @@ package no.nav.personbruker.dittnav.varselbestiller.beskjed
 import no.nav.brukernotifikasjon.schemas.Beskjed
 import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
+import no.nav.personbruker.dittnav.common.util.database.persisting.ListPersistActionResult
 import no.nav.personbruker.dittnav.common.util.kafka.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.varselbestiller.common.EventBatchProcessorService
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.FieldValidationException
@@ -11,10 +12,11 @@ import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.Unvalidatab
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.serializer.getNonNullKey
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
-import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonTransformer
+import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingTransformer
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
@@ -44,22 +46,23 @@ class BeskjedEventService(
                         val doknotifikasjon = DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(beskjedKey, beskjed)
                         successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonKey, doknotifikasjon))
                         varselbestillinger.add(VarselbestillingTransformer.fromBeskjed(beskjedKey, beskjed, doknotifikasjon))
-                        countSuccessfulEventForProducer(beskjedKey.getSystembruker())
+                        countSuccessfulEventForSystemUser(beskjedKey.getSystembruker())
                     }
                 } catch (nne: NokkelNullException) {
-                    countFailedEventForProducer("NoProducerSpecified")
+                    countFailedEventForSystemUser("NoProducerSpecified")
                     log.warn("Beskjed-eventet manglet nøkkel. Topic: ${event.topic()}, Partition: ${event.partition()}, Offset: ${event.offset()}", nne)
                 } catch (fve: FieldValidationException) {
-                    countFailedEventForProducer(event.systembruker ?: "NoProducerSpecified")
+                    countFailedEventForSystemUser(event.systembruker ?: "NoProducerSpecified")
                     log.warn("Eventet kan ikke brukes fordi det inneholder valideringsfeil, beskjed-eventet vil bli forkastet. EventId: ${event.eventId}, context: ${fve.context}", fve)
                 } catch (e: Exception) {
-                    countFailedEventForProducer(event.systembruker ?: "NoProducerSpecified")
+                    countFailedEventForSystemUser(event.systembruker ?: "NoProducerSpecified")
                     problematicEvents.add(event)
                     log.warn("Validering av beskjed-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
                 }
             }
             if (successfullyValidatedEvents.isNotEmpty()) {
-                produceDoknotifikasjonerAndPersistToDB(successfullyValidatedEvents, varselbestillinger)
+                val result = produceDoknotifikasjonerAndPersistToDB(successfullyValidatedEvents, varselbestillinger)
+                countDuplicateKeyEvents(result)
             }
             if (problematicEvents.isNotEmpty()) {
                 kastExceptionHvisMislykkedValidering(problematicEvents)
@@ -67,9 +70,9 @@ class BeskjedEventService(
         }
     }
 
-    private suspend fun produceDoknotifikasjonerAndPersistToDB(successfullyValidatedEvents: MutableList<RecordKeyValueWrapper<String, Doknotifikasjon>>, varselbestillinger: List<Varselbestilling>) {
+    private suspend fun produceDoknotifikasjonerAndPersistToDB(successfullyValidatedEvents: MutableList<RecordKeyValueWrapper<String, Doknotifikasjon>>, varselbestillinger: List<Varselbestilling>): ListPersistActionResult<Varselbestilling> {
         doknotifikasjonProducer.produceDoknotifikasjon(successfullyValidatedEvents)
-        varselbestillingRepository.persistInOneBatch(varselbestillinger)
+        return varselbestillingRepository.persistInOneBatch(varselbestillinger)
     }
 
     private fun skalVarsleEksternt(event: Beskjed?): Boolean {
@@ -82,4 +85,18 @@ class BeskjedEventService(
         exception.addContext("antallMislykkedValidering", problematicEvents.size)
         throw exception
     }
+
+    private fun EventMetricsSession.countDuplicateKeyEvents(result: ListPersistActionResult<Varselbestilling>) {
+        if (result.foundConflictingKeys()) {
+            val constraintErrors = result.getConflictingEntities().size
+            val totalEntities = result.getAllEntities().size
+
+            countDuplicateEventKeysBySystemUser(result)
+
+            val msg = """Traff $constraintErrors feil på duplikate eventId-er ved behandling av $totalEntities beskjed-eventer.
+                           | Feilene ble produsert av: ${getNumberDuplicateKeysBySystemUser()}""".trimMargin()
+            log.warn(msg)
+        }
+    }
+
 }

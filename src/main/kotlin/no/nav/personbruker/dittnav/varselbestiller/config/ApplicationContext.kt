@@ -15,7 +15,6 @@ import no.nav.personbruker.dittnav.varselbestiller.beskjed.BeskjedEventService
 import no.nav.personbruker.dittnav.varselbestiller.common.database.Database
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Consumer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
-import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.done.DoneEventService
 import no.nav.personbruker.dittnav.varselbestiller.health.HealthService
@@ -23,6 +22,7 @@ import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameResolver
 import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameScrubber
 import no.nav.personbruker.dittnav.varselbestiller.oppgave.OppgaveEventService
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.slf4j.LoggerFactory
 
@@ -49,7 +49,7 @@ class ApplicationContext {
     var beskjedConsumer = initializeBeskjedConsumer()
 
     private val oppgaveKafkaProps = Kafka.consumerProps(environment, Eventtype.OPPGAVE)
-    val oppgaveEventService = OppgaveEventService(doknotifikasjonOppgaveProducer, doknotifikasjonRepository)
+    val oppgaveEventService = OppgaveEventService(doknotifikasjonOppgaveProducer, doknotifikasjonRepository, metricsCollector)
     var oppgaveConsumer = initializeOppgaveConsumer()
 
     private val doneKafkaProps = Kafka.consumerProps(environment, Eventtype.DONE)

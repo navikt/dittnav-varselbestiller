@@ -6,18 +6,23 @@ import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.brukernotifikasjon.schemas.Oppgave
 import no.nav.common.KafkaEnvironment
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
+import no.nav.personbruker.dittnav.common.metrics.StubMetricsReporter
 import no.nav.personbruker.dittnav.common.util.kafka.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.common.util.kafka.producer.KafkaProducerWrapper
 import no.nav.personbruker.dittnav.varselbestiller.CapturingEventProcessor
 import no.nav.personbruker.dittnav.varselbestiller.common.database.H2Database
+import no.nav.personbruker.dittnav.varselbestiller.common.getClient
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Consumer
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaEmbed
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaTestUtil
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.config.Kafka
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
-import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
+import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
+import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameResolver
+import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameScrubber
 import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelObjectMother
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import org.amshove.kluent.`should be equal to`
 import org.amshove.kluent.shouldBeEqualTo
 import org.apache.kafka.clients.consumer.KafkaConsumer
@@ -36,6 +41,13 @@ class OppgaveIT {
     private val oppgaveEvents = (1..10).map { AvroNokkelObjectMother.createNokkelWithEventId(it) to AvroOppgaveObjectMother.createOppgaveWithEksternVarsling(it, eksternVarsling = true) }.toMap()
 
     private val capturedDoknotifikasjonRecords = ArrayList<RecordKeyValueWrapper<String, Doknotifikasjon>>()
+
+    private val producerNameAlias = "dittnav"
+    private val client = getClient(producerNameAlias)
+    private val metricsReporter = StubMetricsReporter()
+    private val nameResolver = ProducerNameResolver(client, testEnvironment.eventHandlerURL)
+    private val nameScrubber = ProducerNameScrubber(nameResolver)
+    private val metricsCollector = MetricsCollector(metricsReporter, nameScrubber)
 
     @BeforeAll
     fun setup() {
@@ -75,7 +87,7 @@ class OppgaveIT {
         val doknotifikasjonProducer = DoknotifikasjonProducer(kafkaProducerWrapper)
         val doknotifikasjonRepository = VarselbestillingRepository(database)
 
-        val eventService = OppgaveEventService(doknotifikasjonProducer, doknotifikasjonRepository)
+        val eventService = OppgaveEventService(doknotifikasjonProducer, doknotifikasjonRepository, metricsCollector)
         val consumer = Consumer(Kafka.oppgaveTopicName, kafkaConsumer, eventService)
 
         kafkaProducer.initTransactions()

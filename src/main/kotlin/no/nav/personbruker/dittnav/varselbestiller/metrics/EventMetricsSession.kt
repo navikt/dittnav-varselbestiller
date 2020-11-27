@@ -1,6 +1,8 @@
 package no.nav.personbruker.dittnav.varselbestiller.metrics
 
+import no.nav.personbruker.dittnav.common.util.database.persisting.ListPersistActionResult
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
 
 class EventMetricsSession(val eventType: Eventtype) {
     private val numberProcessedBySystemUser = HashMap<String, Int>()
@@ -8,16 +10,22 @@ class EventMetricsSession(val eventType: Eventtype) {
     private val numberDuplicateKeysBySystemUser = HashMap<String, Int>()
 
 
-    fun countSuccessfulEventForProducer(systemUser: String) {
+    fun countSuccessfulEventForSystemUser(systemUser: String) {
         numberProcessedBySystemUser[systemUser] = numberProcessedBySystemUser.getOrDefault(systemUser, 0).inc()
     }
 
-    fun countFailedEventForProducer(systemUser: String) {
+    fun countFailedEventForSystemUser(systemUser: String) {
         numberFailedBySystemUser[systemUser] = numberFailedBySystemUser.getOrDefault(systemUser, 0).inc()
     }
 
-    fun countDuplicateEventKeysByProducer(systemUser: String, number: Int = 1) {
-        numberDuplicateKeysBySystemUser[systemUser] = numberDuplicateKeysBySystemUser.getOrDefault(systemUser, 0) + number
+    fun countDuplicateEventKeysBySystemUser(result: ListPersistActionResult<Varselbestilling>) {
+        result.getConflictingEntities()
+                .groupingBy { varselbestilling -> varselbestilling.systembruker }
+                .eachCount()
+                .forEach { (systembruker, duplicates) ->
+                    numberDuplicateKeysBySystemUser[systembruker] = numberDuplicateKeysBySystemUser.getOrDefault(systembruker, 0) + duplicates
+                }
+
     }
 
     fun getEventsSeen(systemUser: String): Int {
@@ -32,8 +40,8 @@ class EventMetricsSession(val eventType: Eventtype) {
         return numberFailedBySystemUser.getOrDefault(systemUser, 0)
     }
 
-    fun getDuplicateKeyEvents(producer: String): Int {
-        return numberDuplicateKeysBySystemUser.getOrDefault(producer, 0)
+    fun getDuplicateKeyEvents(systemUser: String): Int {
+        return numberDuplicateKeysBySystemUser.getOrDefault(systemUser, 0)
     }
 
     fun getEventsSeen(): Int {
@@ -48,8 +56,8 @@ class EventMetricsSession(val eventType: Eventtype) {
         return numberFailedBySystemUser.values.sum()
     }
 
-    fun getDuplicateKeyEvents(): Int {
-        return numberDuplicateKeysBySystemUser.values.sum()
+    fun getNumberDuplicateKeysBySystemUser(): HashMap<String, Int> {
+        return numberDuplicateKeysBySystemUser
     }
 
     fun getUniqueSystemUser(): List<String> {

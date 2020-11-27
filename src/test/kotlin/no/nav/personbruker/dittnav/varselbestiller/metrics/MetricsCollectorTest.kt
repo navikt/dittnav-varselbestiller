@@ -41,7 +41,7 @@ internal class MetricsCollectorTest {
 
         runBlocking {
             metricsCollector.recordMetrics(Eventtype.BESKJED) {
-                countSuccessfulEventForProducer(producerName)
+                countSuccessfulEventForSystemUser(producerName)
             }
         }
 
@@ -69,7 +69,7 @@ internal class MetricsCollectorTest {
 
         runBlocking {
             metricsCollector.recordMetrics(Eventtype.BESKJED) {
-                countFailedEventForProducer(producerName)
+                countFailedEventForSystemUser(producerName)
             }
         }
 
@@ -98,9 +98,9 @@ internal class MetricsCollectorTest {
 
         runBlocking {
             metricsCollector.recordMetrics(Eventtype.BESKJED) {
-                countSuccessfulEventForProducer("producer")
-                countSuccessfulEventForProducer("producer")
-                countFailedEventForProducer("producer")
+                countSuccessfulEventForSystemUser("producer")
+                countSuccessfulEventForSystemUser("producer")
+                countFailedEventForSystemUser("producer")
             }
         }
 
