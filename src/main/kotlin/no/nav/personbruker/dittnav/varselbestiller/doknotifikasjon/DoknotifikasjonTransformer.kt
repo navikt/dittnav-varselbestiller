@@ -21,6 +21,8 @@ object DoknotifikasjonTransformer {
                 .setTittel("Du har fått en beskjed fra NAV")
                 .setEpostTekst("Beskjed fra NAV på e-post")
                 .setSmsTekst("Beskjed fra NAV på SMS")
+                .setAntallRenotifikasjoner(1)
+                .setRenotifikasjonIntervall(1)
                 .setPrefererteKanaler(listOf(PrefererteKanal.EPOST, PrefererteKanal.SMS))
         return doknotifikasjonBuilder.build()
     }
@@ -45,6 +47,8 @@ object DoknotifikasjonTransformer {
                 .setTittel("Du har fått en oppgave fra NAV")
                 .setEpostTekst("Oppgave fra NAV på e-post")
                 .setSmsTekst("Oppgave fra NAV på SMS")
+                .setAntallRenotifikasjoner(1)
+                .setRenotifikasjonIntervall(1)
                 .setPrefererteKanaler(listOf(PrefererteKanal.EPOST, PrefererteKanal.SMS))
         return doknotifikasjonBuilder.build()
     }
