@@ -3,11 +3,12 @@ package no.nav.personbruker.dittnav.varselbestiller.metrics
 import io.ktor.client.*
 import io.ktor.client.engine.mock.*
 import io.ktor.client.features.json.*
-import io.ktor.client.request.*
 import io.ktor.http.*
+import io.mockk.clearAllMocks
 import kotlinx.coroutines.runBlocking
 import no.nav.personbruker.dittnav.varselbestiller.config.buildJsonSerializer
 import org.amshove.kluent.`should be equal to`
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.net.URL
 
@@ -15,18 +16,18 @@ internal class ProducerNameResolverTest {
 
     private val systembruker = "x-dittnav"
     private val produsent = "dittnav"
+    private val eventHandlerBaseURL = URL("http://event-handler")
+
+    @BeforeEach
+    fun cleanup() {
+        clearAllMocks()
+    }
 
     @Test
     fun `Skal hente produsentnavn alias`() {
-        val client = getClient {
-            respond(
-                    produsent,
-                    headers = headersOf(HttpHeaders.ContentType,
-                            ContentType.Application.Json.toString())
-            )
-        }
+        val client = getClient(produsent)
 
-        val producerNameResolver = ProducerNameResolver(client, URL("http://event-handler"))
+        val producerNameResolver = ProducerNameResolver(client, eventHandlerBaseURL)
 
         runBlocking {
             val producerNameAlias = producerNameResolver.getProducerNameAlias(systembruker)
@@ -36,15 +37,9 @@ internal class ProducerNameResolverTest {
 
     @Test
     fun `skal returnere tom String hvis produsentnavn ikke ble funnet i handler`() {
-        val client = getClient {
-            respond(
-                    "",
-                    headers = headersOf(HttpHeaders.ContentType,
-                            ContentType.Application.Json.toString())
-            )
-        }
+        val client = getClient("")
 
-        val producerNameResolver = ProducerNameResolver(client, URL("http://event-handler"))
+        val producerNameResolver = ProducerNameResolver(client, eventHandlerBaseURL)
 
         runBlocking {
             val producerNameAlias = producerNameResolver.getProducerNameAlias(systembruker)
@@ -52,35 +47,15 @@ internal class ProducerNameResolverTest {
         }
     }
 
-//TODO hvordan teste coVerify?
-    /*
-       @Test
-       fun `skal returnere cachede produsentnavn hvis henting av nye feiler`() {
-           val client = getClient {
-               respond(
-                       produsent,
-                       headers = headersOf(HttpHeaders.ContentType,
-                               ContentType.Application.Json.toString())
-               )
-           }
-
-           val producerNameResolver = ProducerNameResolver(client, URL("http://event-handler"))
-
-           runBlocking {
-               producerNameResolver.getProducerNameAlias(systembruker)
-               producerNameResolver.getProducerNameAlias(systembruker)
-               coVerify(exactly = 1) { client.get(any(), any()) }
-
-           }
-       }
-
-     */
-
-    private fun getClient(respond: MockRequestHandleScope.() -> HttpResponseData): HttpClient {
+    fun getClient(producerNameAlias: String): HttpClient {
         return HttpClient(MockEngine) {
             engine {
-                addHandler {
-                    respond()
+                addHandler { request ->
+                    if (request.url.encodedPath.contains("/producer/alias") && request.url.host.contains("event-handler")) {
+                        respond(producerNameAlias, headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()))
+                    } else {
+                        respondError(HttpStatusCode.BadRequest)
+                    }
                 }
             }
             install(JsonFeature) {

@@ -4,11 +4,11 @@ import no.nav.personbruker.dittnav.common.util.database.persisting.ListPersistAc
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
 
-class EventMetricsSession(val eventType: Eventtype) {
+class EventMetricsSession(val eventtype: Eventtype) {
     private val numberProcessedBySystemUser = HashMap<String, Int>()
     private val numberFailedBySystemUser = HashMap<String, Int>()
     private val numberDuplicateKeysBySystemUser = HashMap<String, Int>()
-
+    private val startTime = System.nanoTime()
 
     fun countSuccessfulEventForSystemUser(systemUser: String) {
         numberProcessedBySystemUser[systemUser] = numberProcessedBySystemUser.getOrDefault(systemUser, 0).inc()
@@ -26,6 +26,10 @@ class EventMetricsSession(val eventType: Eventtype) {
                     numberDuplicateKeysBySystemUser[systembruker] = numberDuplicateKeysBySystemUser.getOrDefault(systembruker, 0) + duplicates
                 }
 
+    }
+
+    fun timeElapsedSinceSessionStartNanos(): Long {
+        return System.nanoTime() - startTime
     }
 
     fun getEventsSeen(systemUser: String): Int {

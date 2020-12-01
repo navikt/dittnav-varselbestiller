@@ -119,7 +119,7 @@ class ApplicationContext {
                     hostPort = environment.sensuPort.toInt(),
                     clusterName = environment.clusterName,
                     namespace = environment.namespace,
-                    eventsTopLevelName = "personbruker-innloggingsstatus",
+                    eventsTopLevelName = "dittnav-varselbestiller",
                     enableEventBatching = environment.sensuBatchingEnabled,
                     eventBatchesPerSecond = environment.sensuBatchesPerSecond
             )

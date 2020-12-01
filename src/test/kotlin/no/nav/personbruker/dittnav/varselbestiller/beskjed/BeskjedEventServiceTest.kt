@@ -60,6 +60,7 @@ class BeskjedEventServiceTest {
         }
 
         coVerify(exactly = 0) { doknotifikasjonProducer.produceDoknotifikasjon(allAny()) }
+        coVerify (exactly = 1) { metricsSession.countFailedEventForSystemUser(any()) }
         confirmVerified(doknotifikasjonProducer)
     }
 
@@ -85,6 +86,7 @@ class BeskjedEventServiceTest {
 
         verify(exactly = beskjedWithEksternVarslingRecords.count()) { DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(ofType(Nokkel::class), ofType(Beskjed::class)) }
         coVerify(exactly = 1) { doknotifikasjonProducer.produceDoknotifikasjon(allAny()) }
+        coVerify (exactly = 4) { metricsSession.countSuccessfulEventForSystemUser(any()) }
         capturedListOfEntities.captured.size `should be` beskjedWithEksternVarslingRecords.count()
 
         confirmVerified(doknotifikasjonProducer)
@@ -110,6 +112,7 @@ class BeskjedEventServiceTest {
 
         verify(exactly = beskjedRecords.count()) { DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(ofType(Nokkel::class), ofType(Beskjed::class)) }
         coVerify(exactly = 1) { doknotifikasjonProducer.produceDoknotifikasjon(any()) }
+        coVerify (exactly = 5) { metricsSession.countSuccessfulEventForSystemUser(any()) }
         capturedListOfEntities.captured.size `should be` beskjedRecords.count()
 
         confirmVerified(doknotifikasjonProducer)
@@ -133,6 +136,7 @@ class BeskjedEventServiceTest {
         }
 
         coVerify(exactly = 1) { varselbestillingRepository.persistInOneBatch(allAny()) }
+        coVerify (exactly = 4) { metricsSession.countSuccessfulEventForSystemUser(any()) }
         capturedListOfEntities.captured.size `should be` beskjedWithEksternVarslingRecords.count()
 
         confirmVerified(varselbestillingRepository)
@@ -169,6 +173,27 @@ class BeskjedEventServiceTest {
         capturedListOfEntities.captured.size `should be` numberOfSuccessfulTransformations
 
         confirmVerified(doknotifikasjonProducer)
+    }
+
+    @Test
+    fun `skal rapportere hvert velykket event`() {
+        val numberOfRecords = 5
+
+        val beskjedWithEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords, topicName = "dummyTopic", withEksternVarsling = true)
+        val slot = slot<suspend EventMetricsSession.() -> Unit>()
+
+        val persistResult = successfulEvents(giveMeANumberOfVarselbestilling(numberOfRecords))
+        coEvery { varselbestillingRepository.persistInOneBatch(any()) } returns persistResult
+
+        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
+            slot.captured.invoke(metricsSession)
+        }
+
+        runBlocking {
+            eventService.processEvents(beskjedWithEksternVarslingRecords)
+        }
+
+        coVerify (exactly = numberOfRecords) { metricsSession.countSuccessfulEventForSystemUser(any()) }
     }
 }
 

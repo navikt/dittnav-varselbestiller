@@ -2,10 +2,7 @@ package no.nav.personbruker.dittnav.varselbestiller.metrics
 
 import no.nav.personbruker.dittnav.common.metrics.MetricsReporter
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
-import no.nav.personbruker.dittnav.varselbestiller.metrics.influx.KAFKA_EVENTS_DUPLICATE_KEY
-import no.nav.personbruker.dittnav.varselbestiller.metrics.influx.KAFKA_EVENTS_FAILED
-import no.nav.personbruker.dittnav.varselbestiller.metrics.influx.KAFKA_EVENTS_PROCESSED
-import no.nav.personbruker.dittnav.varselbestiller.metrics.influx.KAFKA_EVENTS_SEEN
+import no.nav.personbruker.dittnav.varselbestiller.metrics.influx.*
 import no.nav.personbruker.dittnav.varselbestiller.metrics.prometheus.PrometheusMetricsCollector
 
 class MetricsCollector(private val metricsReporter: MetricsReporter, private val nameScrubber: ProducerNameScrubber) {
@@ -13,42 +10,46 @@ class MetricsCollector(private val metricsReporter: MetricsReporter, private val
     suspend fun recordMetrics(eventType: Eventtype, block: suspend EventMetricsSession.() -> Unit) {
         val session = EventMetricsSession(eventType)
         block.invoke(session)
+        val processingTime = session.timeElapsedSinceSessionStartNanos()
 
         if (session.getEventsSeen() > 0) {
-            handleEventsProcessed(session)
             handleEventsSeen(session)
+            handleEventsProcessed(session)
             handleEventsFailed(session)
             handleDuplicateEventKeys(session)
-        }
-    }
-
-    private suspend fun handleEventsProcessed(session: EventMetricsSession) {
-        session.getUniqueSystemUser().forEach { systemuser ->
-            val numberProcessed = session.getEventsProcessed(systemuser)
-            val eventTypeName = session.eventType.toString()
-            val printableAlias = nameScrubber.getPublicAlias(systemuser)
-
-            reportMetrics(KAFKA_EVENTS_PROCESSED, numberProcessed, eventTypeName, printableAlias)
-            PrometheusMetricsCollector.registerEventsProcessed(numberProcessed, eventTypeName, printableAlias)
+            handleEventsProcessingTime(session, processingTime)
         }
     }
 
     private suspend fun handleEventsSeen(session: EventMetricsSession) {
-        session.getUniqueSystemUser().forEach { systemuser ->
-            val numberSeen = session.getEventsSeen(systemuser)
-            val eventTypeName = session.eventType.toString()
-            val printableAlias = nameScrubber.getPublicAlias(systemuser)
+        session.getUniqueSystemUser().forEach { systemUser ->
+            val numberSeen = session.getEventsSeen(systemUser)
+            val eventTypeName = session.eventtype.toString()
+            val printableAlias = nameScrubber.getPublicAlias(systemUser)
 
             reportMetrics(KAFKA_EVENTS_SEEN, numberSeen, eventTypeName, printableAlias)
             PrometheusMetricsCollector.registerEventsSeen(numberSeen, eventTypeName, printableAlias)
         }
     }
 
+    private suspend fun handleEventsProcessed(session: EventMetricsSession) {
+        session.getUniqueSystemUser().forEach { systemUser ->
+            val numberProcessed = session.getEventsProcessed(systemUser)
+            val eventTypeName = session.eventtype.toString()
+            val printableAlias = nameScrubber.getPublicAlias(systemUser)
+
+            if (numberProcessed > 0) {
+                reportMetrics(KAFKA_EVENTS_PROCESSED, numberProcessed, eventTypeName, printableAlias)
+                PrometheusMetricsCollector.registerEventsProcessed(numberProcessed, eventTypeName, printableAlias)
+            }
+        }
+    }
+
     private suspend fun handleEventsFailed(session: EventMetricsSession) {
-        session.getUniqueSystemUser().forEach { systemuser ->
-            val numberFailed = session.getEventsFailed(systemuser)
-            val eventTypeName = session.eventType.toString()
-            val printableAlias = nameScrubber.getPublicAlias(systemuser)
+        session.getUniqueSystemUser().forEach { systemUser ->
+            val numberFailed = session.getEventsFailed(systemUser)
+            val eventTypeName = session.eventtype.toString()
+            val printableAlias = nameScrubber.getPublicAlias(systemUser)
 
             if (numberFailed > 0) {
                 reportMetrics(KAFKA_EVENTS_FAILED, numberFailed, eventTypeName, printableAlias)
@@ -60,7 +61,7 @@ class MetricsCollector(private val metricsReporter: MetricsReporter, private val
     private suspend fun handleDuplicateEventKeys(session: EventMetricsSession) {
         session.getUniqueSystemUser().forEach { systemUser ->
             val numberDuplicateKeyEvents = session.getDuplicateKeyEvents(systemUser)
-            val eventTypeName = session.eventType.toString()
+            val eventTypeName = session.eventtype.toString()
             val printableAlias = nameScrubber.getPublicAlias(systemUser)
 
             if (numberDuplicateKeyEvents > 0) {
@@ -68,6 +69,21 @@ class MetricsCollector(private val metricsReporter: MetricsReporter, private val
                 PrometheusMetricsCollector.registerEventsDuplicateKey(numberDuplicateKeyEvents, eventTypeName, printableAlias)
             }
         }
+    }
+
+    private suspend fun handleEventsProcessingTime(session: EventMetricsSession, processingTime: Long) {
+        val metricsOverHead = session.timeElapsedSinceSessionStartNanos() - processingTime
+        val fieldMap = listOf(
+                "seen" to session.getEventsSeen(),
+                "processed" to session.getEventsProcessed(),
+                "failed" to session.getEventsFailed(),
+                "processingTime" to processingTime,
+                "metricsOverheadTime" to metricsOverHead
+        ).toMap()
+
+        val tagMap = listOf("eventType" to session.eventtype.toString()).toMap()
+
+        metricsReporter.registerDataPoint(KAFKA_EVENTS_PROCESSING_TIME, fieldMap, tagMap)
     }
 
     private suspend fun reportMetrics(metricName: String, count: Int, eventType: String, producerAlias: String) {

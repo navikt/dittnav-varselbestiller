@@ -6,6 +6,7 @@ import no.nav.personbruker.dittnav.common.metrics.MetricsReporter
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.metrics.influx.KAFKA_EVENTS_FAILED
 import no.nav.personbruker.dittnav.varselbestiller.metrics.influx.KAFKA_EVENTS_PROCESSED
+import no.nav.personbruker.dittnav.varselbestiller.metrics.influx.KAFKA_EVENTS_PROCESSING_TIME
 import no.nav.personbruker.dittnav.varselbestiller.metrics.influx.KAFKA_EVENTS_SEEN
 import no.nav.personbruker.dittnav.varselbestiller.metrics.prometheus.PrometheusMetricsCollector
 import org.amshove.kluent.`should be equal to`
@@ -27,16 +28,16 @@ internal class MetricsCollectorTest {
 
     @Test
     fun `should replace system name with alias for event processed`() {
-        coEvery { producerNameResolver.getProducerNameAlias(producerName) } returns producerAlias
 
+        coEvery { producerNameResolver.getProducerNameAlias(producerName) } returns producerAlias
         val nameScrubber = ProducerNameScrubber(producerNameResolver)
         val metricsCollector = MetricsCollector(metricsReporter, nameScrubber)
 
         val producerNameForPrometheus = slot<String>()
         val capturedTags = slot<Map<String, String>>()
 
-        coEvery { metricsReporter.registerDataPoint(not(KAFKA_EVENTS_FAILED), any(), capture(capturedTags)) } returns Unit
-        coEvery { metricsReporter.registerDataPoint(KAFKA_EVENTS_FAILED, any(), any()) } returns Unit
+        coEvery { metricsReporter.registerDataPoint(not(KAFKA_EVENTS_PROCESSING_TIME), any(), capture(capturedTags)) } returns Unit
+        coEvery { metricsReporter.registerDataPoint(KAFKA_EVENTS_PROCESSING_TIME, any(), any()) } returns Unit
         every { PrometheusMetricsCollector.registerEventsSeen(any(), any(), capture(producerNameForPrometheus)) } returns Unit
 
         runBlocking {
@@ -45,7 +46,7 @@ internal class MetricsCollectorTest {
             }
         }
 
-        coVerify(exactly = 2) { metricsReporter.registerDataPoint(not(KAFKA_EVENTS_FAILED), any(), any()) }
+        coVerify(exactly = 2) { metricsReporter.registerDataPoint(not(KAFKA_EVENTS_PROCESSING_TIME), any(), any()) }
         verify(exactly = 1) { PrometheusMetricsCollector.registerEventsSeen(any(), any(), any()) }
         verify(exactly = 1) { PrometheusMetricsCollector.registerEventsProcessed(any(), any(), any()) }
 
@@ -55,16 +56,16 @@ internal class MetricsCollectorTest {
 
     @Test
     fun `should replace system name with alias for event failed`() {
-        coEvery { producerNameResolver.getProducerNameAlias(producerName) } returns producerAlias
 
+        coEvery { producerNameResolver.getProducerNameAlias(producerName) } returns producerAlias
         val nameScrubber = ProducerNameScrubber(producerNameResolver)
         val metricsCollector = MetricsCollector(metricsReporter, nameScrubber)
 
         val capturedTags = slot<Map<String, String>>()
         val producerNameForPrometheus = slot<String>()
 
-        coEvery { metricsReporter.registerDataPoint(not(KAFKA_EVENTS_PROCESSED), any(), capture(capturedTags)) } returns Unit
-        coEvery { metricsReporter.registerDataPoint(KAFKA_EVENTS_PROCESSED, any(), any()) } returns Unit
+        coEvery { metricsReporter.registerDataPoint(not(KAFKA_EVENTS_PROCESSING_TIME), any(), capture(capturedTags)) } returns Unit
+        coEvery { metricsReporter.registerDataPoint(KAFKA_EVENTS_PROCESSING_TIME, any(), any()) } returns Unit
         every { PrometheusMetricsCollector.registerEventsFailed(any(), any(), capture(producerNameForPrometheus)) } returns Unit
 
         runBlocking {
@@ -73,7 +74,7 @@ internal class MetricsCollectorTest {
             }
         }
 
-        coVerify(exactly = 2) { metricsReporter.registerDataPoint(not(KAFKA_EVENTS_PROCESSED), any(), any()) }
+        coVerify(exactly = 2) { metricsReporter.registerDataPoint(not(KAFKA_EVENTS_PROCESSING_TIME), any(), any()) }
         verify(exactly = 1) { PrometheusMetricsCollector.registerEventsSeen(any(), any(), any()) }
         verify(exactly = 1) { PrometheusMetricsCollector.registerEventsFailed(any(), any(), any()) }
 
@@ -95,6 +96,7 @@ internal class MetricsCollectorTest {
         coEvery { metricsReporter.registerDataPoint(KAFKA_EVENTS_SEEN, capture(capturedFieldsForSeen), any()) } returns Unit
         coEvery { metricsReporter.registerDataPoint(KAFKA_EVENTS_PROCESSED, capture(capturedFieldsForProcessed), any()) } returns Unit
         coEvery { metricsReporter.registerDataPoint(KAFKA_EVENTS_FAILED, capture(capturedFieldsForFailed), any()) } returns Unit
+        coEvery { metricsReporter.registerDataPoint(KAFKA_EVENTS_PROCESSING_TIME, any(), any()) } returns Unit
 
         runBlocking {
             metricsCollector.recordMetrics(Eventtype.BESKJED) {
@@ -104,7 +106,7 @@ internal class MetricsCollectorTest {
             }
         }
 
-        coVerify(exactly = 3) { metricsReporter.registerDataPoint(any(), any(), any()) }
+        coVerify(exactly = 4) { metricsReporter.registerDataPoint(any(), any(), any()) }
         verify(exactly = 1) { PrometheusMetricsCollector.registerEventsSeen(3, any(), any()) }
         verify(exactly = 1) { PrometheusMetricsCollector.registerEventsProcessed(2, any(), any()) }
         verify(exactly = 1) { PrometheusMetricsCollector.registerEventsFailed(1, any(), any()) }
