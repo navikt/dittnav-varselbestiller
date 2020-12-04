@@ -6,10 +6,12 @@ import no.nav.brukernotifikasjon.schemas.Done
 import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.common.KafkaEnvironment
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
+import no.nav.personbruker.dittnav.common.metrics.StubMetricsReporter
 import no.nav.personbruker.dittnav.common.util.kafka.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.common.util.kafka.producer.KafkaProducerWrapper
 import no.nav.personbruker.dittnav.varselbestiller.CapturingEventProcessor
 import no.nav.personbruker.dittnav.varselbestiller.common.database.H2Database
+import no.nav.personbruker.dittnav.varselbestiller.common.getClient
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Consumer
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaEmbed
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaTestUtil
@@ -17,6 +19,9 @@ import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.config.Kafka
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
+import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
+import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameResolver
+import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameScrubber
 import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.createVarselbestillinger
@@ -42,6 +47,13 @@ class DoneIT {
                                                                 VarselbestillingObjectMother.createVarselbestilling(bestillingsId = "B-test-003", eventId = "3", fodselsnummer = "12345"))
 
     private val capturedDoknotifikasjonStopRecords = ArrayList<RecordKeyValueWrapper<String, DoknotifikasjonStopp>>()
+
+    private val producerNameAlias = "dittnav"
+    private val client = getClient(producerNameAlias)
+    private val metricsReporter = StubMetricsReporter()
+    private val nameResolver = ProducerNameResolver(client, testEnvironment.eventHandlerURL)
+    private val nameScrubber = ProducerNameScrubber(nameResolver)
+    private val metricsCollector = MetricsCollector(metricsReporter, nameScrubber)
 
     @BeforeAll
     fun setup() {
@@ -84,7 +96,7 @@ class DoneIT {
         val doknotifikasjonStoppProducer = DoknotifikasjonStoppProducer(kafkaProducerWrapper)
         val doknotifikasjonRepository = VarselbestillingRepository(database)
 
-        val eventService = DoneEventService(doknotifikasjonStoppProducer, doknotifikasjonRepository)
+        val eventService = DoneEventService(doknotifikasjonStoppProducer, doknotifikasjonRepository, metricsCollector)
         val consumer = Consumer(Kafka.doneTopicName, kafkaConsumer, eventService)
 
         kafkaProducer.initTransactions()

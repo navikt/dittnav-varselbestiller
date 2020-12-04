@@ -10,9 +10,9 @@ import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.NokkelNullE
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UnvalidatableRecordException
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.serializer.getNonNullKey
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
-import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonTransformer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppTransformer
+import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import org.apache.kafka.clients.consumer.ConsumerRecord
@@ -22,7 +22,8 @@ import org.slf4j.LoggerFactory
 
 class DoneEventService(
         private val doknotifikasjonStoppProducer: DoknotifikasjonStoppProducer,
-        private val varselbestillingRepository: VarselbestillingRepository
+        private val varselbestillingRepository: VarselbestillingRepository,
+        private val metricsCollector: MetricsCollector
 ) : EventBatchProcessorService<Nokkel, Done> {
 
     private val log: Logger = LoggerFactory.getLogger(DoneEventService::class.java)
@@ -31,28 +32,34 @@ class DoneEventService(
         val successfullyValidatedEvents = mutableListOf<RecordKeyValueWrapper<String, DoknotifikasjonStopp>>()
         val problematicEvents = mutableListOf<ConsumerRecord<Nokkel, Done>>()
 
-        events.forEach { event ->
-            try {
-                val varselbestilling: Varselbestilling? = fetchVarselbestilling(event)
-                if(varselbestilling != null) {
-                    val doknotifikasjonStoppKey = varselbestilling.bestillingsId
-                    val doknotifikasjonStoppEvent = DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(varselbestilling)
-                    successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonStoppKey, doknotifikasjonStoppEvent))
+        metricsCollector.recordMetrics(eventType = Eventtype.DONE) {
+            events.forEach { event ->
+                try {
+                    val varselbestilling: Varselbestilling? = fetchVarselbestilling(event)
+                    if (varselbestilling != null) {
+                        val doknotifikasjonStoppKey = varselbestilling.bestillingsId
+                        val doknotifikasjonStoppEvent = DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(varselbestilling)
+                        successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonStoppKey, doknotifikasjonStoppEvent))
+                        countSuccessfulEventForSystemUser(varselbestilling.systembruker)
+                    }
+                } catch (e: NokkelNullException) {
+                    countFailedEventForSystemUser("NoProducerSpecified")
+                    log.warn("Done-eventet manglet nøkkel. Topic: ${event.topic()}, Partition: ${event.partition()}, Offset: ${event.offset()}", e)
+                } catch (e: FieldValidationException) {
+                    countFailedEventForSystemUser(event.systembruker ?: "NoProducerSpecified")
+                    log.warn("Eventet kan ikke brukes fordi det inneholder valideringsfeil, done-eventet vil bli forkastet. EventId: ${event.eventId}", e)
+                } catch (e: Exception) {
+                    problematicEvents.add(event)
+                    countFailedEventForSystemUser(event.systembruker ?: "NoProducerSpecified")
+                    log.warn("Validering av done-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
                 }
-            } catch (e: NokkelNullException) {
-                log.warn("Done-eventet manglet nøkkel. Topic: ${event.topic()}, Partition: ${event.partition()}, Offset: ${event.offset()}", e)
-            } catch (e: FieldValidationException) {
-                log.warn("Eventet kan ikke brukes fordi det inneholder valideringsfeil, done-eventet vil bli forkastet. EventId: ${event.eventId}", e)
-            } catch (e: Exception) {
-                problematicEvents.add(event)
-                log.warn("Validering av done-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
             }
-        }
-        if(successfullyValidatedEvents.isNotEmpty()) {
-            doknotifikasjonStoppProducer.produceDoknotifikasjonStop(successfullyValidatedEvents)
-        }
-        if(problematicEvents.isNotEmpty()) {
-            kastExceptionHvisMislykkedValidering(problematicEvents)
+            if (successfullyValidatedEvents.isNotEmpty()) {
+                doknotifikasjonStoppProducer.produceDoknotifikasjonStop(successfullyValidatedEvents)
+            }
+            if (problematicEvents.isNotEmpty()) {
+                kastExceptionHvisMislykkedValidering(problematicEvents)
+            }
         }
     }
 

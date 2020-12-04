@@ -55,6 +55,11 @@ dependencies {
     implementation(Prometheus.common)
     implementation(Prometheus.hotspot)
     implementation(Prometheus.logback)
+    implementation(DittNAV.Common.metrics)
+    implementation(Ktor.clientApache)
+    implementation(Ktor.clientJson)
+    implementation(Ktor.clientJackson)
+    implementation(Jackson.dataTypeJsr310)
 
 
     testImplementation(H2Database.h2)
@@ -67,6 +72,7 @@ dependencies {
     testImplementation(Mockk.mockk)
     testImplementation(NAV.kafkaEmbedded)
     testImplementation(Kotlinx.atomicfu)
+    testImplementation(Ktor.clientMock)
 
     intTestImplementation(Junit.engine)
 }

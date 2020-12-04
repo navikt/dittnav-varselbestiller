@@ -11,6 +11,8 @@ import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.ConsumerR
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.AvroDoknotifikasjonStoppObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppTransformer
+import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
+import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother
@@ -24,14 +26,18 @@ import org.junit.jupiter.api.Test
 class DoneEventServiceTest {
 
     private val doknotifikasjonStoppProducer = mockk<DoknotifikasjonStoppProducer>(relaxed = true)
-    private val doknotifikasjonRepository = mockk<VarselbestillingRepository>(relaxed = true)
-    private val eventService = DoneEventService(doknotifikasjonStoppProducer, doknotifikasjonRepository)
+    private val varselbestillingRepository = mockk<VarselbestillingRepository>(relaxed = true)
+    private val metricsCollector = mockk<MetricsCollector>(relaxed = true)
+    private val metricsSession = mockk<EventMetricsSession>(relaxed = true)
+    private val eventService = DoneEventService(doknotifikasjonStoppProducer, varselbestillingRepository, metricsCollector)
 
     @BeforeEach
     private fun resetMocks() {
         mockkObject(DoknotifikasjonStoppTransformer)
         clearMocks(doknotifikasjonStoppProducer)
-        clearMocks(doknotifikasjonRepository)
+        clearMocks(varselbestillingRepository)
+        clearMocks(metricsCollector)
+        clearMocks(metricsSession)
     }
 
     @AfterAll
@@ -44,13 +50,20 @@ class DoneEventServiceTest {
         val done = AvroDoneObjectMother.createDone("001")
         val cr: ConsumerRecord<Nokkel, Done> = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName = "done", actualKey = null, actualEvent = done)
         val records = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(cr)
-        coEvery { doknotifikasjonRepository.fetchVarselbestilling(any(), any(), any()) } returns VarselbestillingObjectMother.createVarselbestilling("B-test-001", "1", "123")
+
+        val slot = slot<suspend EventMetricsSession.() -> Unit>()
+        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
+            slot.captured.invoke(metricsSession)
+        }
+
+        coEvery { varselbestillingRepository.fetchVarselbestilling(any(), any(), any()) } returns VarselbestillingObjectMother.createVarselbestilling("B-test-001", "1", "123")
 
         runBlocking {
             eventService.processEvents(records)
         }
 
         coVerify(exactly = 0) { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(allAny())}
+        coVerify (exactly = 1) { metricsSession.countFailedEventForSystemUser(any()) }
         confirmVerified(doknotifikasjonStoppProducer)
     }
 
@@ -58,7 +71,13 @@ class DoneEventServiceTest {
     fun `Skal opprette DoknotifikasjonStopp for alle eventer som har ekstern varsling`() {
         val doneRecords = ConsumerRecordsObjectMother.giveMeANumberOfDoneRecords(5, "dummyTopic")
         val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, DoknotifikasjonStopp>>>()
-        coEvery { doknotifikasjonRepository.fetchVarselbestilling(any(), any(), any()) } returns VarselbestillingObjectMother.createVarselbestilling("B-test-001", "1", "123")
+
+        val slot = slot<suspend EventMetricsSession.() -> Unit>()
+        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
+            slot.captured.invoke(metricsSession)
+        }
+
+        coEvery { varselbestillingRepository.fetchVarselbestilling(any(), any(), any()) } returns VarselbestillingObjectMother.createVarselbestilling("B-test-001", "1", "123")
         coEvery { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(capture(capturedListOfEntities)) } returns Unit
 
         runBlocking {
@@ -66,6 +85,7 @@ class DoneEventServiceTest {
         }
 
         coVerify(exactly = 1) { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(any()) }
+        coVerify (exactly = 5) { metricsSession.countSuccessfulEventForSystemUser(any()) }
         capturedListOfEntities.captured.size `should be` doneRecords.count()
 
         confirmVerified(doknotifikasjonStoppProducer)
@@ -81,10 +101,15 @@ class DoneEventServiceTest {
         val doneConsumerRecord3 = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName ="done", actualKey = AvroNokkelObjectMother.createNokkelWithEventId(doneEventId3), actualEvent = AvroDoneObjectMother.createDone(eventId = doneEventId3))
         val records = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(listOf(doneConsumerRecord1, doneConsumerRecord2, doneConsumerRecord3))
 
+        val slot = slot<suspend EventMetricsSession.() -> Unit>()
+        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
+            slot.captured.invoke(metricsSession)
+        }
+
         val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, DoknotifikasjonStopp>>>()
-        coEvery { doknotifikasjonRepository.fetchVarselbestilling(eventId = doneEventId1, any(), any()) } returns VarselbestillingObjectMother.createVarselbestilling("B-test-001", doneEventId1, "123")
-        coEvery { doknotifikasjonRepository.fetchVarselbestilling(eventId = doneEventId2, any(), any()) } returns VarselbestillingObjectMother.createVarselbestilling("B-test-002", doneEventId2, "123")
-        coEvery { doknotifikasjonRepository.fetchVarselbestilling(eventId = doneEventId3, any(), any()) } returns null
+        coEvery { varselbestillingRepository.fetchVarselbestilling(eventId = doneEventId1, any(), any()) } returns VarselbestillingObjectMother.createVarselbestilling("B-test-001", doneEventId1, "123")
+        coEvery { varselbestillingRepository.fetchVarselbestilling(eventId = doneEventId2, any(), any()) } returns VarselbestillingObjectMother.createVarselbestilling("B-test-002", doneEventId2, "123")
+        coEvery { varselbestillingRepository.fetchVarselbestilling(eventId = doneEventId3, any(), any()) } returns null
         coEvery { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(capture(capturedListOfEntities)) } returns Unit
 
         runBlocking {
@@ -92,6 +117,7 @@ class DoneEventServiceTest {
         }
 
         coVerify(exactly = 1) { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(any())}
+        coVerify (exactly = 2) { metricsSession.countSuccessfulEventForSystemUser(any()) }
         capturedListOfEntities.captured.size `should be` 2
         confirmVerified(doknotifikasjonStoppProducer)
     }
@@ -102,11 +128,15 @@ class DoneEventServiceTest {
         val numberOfFailedTransformations = 1
         val numberOfSuccessfulTransformations = totalNumberOfRecords - numberOfFailedTransformations
 
+        val slot = slot<suspend EventMetricsSession.() -> Unit>()
+        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
+            slot.captured.invoke(metricsSession)
+        }
+
         val records = ConsumerRecordsObjectMother.giveMeANumberOfDoneRecords(numberOfRecords = totalNumberOfRecords, topicName = "dummyTopic", )
         val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, DoknotifikasjonStopp>>>()
-
         coEvery { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(capture(capturedListOfEntities)) } returns Unit
-        coEvery { doknotifikasjonRepository.fetchVarselbestilling(any(), any(), any()) } returns VarselbestillingObjectMother.createVarselbestilling("B-test-001", "1", "123")
+        coEvery { varselbestillingRepository.fetchVarselbestilling(any(), any(), any()) } returns VarselbestillingObjectMother.createVarselbestilling("B-test-001", "1", "123")
 
         val fieldValidationException = FieldValidationException("Simulert feil i en test")
         val doknotifikasjonStopp = AvroDoknotifikasjonStoppObjectMother.giveMeANumberOfDoknotifikasjonStopp(5)
@@ -117,6 +147,8 @@ class DoneEventServiceTest {
         }
 
         coVerify(exactly = 1) { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(any()) }
+        coVerify(exactly = numberOfFailedTransformations) { metricsSession.countFailedEventForSystemUser(any()) }
+        coVerify (exactly = numberOfSuccessfulTransformations) { metricsSession.countSuccessfulEventForSystemUser(any()) }
         capturedListOfEntities.captured.size `should be` numberOfSuccessfulTransformations
 
         confirmVerified(doknotifikasjonStoppProducer)
