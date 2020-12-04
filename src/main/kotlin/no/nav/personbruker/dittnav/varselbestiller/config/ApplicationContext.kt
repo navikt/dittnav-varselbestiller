@@ -53,7 +53,7 @@ class ApplicationContext {
     var oppgaveConsumer = initializeOppgaveConsumer()
 
     private val doneKafkaProps = Kafka.consumerProps(environment, Eventtype.DONE)
-    private val doneEventService = DoneEventService(doknotifikasjonStopProducer, doknotifikasjonRepository)
+    private val doneEventService = DoneEventService(doknotifikasjonStopProducer, doknotifikasjonRepository, metricsCollector)
     var doneConsumer = initializeDoneConsumer()
 
     val healthService = HealthService(this)
