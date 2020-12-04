@@ -14,6 +14,7 @@ import no.nav.personbruker.dittnav.common.util.kafka.producer.KafkaProducerWrapp
 import no.nav.personbruker.dittnav.varselbestiller.beskjed.BeskjedEventService
 import no.nav.personbruker.dittnav.varselbestiller.common.database.Database
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Consumer
+import no.nav.personbruker.dittnav.varselbestiller.common.kafka.polling.PeriodicConsumerPollingCheck
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.done.DoneEventService
@@ -58,6 +59,9 @@ class ApplicationContext {
 
     val healthService = HealthService(this)
 
+    var periodicConsumerPollingCheck = initializePeriodicConsumerPollingCheck()
+
+
     private fun initializeBeskjedConsumer(): Consumer<Nokkel, Beskjed> {
         return KafkaConsumerSetup.setupConsumerForTheBeskjedTopic(beskjedKafkaProps, beskjedEventService)
     }
@@ -86,6 +90,8 @@ class ApplicationContext {
         return DoknotifikasjonStoppProducer(kafkaProducerDoknotifikasjonStopp)
     }
 
+    private fun initializePeriodicConsumerPollingCheck() = PeriodicConsumerPollingCheck(this)
+
     fun reinitializeConsumers() {
         if (beskjedConsumer.isCompleted()) {
             beskjedConsumer = initializeBeskjedConsumer()
@@ -106,6 +112,15 @@ class ApplicationContext {
             log.info("doneConsumer har blitt reinstansiert.")
         } else {
             log.warn("doneConsumer kunne ikke bli reinstansiert fordi den fortsatt er aktiv.")
+        }
+    }
+
+    fun reinitializePeriodicConsumerPollingCheck() {
+        if (periodicConsumerPollingCheck.isCompleted()) {
+            periodicConsumerPollingCheck = initializePeriodicConsumerPollingCheck()
+            log.info("periodicConsumerPollingCheck har blitt reinstansiert.")
+        } else {
+            log.warn("periodicConsumerPollingCheck kunne ikke bli reinstansiert fordi den fortsatt er aktiv.")
         }
     }
 

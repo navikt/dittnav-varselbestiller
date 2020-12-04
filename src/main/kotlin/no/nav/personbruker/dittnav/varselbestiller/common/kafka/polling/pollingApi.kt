@@ -12,7 +12,7 @@ fun Routing.pollingApi(appContext: ApplicationContext) {
 
     get("/internal/polling/start") {
         val responseText = "Polling etter eventer har blitt startet."
-        restartPolling(appContext)
+        KafkaConsumerSetup.restartPolling(appContext)
         call.respondText(text = responseText, contentType = ContentType.Text.Plain)
     }
 
@@ -21,10 +21,19 @@ fun Routing.pollingApi(appContext: ApplicationContext) {
         KafkaConsumerSetup.stopAllKafkaConsumers(appContext)
         call.respondText(text = responseText, contentType = ContentType.Text.Plain)
     }
+
+    get("/internal/polling/checker/start") {
+        val responseText = "Startet jobben som sjekker om konsumerne kjører."
+        appContext.reinitializePeriodicConsumerPollingCheck()
+        appContext.periodicConsumerPollingCheck.start()
+        call.respondText(text = responseText, contentType = ContentType.Text.Plain)
+    }
+
+    get("/internal/polling/checker/stop") {
+        val responseText = "Stoppet jobben som sjekker om konsumerne kjører."
+        appContext.periodicConsumerPollingCheck.stop()
+        call.respondText(text = responseText, contentType = ContentType.Text.Plain)
+    }
+
 }
 
-private suspend fun restartPolling(appContext: ApplicationContext) {
-    KafkaConsumerSetup.stopAllKafkaConsumers(appContext)
-    appContext.reinitializeConsumers()
-    KafkaConsumerSetup.startAllKafkaPollers(appContext)
-}
