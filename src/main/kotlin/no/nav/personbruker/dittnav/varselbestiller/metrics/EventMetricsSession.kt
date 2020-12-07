@@ -5,16 +5,25 @@ import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
 
 class EventMetricsSession(val eventtype: Eventtype) {
+    private val numberOfAllEvents = HashMap<String, Int>()
     private val numberProcessedBySystemUser = HashMap<String, Int>()
     private val numberFailedBySystemUser = HashMap<String, Int>()
     private val numberDuplicateKeysBySystemUser = HashMap<String, Int>()
     private val startTime = System.nanoTime()
+    private val nokkelIsNull = "NokkelIsNullNoProducerSpecified"
+
+    fun countAllEventsFromKafkaForSystemUser(systemUser: String) {
+        numberOfAllEvents[systemUser] = numberOfAllEvents.getOrDefault(systemUser, 0).inc()
+    }
 
     fun countSuccessfulEventForSystemUser(systemUser: String) {
         numberProcessedBySystemUser[systemUser] = numberProcessedBySystemUser.getOrDefault(systemUser, 0).inc()
     }
 
     fun countFailedEventForSystemUser(systemUser: String) {
+        if (systemUser == nokkelIsNull) {
+            countAllEventsFromKafkaForSystemUser(systemUser)
+        }
         numberFailedBySystemUser[systemUser] = numberFailedBySystemUser.getOrDefault(systemUser, 0).inc()
     }
 
@@ -46,6 +55,10 @@ class EventMetricsSession(val eventtype: Eventtype) {
 
     fun getDuplicateKeyEvents(systemUser: String): Int {
         return numberDuplicateKeysBySystemUser.getOrDefault(systemUser, 0)
+    }
+
+    fun getAllEvents(): Int {
+        return numberOfAllEvents.values.sum()
     }
 
     fun getEventsSeen(): Int {

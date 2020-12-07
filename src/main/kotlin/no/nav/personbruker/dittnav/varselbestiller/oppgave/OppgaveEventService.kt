@@ -38,8 +38,10 @@ class OppgaveEventService(
         metricsCollector.recordMetrics(eventType = Eventtype.OPPGAVE) {
             events.forEach { event ->
                 try {
+                    val oppgaveKey = event.getNonNullKey()
+                    countAllEventsFromKafkaForSystemUser(oppgaveKey.getSystembruker())
+
                     if (skalVarsleEksternt(event.value())) {
-                        val oppgaveKey = event.getNonNullKey()
                         val oppgave = event.value()
                         val doknotifikasjonKey = DoknotifikasjonTransformer.createDoknotifikasjonKey(oppgaveKey, Eventtype.OPPGAVE)
                         val doknotifikasjon = DoknotifikasjonTransformer.createDoknotifikasjonFromOppgave(oppgaveKey, oppgave)
@@ -48,7 +50,7 @@ class OppgaveEventService(
                         countSuccessfulEventForSystemUser(oppgaveKey.getSystembruker())
                     }
                 } catch (e: NokkelNullException) {
-                    countFailedEventForSystemUser("NoProducerSpecified")
+                    countFailedEventForSystemUser("NokkelIsNullNoProducerSpecified")
                     log.warn("Oppgave-eventet manglet nøkkel. Topic: ${event.topic()}, Partition: ${event.partition()}, Offset: ${event.offset()}", e)
                 } catch (e: FieldValidationException) {
                     countFailedEventForSystemUser(event.systembruker ?: "NoProducerSpecified")

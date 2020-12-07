@@ -39,8 +39,10 @@ class BeskjedEventService(
         metricsCollector.recordMetrics(eventType = Eventtype.BESKJED) {
             events.forEach { event ->
                 try {
+                    val beskjedKey = event.getNonNullKey()
+                    countAllEventsFromKafkaForSystemUser(beskjedKey.getSystembruker())
+
                     if (skalVarsleEksternt(event.value())) {
-                        val beskjedKey = event.getNonNullKey()
                         val beskjed = event.value()
                         val doknotifikasjonKey = DoknotifikasjonTransformer.createDoknotifikasjonKey(beskjedKey, Eventtype.BESKJED)
                         val doknotifikasjon = DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(beskjedKey, beskjed)
@@ -49,7 +51,7 @@ class BeskjedEventService(
                         countSuccessfulEventForSystemUser(beskjedKey.getSystembruker())
                     }
                 } catch (nne: NokkelNullException) {
-                    countFailedEventForSystemUser("NoProducerSpecified")
+                    countFailedEventForSystemUser("NokkelIsNullNoProducerSpecified")
                     log.warn("Beskjed-eventet manglet nøkkel. Topic: ${event.topic()}, Partition: ${event.partition()}, Offset: ${event.offset()}", nne)
                 } catch (fve: FieldValidationException) {
                     countFailedEventForSystemUser(event.systembruker ?: "NoProducerSpecified")

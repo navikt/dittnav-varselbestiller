@@ -33,4 +33,25 @@ internal class EventMetricsSessionTest {
         session.getDuplicateKeyEvents(systembruker) `should be` 0
     }
 
+    @Test
+    fun `Skal plusse paa én numberOfAllEvents når nokkel er null`() {
+        val session = EventMetricsSession(Eventtype.BESKJED)
+        val systemUserThatIsNull = "NokkelIsNullNoProducerSpecified"
+
+        session.countFailedEventForSystemUser(systemUserThatIsNull)
+
+        session.getAllEvents() `should be` 1
+        session.getEventsFailed() `should be` 1
+    }
+
+    @Test
+    fun `Skal ikke plusse paa numberOfAllEvents hvis nokkel ikke er null`() {
+        val session = EventMetricsSession(Eventtype.BESKJED)
+        val systemUser = "dummySystemUser"
+
+        session.countFailedEventForSystemUser(systemUser)
+
+        session.getAllEvents() `should be` 0
+        session.getEventsFailed() `should be` 1
+    }
 }

@@ -35,6 +35,9 @@ class DoneEventService(
         metricsCollector.recordMetrics(eventType = Eventtype.DONE) {
             events.forEach { event ->
                 try {
+                    val doneKey = event.getNonNullKey()
+                    countAllEventsFromKafkaForSystemUser(doneKey.getSystembruker())
+
                     val varselbestilling: Varselbestilling? = fetchVarselbestilling(event)
                     if (varselbestilling != null) {
                         val doknotifikasjonStoppKey = varselbestilling.bestillingsId
@@ -43,7 +46,7 @@ class DoneEventService(
                         countSuccessfulEventForSystemUser(varselbestilling.systembruker)
                     }
                 } catch (e: NokkelNullException) {
-                    countFailedEventForSystemUser("NoProducerSpecified")
+                    countFailedEventForSystemUser("NokkelIsNullNoProducerSpecified")
                     log.warn("Done-eventet manglet nøkkel. Topic: ${event.topic()}, Partition: ${event.partition()}, Offset: ${event.offset()}", e)
                 } catch (e: FieldValidationException) {
                     countFailedEventForSystemUser(event.systembruker ?: "NoProducerSpecified")
