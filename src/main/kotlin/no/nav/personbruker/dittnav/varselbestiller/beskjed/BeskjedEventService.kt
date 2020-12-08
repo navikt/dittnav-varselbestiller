@@ -39,23 +39,24 @@ class BeskjedEventService(
         metricsCollector.recordMetrics(eventType = Eventtype.BESKJED) {
             events.forEach { event ->
                 try {
+                    val beskjedKey = event.getNonNullKey()
+                    countAllEventsFromKafkaForSystemUser(beskjedKey.getSystembruker())
                     if (shouldCreateDoknotifikasjon(event)) {
-                        val beskjedKey = event.getNonNullKey()
                         val beskjed = event.value()
                         val doknotifikasjonKey = DoknotifikasjonTransformer.createDoknotifikasjonKey(beskjedKey, Eventtype.BESKJED)
                         val doknotifikasjon = DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(beskjedKey, beskjed)
                         successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonKey, doknotifikasjon))
                         varselbestillinger.add(VarselbestillingTransformer.fromBeskjed(beskjedKey, beskjed, doknotifikasjon))
-                        countSuccessfulEventForSystemUser(beskjedKey.getSystembruker())
+                        countSuccessfulEksternvarslingForSystemUser(beskjedKey.getSystembruker())
                     }
                 } catch (nne: NokkelNullException) {
-                    countFailedEventForSystemUser("NoProducerSpecified")
+                    countNokkelWasNull()
                     log.warn("Beskjed-eventet manglet nøkkel. Topic: ${event.topic()}, Partition: ${event.partition()}, Offset: ${event.offset()}", nne)
                 } catch (fve: FieldValidationException) {
-                    countFailedEventForSystemUser(event.systembruker ?: "NoProducerSpecified")
+                    countFailedEksternvarslingForSystemUser(event.systembruker ?: "NoProducerSpecified")
                     log.warn("Eventet kan ikke brukes fordi det inneholder valideringsfeil, beskjed-eventet vil bli forkastet. EventId: ${event.eventId}, context: ${fve.context}", fve)
                 } catch (e: Exception) {
-                    countFailedEventForSystemUser(event.systembruker ?: "NoProducerSpecified")
+                    countFailedEksternvarslingForSystemUser(event.systembruker ?: "NoProducerSpecified")
                     problematicEvents.add(event)
                     log.warn("Validering av beskjed-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
                 }
@@ -107,10 +108,10 @@ class BeskjedEventService(
             val constraintErrors = result.getConflictingEntities().size
             val totalEntities = result.getAllEntities().size
 
-            countDuplicateEventKeysBySystemUser(result)
+            countDuplicateKeyEksternvarslingBySystemUser(result)
 
             val msg = """Traff $constraintErrors feil på duplikate eventId-er ved behandling av $totalEntities beskjed-eventer.
-                           | Feilene ble produsert av: ${getNumberDuplicateKeysBySystemUser()}""".trimMargin()
+                           | Feilene ble produsert av: ${getEksternvarslingDuplicateKeys()}""".trimMargin()
             log.warn(msg)
         }
     }

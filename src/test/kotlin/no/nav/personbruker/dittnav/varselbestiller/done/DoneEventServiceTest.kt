@@ -63,7 +63,7 @@ class DoneEventServiceTest {
         }
 
         coVerify(exactly = 0) { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(allAny())}
-        coVerify (exactly = 1) { metricsSession.countFailedEventForSystemUser(any()) }
+        coVerify (exactly = 1) { metricsSession.countNokkelWasNull() }
         confirmVerified(doknotifikasjonStoppProducer)
     }
 
@@ -85,7 +85,8 @@ class DoneEventServiceTest {
         }
 
         coVerify(exactly = 1) { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(any()) }
-        coVerify (exactly = 5) { metricsSession.countSuccessfulEventForSystemUser(any()) }
+        coVerify (exactly = 5) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
+        coVerify (exactly = 5) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
         capturedListOfEntities.captured.size `should be` doneRecords.count()
 
         confirmVerified(doknotifikasjonStoppProducer)
@@ -117,7 +118,8 @@ class DoneEventServiceTest {
         }
 
         coVerify(exactly = 1) { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(any())}
-        coVerify (exactly = 2) { metricsSession.countSuccessfulEventForSystemUser(any()) }
+        coVerify (exactly = 2) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
+        coVerify (exactly = 3) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
         capturedListOfEntities.captured.size `should be` 2
         confirmVerified(doknotifikasjonStoppProducer)
     }
@@ -153,7 +155,7 @@ class DoneEventServiceTest {
         }
 
         coVerify(exactly = 1) { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(any())}
-        coVerify (exactly = 1) { metricsSession.countSuccessfulEventForSystemUser(any()) }
+        coVerify (exactly = 1) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
         capturedListOfEntities.captured.size `should be` 1
         confirmVerified(doknotifikasjonStoppProducer)
     }
@@ -183,8 +185,9 @@ class DoneEventServiceTest {
         }
 
         coVerify(exactly = 1) { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(any()) }
-        coVerify(exactly = numberOfFailedTransformations) { metricsSession.countFailedEventForSystemUser(any()) }
-        coVerify (exactly = numberOfSuccessfulTransformations) { metricsSession.countSuccessfulEventForSystemUser(any()) }
+        coVerify(exactly = numberOfFailedTransformations) { metricsSession.countFailedEksternvarslingForSystemUser(any()) }
+        coVerify (exactly = numberOfSuccessfulTransformations) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
+        coVerify (exactly = numberOfSuccessfulTransformations + numberOfFailedTransformations) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
         capturedListOfEntities.captured.size `should be` numberOfSuccessfulTransformations
 
         confirmVerified(doknotifikasjonStoppProducer)
