@@ -35,22 +35,25 @@ class DoneEventService(
         metricsCollector.recordMetrics(eventType = Eventtype.DONE) {
             events.forEach { event ->
                 try {
+                    val doneKey = event.getNonNullKey()
+                    countAllEventsFromKafkaForSystemUser(doneKey.getSystembruker())
+
                     val varselbestilling: Varselbestilling? = fetchVarselbestilling(event)
                     if (varselbestilling != null) {
                         val doknotifikasjonStoppKey = varselbestilling.bestillingsId
                         val doknotifikasjonStoppEvent = DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(varselbestilling)
                         successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonStoppKey, doknotifikasjonStoppEvent))
-                        countSuccessfulEventForSystemUser(varselbestilling.systembruker)
+                        countSuccessfulEksternvarslingForSystemUser(varselbestilling.systembruker)
                     }
                 } catch (e: NokkelNullException) {
-                    countFailedEventForSystemUser("NoProducerSpecified")
+                    countNokkelWasNull()
                     log.warn("Done-eventet manglet nøkkel. Topic: ${event.topic()}, Partition: ${event.partition()}, Offset: ${event.offset()}", e)
                 } catch (e: FieldValidationException) {
-                    countFailedEventForSystemUser(event.systembruker ?: "NoProducerSpecified")
+                    countFailedEksternvarslingForSystemUser(event.systembruker ?: "NoProducerSpecified")
                     log.warn("Eventet kan ikke brukes fordi det inneholder valideringsfeil, done-eventet vil bli forkastet. EventId: ${event.eventId}", e)
                 } catch (e: Exception) {
                     problematicEvents.add(event)
-                    countFailedEventForSystemUser(event.systembruker ?: "NoProducerSpecified")
+                    countFailedEksternvarslingForSystemUser(event.systembruker ?: "NoProducerSpecified")
                     log.warn("Validering av done-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
                 }
             }
