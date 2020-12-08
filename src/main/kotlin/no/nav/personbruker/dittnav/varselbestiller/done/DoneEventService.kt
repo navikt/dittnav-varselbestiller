@@ -31,15 +31,17 @@ class DoneEventService(
     override suspend fun processEvents(events: ConsumerRecords<Nokkel, Done>) {
         val successfullyValidatedEvents = mutableListOf<RecordKeyValueWrapper<String, DoknotifikasjonStopp>>()
         val problematicEvents = mutableListOf<ConsumerRecord<Nokkel, Done>>()
+        val varselbestillingerToCancel = mutableListOf<Varselbestilling>()
 
         metricsCollector.recordMetrics(eventType = Eventtype.DONE) {
             events.forEach { event ->
                 try {
                     val varselbestilling: Varselbestilling? = fetchVarselbestilling(event)
-                    if (varselbestilling != null) {
-                        val doknotifikasjonStoppKey = varselbestilling.bestillingsId
+                    if (shouldCancelVarselbestilling(varselbestilling)) {
+                        val doknotifikasjonStoppKey = varselbestilling!!.bestillingsId
                         val doknotifikasjonStoppEvent = DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(varselbestilling)
                         successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonStoppKey, doknotifikasjonStoppEvent))
+                        varselbestillingerToCancel.add(varselbestilling)
                         countSuccessfulEventForSystemUser(varselbestilling.systembruker)
                     }
                 } catch (e: NokkelNullException) {
@@ -55,12 +57,29 @@ class DoneEventService(
                 }
             }
             if (successfullyValidatedEvents.isNotEmpty()) {
-                doknotifikasjonStoppProducer.produceDoknotifikasjonStop(successfullyValidatedEvents)
+                produceDoknotifikasjonStoppAndPersistToDB(successfullyValidatedEvents, varselbestillingerToCancel)
             }
             if (problematicEvents.isNotEmpty()) {
                 kastExceptionHvisMislykkedValidering(problematicEvents)
             }
         }
+    }
+
+    private fun shouldCancelVarselbestilling(varselbestilling: Varselbestilling?): Boolean {
+        var shouldCancel = false
+        if (varselbestilling != null) {
+            if (varselbestilling.avbestilt) {
+                log.info("Varsel med bestillingsid ${varselbestilling.bestillingsId} allerede avbestilt, avbestiller ikke på nytt.")
+            } else {
+                shouldCancel = true
+            }
+        }
+        return shouldCancel
+    }
+
+    private suspend fun produceDoknotifikasjonStoppAndPersistToDB(successfullyValidatedEvents: List<RecordKeyValueWrapper<String, DoknotifikasjonStopp>>, varselbestillingerToCancel: List<Varselbestilling>) {
+        doknotifikasjonStoppProducer.produceDoknotifikasjonStop(successfullyValidatedEvents)
+        varselbestillingRepository.cancelVarselbestilling(varselbestillingerToCancel)
     }
 
     private suspend fun fetchVarselbestilling(event: ConsumerRecord<Nokkel, Done>): Varselbestilling? {

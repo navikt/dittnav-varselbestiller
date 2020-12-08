@@ -123,6 +123,42 @@ class DoneEventServiceTest {
     }
 
     @Test
+    fun `Skal ikke opprette DoknotifikasjonStopp hvis varsel er avbestilt tidligere`() {
+        val doneEventId1 = "001"
+        val doneEventId2 = "002"
+        val doneEventId3 = "003"
+        val doneConsumerRecord1 = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName = "done", actualKey = AvroNokkelObjectMother.createNokkelWithEventId(doneEventId1), actualEvent = AvroDoneObjectMother.createDone(eventId = doneEventId1))
+        val doneConsumerRecord2 = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName = "done", actualKey = AvroNokkelObjectMother.createNokkelWithEventId(doneEventId2), actualEvent =  AvroDoneObjectMother.createDone(eventId = doneEventId2))
+        val doneConsumerRecord3 = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName ="done", actualKey = AvroNokkelObjectMother.createNokkelWithEventId(doneEventId3), actualEvent = AvroDoneObjectMother.createDone(eventId = doneEventId3))
+        val records = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(listOf(doneConsumerRecord1, doneConsumerRecord2, doneConsumerRecord3))
+
+        val slot = slot<suspend EventMetricsSession.() -> Unit>()
+        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
+            slot.captured.invoke(metricsSession)
+        }
+
+        val varselbestilling1Avbestilt = VarselbestillingObjectMother.createVarselbestilling("B-test-001", doneEventId1, "123").copy(avbestilt = true)
+        val varselbestilling2Avbestilt = VarselbestillingObjectMother.createVarselbestilling("B-test-002", doneEventId2, "123").copy(avbestilt = true)
+        val varselbestilling3IkkeAvbestilt = VarselbestillingObjectMother.createVarselbestilling("B-test-002", doneEventId3, "123")
+
+
+        val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, DoknotifikasjonStopp>>>()
+        coEvery { varselbestillingRepository.fetchVarselbestilling(eventId = doneEventId1, any(), any()) } returns varselbestilling1Avbestilt
+        coEvery { varselbestillingRepository.fetchVarselbestilling(eventId = doneEventId2, any(), any()) } returns varselbestilling2Avbestilt
+        coEvery { varselbestillingRepository.fetchVarselbestilling(eventId = doneEventId3, any(), any()) } returns varselbestilling3IkkeAvbestilt
+        coEvery { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(capture(capturedListOfEntities)) } returns Unit
+
+        runBlocking {
+            eventService.processEvents(records)
+        }
+
+        coVerify(exactly = 1) { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(any())}
+        coVerify (exactly = 1) { metricsSession.countSuccessfulEventForSystemUser(any()) }
+        capturedListOfEntities.captured.size `should be` 1
+        confirmVerified(doknotifikasjonStoppProducer)
+    }
+
+    @Test
     fun `Skal haandtere at enkelte valideringer feiler og fortsette aa validere resten av batch-en`() {
         val totalNumberOfRecords = 5
         val numberOfFailedTransformations = 1

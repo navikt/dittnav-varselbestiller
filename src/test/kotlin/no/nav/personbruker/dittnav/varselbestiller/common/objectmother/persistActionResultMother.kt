@@ -19,5 +19,3 @@ fun <T> conflictingKeysEvents(events: List<T>): ListPersistActionResult<T> {
         ListPersistActionResult.mapListOfIndividualResults(entryList)
     }
 }
-
-fun <T> emptyPersistResult(): ListPersistActionResult<T> = ListPersistActionResult.mapListOfIndividualResults(emptyList())

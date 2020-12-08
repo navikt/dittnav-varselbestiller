@@ -16,6 +16,7 @@ import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.Doknotifikasj
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import org.amshove.kluent.`should be`
 import org.junit.jupiter.api.AfterAll
@@ -37,6 +38,7 @@ class OppgaveEventServiceTest {
         clearMocks(varselbestillingRepository)
         clearMocks(metricsCollector)
         clearMocks(metricsSession)
+        coEvery { varselbestillingRepository.fetchVarselbestilling(any()) } returns null
     }
 
     @AfterAll
@@ -66,7 +68,7 @@ class OppgaveEventServiceTest {
     }
 
     @Test
-    fun `Skal skrive kun eventer som har ekstern varsling til Doknotifikasjon-topic`() {
+    fun `Skal opprette Doknotifikasjon kun for eventer som har ekstern varsling`() {
         val oppgaveWithEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfOppgaveRecords(numberOfRecords = 4, topicName = "dummyTopic", withEksternVarsling = true)
         val oppgaveWithoutEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfOppgaveRecords(numberOfRecords = 6, topicName = "dummyTopic", withEksternVarsling = false)
         val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, no.nav.doknotifikasjon.schemas.Doknotifikasjon>>>()
@@ -94,7 +96,7 @@ class OppgaveEventServiceTest {
     }
 
     @Test
-    fun `Skal skrive alle eventer som har ekstern varsling til Doknotifikasjon-topic`() {
+    fun `Skal opprette Doknotifikasjon for alle eventer som har ekstern varsling`() {
         val oppgaveRecords = ConsumerRecordsObjectMother.giveMeANumberOfOppgaveRecords(numberOfRecords = 5, topicName = "dummyTopic", withEksternVarsling = true)
         val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, no.nav.doknotifikasjon.schemas.Doknotifikasjon>>>()
 
@@ -121,6 +123,30 @@ class OppgaveEventServiceTest {
     }
 
     @Test
+    fun `Skal ikke opprette Doknotifikasjon for eventer som har tidligere bestilt ekstern varsling`() {
+        val oppgaveRecords = ConsumerRecordsObjectMother.giveMeANumberOfOppgaveRecords(numberOfRecords = 5, topicName = "dummyTopic", withEksternVarsling = true)
+        val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, no.nav.doknotifikasjon.schemas.Doknotifikasjon>>>()
+
+        val persistResult = successfulEvents(giveMeANumberOfVarselbestilling(numberOfEvents = 5))
+        coEvery { varselbestillingRepository.persistInOneBatch(any()) } returns persistResult
+        coEvery { varselbestillingRepository.fetchVarselbestilling(any()) } returns VarselbestillingObjectMother.createVarselbestilling(bestillingsId = "O-test-001", eventId = "001", fodselsnummer = "123")
+
+        val slot = slot<suspend EventMetricsSession.() -> Unit>()
+        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
+            slot.captured.invoke(metricsSession)
+        }
+        coEvery { doknotifikasjonProducer.produceDoknotifikasjon(capture(capturedListOfEntities)) } returns Unit
+
+        runBlocking {
+            eventService.processEvents(oppgaveRecords)
+        }
+
+        verify { DoknotifikasjonTransformer.createDoknotifikasjonFromOppgave(ofType(Nokkel::class), ofType(Oppgave::class)) wasNot Called }
+        coVerify { doknotifikasjonProducer wasNot Called}
+        coVerify { metricsSession wasNot Called }
+    }
+
+    @Test
     fun `Skal skrive Doknotifikasjon til database for Beskjeder som har ekstern varsling`() {
         val oppgaveWithEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfOppgaveRecords(numberOfRecords = 4, topicName = "dummyTopic", withEksternVarsling = true)
         val oppgaveWithoutEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfOppgaveRecords(numberOfRecords = 6, topicName = "dummyTopic", withEksternVarsling = false)
@@ -140,8 +166,6 @@ class OppgaveEventServiceTest {
         coVerify(exactly = 1) { varselbestillingRepository.persistInOneBatch(allAny()) }
         coVerify (exactly = 4) { metricsSession.countSuccessfulEventForSystemUser(any()) }
         capturedListOfEntities.captured.size `should be` oppgaveWithEksternVarslingRecords.count()
-
-        confirmVerified(varselbestillingRepository)
     }
 
     @Test
@@ -178,7 +202,7 @@ class OppgaveEventServiceTest {
     }
 
     @Test
-    fun `skal rapportere hvert velykket event`() {
+    fun `Skal rapportere hvert velykket event`() {
         val numberOfRecords = 5
 
         val oppgaveWithEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfOppgaveRecords(numberOfRecords, topicName = "dummyTopic", withEksternVarsling = true)

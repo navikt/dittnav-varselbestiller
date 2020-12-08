@@ -18,4 +18,18 @@ class VarselbestillingRepository(private val database: Database) {
         }
         return resultat
     }
+
+    suspend fun fetchVarselbestilling(bestillingsId: String): Varselbestilling? {
+        var resultat: Varselbestilling? = null
+        database.queryWithExceptionTranslation {
+            resultat = getVarselbestillingForBestillingsId(bestillingsId = bestillingsId)
+        }
+        return resultat
+    }
+
+    suspend fun cancelVarselbestilling(entities: List<Varselbestilling>) {
+        database.queryWithExceptionTranslation {
+            setVarselbestillingAvbestiltFlag(entities, true)
+        }
+    }
 }

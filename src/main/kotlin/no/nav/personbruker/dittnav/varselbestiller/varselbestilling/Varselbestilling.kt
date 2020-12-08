@@ -7,5 +7,6 @@ data class Varselbestilling(
         val eventId: String,
         val fodselsnummer: String,
         val systembruker: String,
-        val bestillingstidspunkt: LocalDateTime
+        val bestillingstidspunkt: LocalDateTime,
+        val avbestilt: Boolean = false
 )

@@ -38,7 +38,7 @@ class OppgaveEventService(
         metricsCollector.recordMetrics(eventType = Eventtype.OPPGAVE) {
             events.forEach { event ->
                 try {
-                    if (skalVarsleEksternt(event.value())) {
+                    if (skalBestilleEksternVarsling(event)) {
                         val oppgaveKey = event.getNonNullKey()
                         val oppgave = event.value()
                         val doknotifikasjonKey = DoknotifikasjonTransformer.createDoknotifikasjonKey(oppgaveKey, Eventtype.OPPGAVE)
@@ -75,8 +75,24 @@ class OppgaveEventService(
         return varselbestillingRepository.persistInOneBatch(varselbestillinger)
     }
 
-    private fun skalVarsleEksternt(event: Oppgave?): Boolean {
-        return event != null && event.getEksternVarsling()
+    private suspend fun skalBestilleEksternVarsling(event: ConsumerRecord<Nokkel, Oppgave>): Boolean {
+        val oppgaveKey = event.getNonNullKey()
+        val oppgave = event.value()
+        val bestillingsid = DoknotifikasjonTransformer.createDoknotifikasjonKey(oppgaveKey, Eventtype.OPPGAVE)
+        var skalBestille = false
+        if(oppgave.getEksternVarsling()) {
+            if(alleredeBestilt(bestillingsid)) {
+                log.info("Varsel med bestillingsid $bestillingsid er allerede bestilt, bestiller ikke på nytt.")
+            } else {
+                skalBestille = true
+            }
+        }
+        return skalBestille
+    }
+
+    private suspend fun alleredeBestilt(bestillingsId: String): Boolean {
+        val varselbestilling = varselbestillingRepository.fetchVarselbestilling(bestillingsId = bestillingsId)
+        return varselbestilling != null
     }
 
     private fun kastExceptionVedMislykkedValidering(problematicEvents: MutableList<ConsumerRecord<Nokkel, Oppgave>>) {
