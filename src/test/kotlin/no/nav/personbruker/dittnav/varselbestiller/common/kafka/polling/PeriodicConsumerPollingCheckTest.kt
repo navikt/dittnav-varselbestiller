@@ -61,7 +61,7 @@ class PeriodicConsumerPollingCheckTest {
 
 
         runBlocking {
-            periodicConsumerPollingCheck.checkIfConsumersAreRunningAndRestartIfNot()
+            periodicConsumerPollingCheck.checkIfConsumersAreRunningAndRestartIfTheyShouldRun()
         }
 
         coVerify(exactly = 1) { KafkaConsumerSetup.restartPolling(appContext) }
@@ -74,7 +74,7 @@ class PeriodicConsumerPollingCheckTest {
         createResponseShouldConsumerPollToDoknotifikasjon(shouldBeskjedPoll = true, shouldDonePoll = true, shouldOppgavePoll = true)
 
         runBlocking {
-            periodicConsumerPollingCheck.checkIfConsumersAreRunningAndRestartIfNot()
+            periodicConsumerPollingCheck.checkIfConsumersAreRunningAndRestartIfTheyShouldRun()
         }
 
         coVerify(exactly = 0) { KafkaConsumerSetup.restartPolling(appContext) }

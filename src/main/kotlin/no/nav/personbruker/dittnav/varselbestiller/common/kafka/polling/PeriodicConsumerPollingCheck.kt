@@ -25,12 +25,12 @@ class PeriodicConsumerPollingCheck(
         launch {
             while (job.isActive) {
                 delay(minutesToWait)
-                checkIfConsumersAreRunningAndRestartIfNot()
+                checkIfConsumersAreRunningAndRestartIfTheyShouldRun()
             }
         }
     }
 
-    suspend fun checkIfConsumersAreRunningAndRestartIfNot() {
+    suspend fun checkIfConsumersAreRunningAndRestartIfTheyShouldRun() {
         val consumersThatShouldBeRestarted = getConsumersThatShouldBeRestarted()
         if (consumersThatShouldBeRestarted.isNotEmpty()) {
             restartPolling(consumersThatShouldBeRestarted)
