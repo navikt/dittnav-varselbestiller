@@ -34,24 +34,24 @@ internal class EventMetricsSessionTest {
     }
 
     @Test
-    fun `Skal plusse paa én numberOfAllEvents når nokkel er null`() {
+    fun `Skal fortsatt telle event hvis nokkel er null`() {
         val session = EventMetricsSession(Eventtype.BESKJED)
-        val systemUserThatIsNull = "NokkelIsNullNoProducerSpecified"
 
-        session.countFailedEksternvarslingForSystemUser(systemUserThatIsNull)
+        session.countNokkelWasNull()
 
         session.getAllEventsFromKafka() `should be` 1
-        session.getEksternvarslingEventsFailed() `should be` 1
+        session.getNokkelWasNull() `should be` 1
     }
 
     @Test
-    fun `Skal ikke plusse paa numberOfAllEvents hvis nokkel ikke er null`() {
+    fun `Skal telle rett antall totale events fra Kafka`() {
         val session = EventMetricsSession(Eventtype.BESKJED)
         val systemUser = "dummySystemUser"
 
-        session.countFailedEksternvarslingForSystemUser(systemUser)
+        session.countNokkelWasNull()
+        session.countAllEventsFromKafkaForSystemUser(systemUser)
 
-        session.getAllEventsFromKafka() `should be` 0
-        session.getEksternvarslingEventsFailed() `should be` 1
+        session.getAllEventsFromKafka() `should be` 2
+        session.getAllEventsFromKafka(systemUser) `should be` 1
     }
 }

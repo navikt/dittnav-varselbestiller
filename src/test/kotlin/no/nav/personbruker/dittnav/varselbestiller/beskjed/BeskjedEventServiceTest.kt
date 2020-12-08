@@ -65,7 +65,7 @@ class BeskjedEventServiceTest {
         }
 
         coVerify(exactly = 0) { doknotifikasjonProducer.produceDoknotifikasjon(allAny()) }
-        coVerify(exactly = 1) { metricsSession.countFailedEksternvarslingForSystemUser(any()) }
+        coVerify(exactly = 1) { metricsSession.countNokkelWasNull() }
         confirmVerified(doknotifikasjonProducer)
     }
 

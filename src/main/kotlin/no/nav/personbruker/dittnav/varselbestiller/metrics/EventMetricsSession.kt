@@ -82,6 +82,10 @@ class EventMetricsSession(val eventtype: Eventtype) {
         return countDuplicateKeyEksternvarslingBySysUser
     }
 
+    fun getNokkelWasNull(): Int {
+        return countNokkelWasNull
+    }
+
     fun getUniqueSystemUser(): List<String> {
         val systemUsers = ArrayList<String>()
         systemUsers.addAll(countAllEventsFromKafkaBySysUser.keys)

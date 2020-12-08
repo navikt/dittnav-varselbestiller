@@ -63,7 +63,7 @@ class DoneEventServiceTest {
         }
 
         coVerify(exactly = 0) { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(allAny())}
-        coVerify (exactly = 1) { metricsSession.countFailedEksternvarslingForSystemUser(any()) }
+        coVerify (exactly = 1) { metricsSession.countNokkelWasNull() }
         confirmVerified(doknotifikasjonStoppProducer)
     }
 
