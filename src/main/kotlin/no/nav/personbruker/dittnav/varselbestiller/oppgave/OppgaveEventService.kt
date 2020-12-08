@@ -38,7 +38,7 @@ class OppgaveEventService(
         metricsCollector.recordMetrics(eventType = Eventtype.OPPGAVE) {
             events.forEach { event ->
                 try {
-                    if (skalBestilleEksternVarsling(event)) {
+                    if (shouldCreateDoknotifikasjon(event)) {
                         val oppgaveKey = event.getNonNullKey()
                         val oppgave = event.value()
                         val doknotifikasjonKey = DoknotifikasjonTransformer.createDoknotifikasjonKey(oppgaveKey, Eventtype.OPPGAVE)
@@ -65,7 +65,7 @@ class OppgaveEventService(
                 countDuplicateKeyEvents(result)
             }
             if (problematicEvents.isNotEmpty()) {
-                kastExceptionVedMislykkedValidering(problematicEvents)
+                throwExceptionIfValidationFailed(problematicEvents)
             }
         }
     }
@@ -75,27 +75,27 @@ class OppgaveEventService(
         return varselbestillingRepository.persistInOneBatch(varselbestillinger)
     }
 
-    private suspend fun skalBestilleEksternVarsling(event: ConsumerRecord<Nokkel, Oppgave>): Boolean {
+    private suspend fun shouldCreateDoknotifikasjon(event: ConsumerRecord<Nokkel, Oppgave>): Boolean {
         val oppgaveKey = event.getNonNullKey()
         val oppgave = event.value()
         val bestillingsid = DoknotifikasjonTransformer.createDoknotifikasjonKey(oppgaveKey, Eventtype.OPPGAVE)
-        var skalBestille = false
+        var shouldCreate = false
         if(oppgave.getEksternVarsling()) {
-            if(alleredeBestilt(bestillingsid)) {
+            if(alreadyCreated(bestillingsid)) {
                 log.info("Varsel med bestillingsid $bestillingsid er allerede bestilt, bestiller ikke på nytt.")
             } else {
-                skalBestille = true
+                shouldCreate = true
             }
         }
-        return skalBestille
+        return shouldCreate
     }
 
-    private suspend fun alleredeBestilt(bestillingsId: String): Boolean {
+    private suspend fun alreadyCreated(bestillingsId: String): Boolean {
         val varselbestilling = varselbestillingRepository.fetchVarselbestilling(bestillingsId = bestillingsId)
         return varselbestilling != null
     }
 
-    private fun kastExceptionVedMislykkedValidering(problematicEvents: MutableList<ConsumerRecord<Nokkel, Oppgave>>) {
+    private fun throwExceptionIfValidationFailed(problematicEvents: MutableList<ConsumerRecord<Nokkel, Oppgave>>) {
         val message = "En eller flere oppgave-eventer kunne ikke sendes til varselbestiller fordi validering feilet."
         val exception = UnvalidatableRecordException(message)
         exception.addContext("antallMislykkedValidering", problematicEvents.size)

@@ -37,7 +37,7 @@ class DoneEventService(
             events.forEach { event ->
                 try {
                     val varselbestilling: Varselbestilling? = fetchVarselbestilling(event)
-                    if (shouldCancelVarselbestilling(varselbestilling)) {
+                    if (shouldCreateDoknotifikasjonStopp(varselbestilling)) {
                         val doknotifikasjonStoppKey = varselbestilling!!.bestillingsId
                         val doknotifikasjonStoppEvent = DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(varselbestilling)
                         successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonStoppKey, doknotifikasjonStoppEvent))
@@ -60,12 +60,12 @@ class DoneEventService(
                 produceDoknotifikasjonStoppAndPersistToDB(successfullyValidatedEvents, varselbestillingerToCancel)
             }
             if (problematicEvents.isNotEmpty()) {
-                kastExceptionHvisMislykkedValidering(problematicEvents)
+                throwExceptionIfFailedValidation(problematicEvents)
             }
         }
     }
 
-    private fun shouldCancelVarselbestilling(varselbestilling: Varselbestilling?): Boolean {
+    private fun shouldCreateDoknotifikasjonStopp(varselbestilling: Varselbestilling?): Boolean {
         var shouldCancel = false
         if (varselbestilling != null) {
             if (varselbestilling.avbestilt) {
@@ -89,7 +89,7 @@ class DoneEventService(
                 eventId = doneKey.getEventId(), systembruker = doneKey.getSystembruker(), fodselsnummer = doneValue.getFodselsnummer())
     }
 
-    private fun kastExceptionHvisMislykkedValidering(problematicEvents: MutableList<ConsumerRecord<Nokkel, Done>>) {
+    private fun throwExceptionIfFailedValidation(problematicEvents: MutableList<ConsumerRecord<Nokkel, Done>>) {
         if (problematicEvents.isNotEmpty()) {
             val message = "En eller flere done-eventer kunne ikke sendes til varselbestiller fordi validering feilet."
             val exception = UnvalidatableRecordException(message)
