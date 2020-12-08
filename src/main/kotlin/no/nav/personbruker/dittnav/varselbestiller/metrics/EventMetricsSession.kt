@@ -41,6 +41,10 @@ class EventMetricsSession(val eventtype: Eventtype) {
         return System.nanoTime() - startTime
     }
 
+    fun getAllEvents(systemUser: String): Int {
+        return numberOfAllEvents.getOrDefault(systemUser, 0)
+    }
+
     fun getEventsSeen(systemUser: String): Int {
         return getEventsProcessed(systemUser) + getEventsFailed(systemUser)
     }
@@ -79,6 +83,7 @@ class EventMetricsSession(val eventtype: Eventtype) {
 
     fun getUniqueSystemUser(): List<String> {
         val systemUsers = ArrayList<String>()
+        systemUsers.addAll(numberOfAllEvents.keys)
         systemUsers.addAll(numberProcessedBySystemUser.keys)
         systemUsers.addAll(numberFailedBySystemUser.keys)
         return systemUsers.distinct()

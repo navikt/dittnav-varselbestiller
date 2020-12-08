@@ -11,6 +11,7 @@ class MetricsCollector(private val metricsReporter: MetricsReporter, private val
         val session = EventMetricsSession(eventType)
         block.invoke(session)
         val processingTime = session.timeElapsedSinceSessionStartNanos()
+        handleAllEvents(session)
 
         if (session.getEventsSeen() > 0) {
             handleEventsSeen(session)
@@ -29,6 +30,19 @@ class MetricsCollector(private val metricsReporter: MetricsReporter, private val
 
             reportMetrics(KAFKA_EVENTS_SEEN, numberSeen, eventTypeName, printableAlias)
             PrometheusMetricsCollector.registerEventsSeen(numberSeen, eventTypeName, printableAlias)
+        }
+    }
+
+    private suspend fun handleAllEvents(session: EventMetricsSession) {
+        session.getUniqueSystemUser().forEach { systemUser ->
+            val numberOfAllEvents = session.getAllEvents(systemUser)
+            val eventTypeName = session.eventtype.toString()
+            val printableAlias = nameScrubber.getPublicAlias(systemUser)
+
+            if (numberOfAllEvents > 0) {
+                reportMetrics(KAFKA_ALL_EVENTS, numberOfAllEvents, eventTypeName, printableAlias)
+                PrometheusMetricsCollector.registerAllEventsFromKafka(numberOfAllEvents, eventTypeName, printableAlias)
+            }
         }
     }
 
