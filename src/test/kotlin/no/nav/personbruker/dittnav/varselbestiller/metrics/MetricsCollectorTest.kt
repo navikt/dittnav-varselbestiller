@@ -35,7 +35,7 @@ internal class MetricsCollectorTest {
 
         coEvery { metricsReporter.registerDataPoint(not(KAFKA_EVENTS_PROCESSING_TIME), any(), capture(capturedTags)) } returns Unit
         coEvery { metricsReporter.registerDataPoint(KAFKA_EVENTS_PROCESSING_TIME, any(), any()) } returns Unit
-        every { PrometheusMetricsCollector.registerEventsSeen(any(), any(), capture(producerNameForPrometheus)) } returns Unit
+        every { PrometheusMetricsCollector.registerSeenEksternvarslingEvents(any(), any(), capture(producerNameForPrometheus)) } returns Unit
 
         runBlocking {
             metricsCollector.recordMetrics(Eventtype.BESKJED) {
@@ -44,8 +44,8 @@ internal class MetricsCollectorTest {
         }
 
         coVerify(exactly = 2) { metricsReporter.registerDataPoint(not(KAFKA_EVENTS_PROCESSING_TIME), any(), any()) }
-        verify(exactly = 1) { PrometheusMetricsCollector.registerEventsSeen(any(), any(), any()) }
-        verify(exactly = 1) { PrometheusMetricsCollector.registerEventsProcessed(any(), any(), any()) }
+        verify(exactly = 1) { PrometheusMetricsCollector.registerSeenEksternvarslingEvents(any(), any(), any()) }
+        verify(exactly = 1) { PrometheusMetricsCollector.registerProcessedEksternvarslingEvents(any(), any(), any()) }
 
         producerNameForPrometheus.captured `should be equal to` producerAlias
         capturedTags.captured["producer"] `should be equal to` producerAlias
@@ -63,7 +63,7 @@ internal class MetricsCollectorTest {
 
         coEvery { metricsReporter.registerDataPoint(not(KAFKA_EVENTS_PROCESSING_TIME), any(), capture(capturedTags)) } returns Unit
         coEvery { metricsReporter.registerDataPoint(KAFKA_EVENTS_PROCESSING_TIME, any(), any()) } returns Unit
-        every { PrometheusMetricsCollector.registerEventsFailed(any(), any(), capture(producerNameForPrometheus)) } returns Unit
+        every { PrometheusMetricsCollector.registerFailedEksternvarslingEvents(any(), any(), capture(producerNameForPrometheus)) } returns Unit
 
         runBlocking {
             metricsCollector.recordMetrics(Eventtype.BESKJED) {
@@ -72,8 +72,8 @@ internal class MetricsCollectorTest {
         }
 
         coVerify(exactly = 2) { metricsReporter.registerDataPoint(not(KAFKA_EVENTS_PROCESSING_TIME), any(), any()) }
-        verify(exactly = 1) { PrometheusMetricsCollector.registerEventsSeen(any(), any(), any()) }
-        verify(exactly = 1) { PrometheusMetricsCollector.registerEventsFailed(any(), any(), any()) }
+        verify(exactly = 1) { PrometheusMetricsCollector.registerSeenEksternvarslingEvents(any(), any(), any()) }
+        verify(exactly = 1) { PrometheusMetricsCollector.registerFailedEksternvarslingEvents(any(), any(), any()) }
 
         producerNameForPrometheus.captured `should be equal to` producerAlias
         capturedTags.captured["producer"] `should be equal to` producerAlias
@@ -133,9 +133,9 @@ internal class MetricsCollectorTest {
         }
 
         coVerify(exactly = 5) { metricsReporter.registerDataPoint(any(), any(), any()) }
-        verify(exactly = 1) { PrometheusMetricsCollector.registerEventsSeen(3, any(), any()) }
-        verify(exactly = 1) { PrometheusMetricsCollector.registerEventsProcessed(2, any(), any()) }
-        verify(exactly = 1) { PrometheusMetricsCollector.registerEventsFailed(1, any(), any()) }
+        verify(exactly = 1) { PrometheusMetricsCollector.registerSeenEksternvarslingEvents(3, any(), any()) }
+        verify(exactly = 1) { PrometheusMetricsCollector.registerProcessedEksternvarslingEvents(2, any(), any()) }
+        verify(exactly = 1) { PrometheusMetricsCollector.registerFailedEksternvarslingEvents(1, any(), any()) }
         verify(exactly = 1) { PrometheusMetricsCollector.registerAllEventsFromKafka(1, any(), any()) }
 
         capturedFieldsForSeen.captured["counter"] `should be equal to` 3

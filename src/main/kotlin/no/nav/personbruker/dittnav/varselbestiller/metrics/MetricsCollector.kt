@@ -29,7 +29,7 @@ class MetricsCollector(private val metricsReporter: MetricsReporter, private val
             val printableAlias = nameScrubber.getPublicAlias(systemUser)
 
             reportMetrics(KAFKA_EKSTERNVARSLING_EVENTS_SEEN, numberEksternvarslingSeen, eventTypeName, printableAlias)
-            PrometheusMetricsCollector.registerEventsSeen(numberEksternvarslingSeen, eventTypeName, printableAlias)
+            PrometheusMetricsCollector.registerSeenEksternvarslingEvents(numberEksternvarslingSeen, eventTypeName, printableAlias)
         }
     }
 
@@ -54,7 +54,7 @@ class MetricsCollector(private val metricsReporter: MetricsReporter, private val
 
             if (numberEksternvarslingProcessed > 0) {
                 reportMetrics(KAFKA_EKSTERNVARSLING_EVENTS_PROCESSED, numberEksternvarslingProcessed, eventTypeName, printableAlias)
-                PrometheusMetricsCollector.registerEventsProcessed(numberEksternvarslingProcessed, eventTypeName, printableAlias)
+                PrometheusMetricsCollector.registerProcessedEksternvarslingEvents(numberEksternvarslingProcessed, eventTypeName, printableAlias)
             }
         }
     }
@@ -67,7 +67,7 @@ class MetricsCollector(private val metricsReporter: MetricsReporter, private val
 
             if (numberEksternvarslingFailed > 0) {
                 reportMetrics(KAFKA_EKSTERNVARSLING_EVENTS_FAILED, numberEksternvarslingFailed, eventTypeName, printableAlias)
-                PrometheusMetricsCollector.registerEventsFailed(numberEksternvarslingFailed, eventTypeName, printableAlias)
+                PrometheusMetricsCollector.registerFailedEksternvarslingEvents(numberEksternvarslingFailed, eventTypeName, printableAlias)
             }
         }
     }
@@ -80,7 +80,7 @@ class MetricsCollector(private val metricsReporter: MetricsReporter, private val
 
             if (numberEksternvarslingDuplicateKeys > 0) {
                 reportMetrics(KAFKA_EKSTERNVARSLING_EVENTS_DUPLICATE_KEY, numberEksternvarslingDuplicateKeys, eventTypeName, printableAlias)
-                PrometheusMetricsCollector.registerEventsDuplicateKey(numberEksternvarslingDuplicateKeys, eventTypeName, printableAlias)
+                PrometheusMetricsCollector.registerDuplicateKeyEksternvarslingEvents(numberEksternvarslingDuplicateKeys, eventTypeName, printableAlias)
             }
         }
     }
