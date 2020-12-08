@@ -16,8 +16,10 @@ import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.Doknotifikasj
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import org.amshove.kluent.`should be`
+import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -45,6 +47,29 @@ class OppgaveEventServiceTest {
     }
 
     @Test
+    fun `Skal forkaste eventer som mangler nokkel`() {
+        val defaultLopenummer = 1
+        val oppgave = AvroOppgaveObjectMother.createOppgave(defaultLopenummer)
+        val cr: ConsumerRecord<Nokkel, Oppgave> = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName = "oppgave", actualKey = null, actualEvent = oppgave)
+        val records = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(cr)
+
+        val slot = slot<suspend EventMetricsSession.() -> Unit>()
+        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
+            slot.captured.invoke(metricsSession)
+        }
+
+        coEvery { varselbestillingRepository.fetchVarselbestilling(any(), any(), any()) } returns VarselbestillingObjectMother.createVarselbestilling("O-test-001", "1", "123")
+
+        runBlocking {
+            eventService.processEvents(records)
+        }
+
+        coVerify(exactly = 0) { doknotifikasjonProducer.produceDoknotifikasjon(allAny()) }
+        coVerify (exactly = 1) { metricsSession.countNokkelWasNull() }
+        confirmVerified(doknotifikasjonProducer)
+    }
+
+    @Test
     fun `Skal forkaste eventer som mangler fodselsnummer`() {
         val oppgaveWithoutFodselsnummer = AvroOppgaveObjectMother.createOppgaveWithFodselsnummerOgEksternVarsling(1, "", true)
         val cr = ConsumerRecordsObjectMother.createConsumerRecord("oppgave", oppgaveWithoutFodselsnummer)
@@ -60,7 +85,8 @@ class OppgaveEventServiceTest {
         }
 
         coVerify(exactly = 0) { doknotifikasjonProducer.produceDoknotifikasjon(allAny()) }
-        coVerify (exactly = 1) { metricsSession.countFailedEventForSystemUser(any()) }
+        coVerify (exactly = 1) { metricsSession.countFailedEksternvarslingForSystemUser(any()) }
+        coVerify (exactly = 1) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
         confirmVerified(doknotifikasjonProducer)
 
     }
@@ -87,7 +113,8 @@ class OppgaveEventServiceTest {
 
         verify(exactly = oppgaveWithEksternVarslingRecords.count()) { DoknotifikasjonTransformer.createDoknotifikasjonFromOppgave(ofType(Nokkel::class), ofType(Oppgave::class)) }
         coVerify(exactly = 1) { doknotifikasjonProducer.produceDoknotifikasjon(allAny()) }
-        coVerify (exactly = 4) { metricsSession.countSuccessfulEventForSystemUser(any()) }
+        coVerify (exactly = oppgaveWithEksternVarslingRecords.count()) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
+        coVerify (exactly = oppgaveWithEksternVarslingRecords.count() + oppgaveWithoutEksternVarslingRecords.count()) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
         capturedListOfEntities.captured.size `should be` oppgaveWithEksternVarslingRecords.count()
 
         confirmVerified(doknotifikasjonProducer)
@@ -114,7 +141,8 @@ class OppgaveEventServiceTest {
 
         verify(exactly = oppgaveRecords.count()) { DoknotifikasjonTransformer.createDoknotifikasjonFromOppgave(ofType(Nokkel::class), ofType(Oppgave::class)) }
         coVerify(exactly = 1) { doknotifikasjonProducer.produceDoknotifikasjon(allAny()) }
-        coVerify (exactly = 5) { metricsSession.countSuccessfulEventForSystemUser(any()) }
+        coVerify (exactly = oppgaveRecords.count()) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
+        coVerify (exactly = oppgaveRecords.count()) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
         capturedListOfEntities.captured.size `should be` oppgaveRecords.count()
 
         confirmVerified(doknotifikasjonProducer)
@@ -138,7 +166,8 @@ class OppgaveEventServiceTest {
         }
 
         coVerify(exactly = 1) { varselbestillingRepository.persistInOneBatch(allAny()) }
-        coVerify (exactly = 4) { metricsSession.countSuccessfulEventForSystemUser(any()) }
+        coVerify (exactly = oppgaveWithEksternVarslingRecords.count()) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
+        coVerify (exactly = oppgaveWithEksternVarslingRecords.count() + oppgaveWithoutEksternVarslingRecords.count()) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
         capturedListOfEntities.captured.size `should be` oppgaveWithEksternVarslingRecords.count()
 
         confirmVerified(varselbestillingRepository)
@@ -171,7 +200,8 @@ class OppgaveEventServiceTest {
         }
 
         coVerify(exactly = 1) { doknotifikasjonProducer.produceDoknotifikasjon(any()) }
-        coVerify(exactly = numberOfFailedTransformations) { metricsSession.countFailedEventForSystemUser(any()) }
+        coVerify(exactly = numberOfFailedTransformations) { metricsSession.countFailedEksternvarslingForSystemUser(any()) }
+        coVerify(exactly = numberOfFailedTransformations + numberOfSuccessfulTransformations) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
         capturedListOfEntities.captured.size `should be` numberOfSuccessfulTransformations
 
         confirmVerified(doknotifikasjonProducer)
@@ -195,6 +225,7 @@ class OppgaveEventServiceTest {
             eventService.processEvents(oppgaveWithEksternVarslingRecords)
         }
 
-        coVerify (exactly = numberOfRecords) { metricsSession.countSuccessfulEventForSystemUser(any()) }
+        coVerify (exactly = numberOfRecords) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
+        coVerify (exactly = numberOfRecords) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
     }
 }

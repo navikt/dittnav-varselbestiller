@@ -11,62 +11,76 @@ class MetricsCollector(private val metricsReporter: MetricsReporter, private val
         val session = EventMetricsSession(eventType)
         block.invoke(session)
         val processingTime = session.timeElapsedSinceSessionStartNanos()
+        handleAllEventsFromKafka(session)
 
-        if (session.getEventsSeen() > 0) {
-            handleEventsSeen(session)
-            handleEventsProcessed(session)
-            handleEventsFailed(session)
-            handleDuplicateEventKeys(session)
+        if (session.getEksternvarslingEventsSeen() > 0) {
+            handleSeenEksternvarslingEvents(session)
+            handleProcessedEksternvarslingEvents(session)
+            handleFailedEksternvarslingEvents(session)
+            handleDuplicateEksternvarslingEventKeys(session)
             handleEventsProcessingTime(session, processingTime)
         }
     }
 
-    private suspend fun handleEventsSeen(session: EventMetricsSession) {
+    private suspend fun handleSeenEksternvarslingEvents(session: EventMetricsSession) {
         session.getUniqueSystemUser().forEach { systemUser ->
-            val numberSeen = session.getEventsSeen(systemUser)
+            val numberEksternvarslingSeen = session.getEksternvarslingEventsSeen(systemUser)
             val eventTypeName = session.eventtype.toString()
             val printableAlias = nameScrubber.getPublicAlias(systemUser)
 
-            reportMetrics(KAFKA_EVENTS_SEEN, numberSeen, eventTypeName, printableAlias)
-            PrometheusMetricsCollector.registerEventsSeen(numberSeen, eventTypeName, printableAlias)
+            reportMetrics(KAFKA_EKSTERNVARSLING_EVENTS_SEEN, numberEksternvarslingSeen, eventTypeName, printableAlias)
+            PrometheusMetricsCollector.registerSeenEksternvarslingEvents(numberEksternvarslingSeen, eventTypeName, printableAlias)
         }
     }
 
-    private suspend fun handleEventsProcessed(session: EventMetricsSession) {
+    private suspend fun handleAllEventsFromKafka(session: EventMetricsSession) {
         session.getUniqueSystemUser().forEach { systemUser ->
-            val numberProcessed = session.getEventsProcessed(systemUser)
+            val numberOfAllEvents = session.getAllEventsFromKafka(systemUser)
             val eventTypeName = session.eventtype.toString()
             val printableAlias = nameScrubber.getPublicAlias(systemUser)
 
-            if (numberProcessed > 0) {
-                reportMetrics(KAFKA_EVENTS_PROCESSED, numberProcessed, eventTypeName, printableAlias)
-                PrometheusMetricsCollector.registerEventsProcessed(numberProcessed, eventTypeName, printableAlias)
+            if (numberOfAllEvents > 0) {
+                reportMetrics(KAFKA_ALL_EVENTS, numberOfAllEvents, eventTypeName, printableAlias)
+                PrometheusMetricsCollector.registerAllEventsFromKafka(numberOfAllEvents, eventTypeName, printableAlias)
             }
         }
     }
 
-    private suspend fun handleEventsFailed(session: EventMetricsSession) {
+    private suspend fun handleProcessedEksternvarslingEvents(session: EventMetricsSession) {
         session.getUniqueSystemUser().forEach { systemUser ->
-            val numberFailed = session.getEventsFailed(systemUser)
+            val numberEksternvarslingProcessed = session.getEksternvarslingEventsProcessed(systemUser)
             val eventTypeName = session.eventtype.toString()
             val printableAlias = nameScrubber.getPublicAlias(systemUser)
 
-            if (numberFailed > 0) {
-                reportMetrics(KAFKA_EVENTS_FAILED, numberFailed, eventTypeName, printableAlias)
-                PrometheusMetricsCollector.registerEventsFailed(numberFailed, eventTypeName, printableAlias)
+            if (numberEksternvarslingProcessed > 0) {
+                reportMetrics(KAFKA_EKSTERNVARSLING_EVENTS_PROCESSED, numberEksternvarslingProcessed, eventTypeName, printableAlias)
+                PrometheusMetricsCollector.registerProcessedEksternvarslingEvents(numberEksternvarslingProcessed, eventTypeName, printableAlias)
             }
         }
     }
 
-    private suspend fun handleDuplicateEventKeys(session: EventMetricsSession) {
+    private suspend fun handleFailedEksternvarslingEvents(session: EventMetricsSession) {
         session.getUniqueSystemUser().forEach { systemUser ->
-            val numberDuplicateKeyEvents = session.getDuplicateKeyEvents(systemUser)
+            val numberEksternvarslingFailed = session.getEksternvarslingEventsFailed(systemUser)
             val eventTypeName = session.eventtype.toString()
             val printableAlias = nameScrubber.getPublicAlias(systemUser)
 
-            if (numberDuplicateKeyEvents > 0) {
-                reportMetrics(KAFKA_EVENTS_DUPLICATE_KEY, numberDuplicateKeyEvents, eventTypeName, printableAlias)
-                PrometheusMetricsCollector.registerEventsDuplicateKey(numberDuplicateKeyEvents, eventTypeName, printableAlias)
+            if (numberEksternvarslingFailed > 0) {
+                reportMetrics(KAFKA_EKSTERNVARSLING_EVENTS_FAILED, numberEksternvarslingFailed, eventTypeName, printableAlias)
+                PrometheusMetricsCollector.registerFailedEksternvarslingEvents(numberEksternvarslingFailed, eventTypeName, printableAlias)
+            }
+        }
+    }
+
+    private suspend fun handleDuplicateEksternvarslingEventKeys(session: EventMetricsSession) {
+        session.getUniqueSystemUser().forEach { systemUser ->
+            val numberEksternvarslingDuplicateKeys = session.getEksternvarslingDuplicateKeys(systemUser)
+            val eventTypeName = session.eventtype.toString()
+            val printableAlias = nameScrubber.getPublicAlias(systemUser)
+
+            if (numberEksternvarslingDuplicateKeys > 0) {
+                reportMetrics(KAFKA_EKSTERNVARSLING_EVENTS_DUPLICATE_KEY, numberEksternvarslingDuplicateKeys, eventTypeName, printableAlias)
+                PrometheusMetricsCollector.registerDuplicateKeyEksternvarslingEvents(numberEksternvarslingDuplicateKeys, eventTypeName, printableAlias)
             }
         }
     }
@@ -74,9 +88,9 @@ class MetricsCollector(private val metricsReporter: MetricsReporter, private val
     private suspend fun handleEventsProcessingTime(session: EventMetricsSession, processingTime: Long) {
         val metricsOverHead = session.timeElapsedSinceSessionStartNanos() - processingTime
         val fieldMap = listOf(
-                "seen" to session.getEventsSeen(),
-                "processed" to session.getEventsProcessed(),
-                "failed" to session.getEventsFailed(),
+                "seen" to session.getEksternvarslingEventsSeen(),
+                "processed" to session.getEksternvarslingEventsProcessed(),
+                "failed" to session.getEksternvarslingEventsFailed(),
                 "processingTime" to processingTime,
                 "metricsOverheadTime" to metricsOverHead
         ).toMap()

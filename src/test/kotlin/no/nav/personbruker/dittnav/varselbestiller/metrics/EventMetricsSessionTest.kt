@@ -17,9 +17,9 @@ internal class EventMetricsSessionTest {
         val session = EventMetricsSession(Eventtype.BESKJED)
         val conflictingKeysResult = conflictingKeysEvents(giveMeANumberOfVarselbestilling(numberOfDuplicates))
 
-        session.countDuplicateEventKeysBySystemUser(conflictingKeysResult)
+        session.countDuplicateKeyEksternvarslingBySystemUser(conflictingKeysResult)
 
-        session.getDuplicateKeyEvents(systembruker) `should be` numberOfDuplicates
+        session.getEksternvarslingDuplicateKeys(systembruker) `should be` numberOfDuplicates
     }
 
     @Test
@@ -28,9 +28,30 @@ internal class EventMetricsSessionTest {
         val session = EventMetricsSession(Eventtype.BESKJED)
         val result = successfulEvents(giveMeANumberOfVarselbestilling(numberOfEvents))
 
-        session.countDuplicateEventKeysBySystemUser(result)
+        session.countDuplicateKeyEksternvarslingBySystemUser(result)
 
-        session.getDuplicateKeyEvents(systembruker) `should be` 0
+        session.getEksternvarslingDuplicateKeys(systembruker) `should be` 0
     }
 
+    @Test
+    fun `Skal fortsatt telle event hvis nokkel er null`() {
+        val session = EventMetricsSession(Eventtype.BESKJED)
+
+        session.countNokkelWasNull()
+
+        session.getAllEventsFromKafka() `should be` 1
+        session.getNokkelWasNull() `should be` 1
+    }
+
+    @Test
+    fun `Skal telle rett antall totale events fra Kafka`() {
+        val session = EventMetricsSession(Eventtype.BESKJED)
+        val systemUser = "dummySystemUser"
+
+        session.countNokkelWasNull()
+        session.countAllEventsFromKafkaForSystemUser(systemUser)
+
+        session.getAllEventsFromKafka() `should be` 2
+        session.getAllEventsFromKafka(systemUser) `should be` 1
+    }
 }
