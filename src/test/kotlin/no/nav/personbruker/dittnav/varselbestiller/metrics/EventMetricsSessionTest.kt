@@ -17,9 +17,9 @@ internal class EventMetricsSessionTest {
         val session = EventMetricsSession(Eventtype.BESKJED)
         val conflictingKeysResult = conflictingKeysEvents(giveMeANumberOfVarselbestilling(numberOfDuplicates))
 
-        session.countDuplicateEventKeysBySystemUser(conflictingKeysResult)
+        session.countDuplicateKeyEksternvarslingBySystemUser(conflictingKeysResult)
 
-        session.getDuplicateKeyEvents(systembruker) `should be` numberOfDuplicates
+        session.getEksternvarslingDuplicateKeys(systembruker) `should be` numberOfDuplicates
     }
 
     @Test
@@ -28,9 +28,9 @@ internal class EventMetricsSessionTest {
         val session = EventMetricsSession(Eventtype.BESKJED)
         val result = successfulEvents(giveMeANumberOfVarselbestilling(numberOfEvents))
 
-        session.countDuplicateEventKeysBySystemUser(result)
+        session.countDuplicateKeyEksternvarslingBySystemUser(result)
 
-        session.getDuplicateKeyEvents(systembruker) `should be` 0
+        session.getEksternvarslingDuplicateKeys(systembruker) `should be` 0
     }
 
     @Test
@@ -38,10 +38,10 @@ internal class EventMetricsSessionTest {
         val session = EventMetricsSession(Eventtype.BESKJED)
         val systemUserThatIsNull = "NokkelIsNullNoProducerSpecified"
 
-        session.countFailedEventForSystemUser(systemUserThatIsNull)
+        session.countFailedEksternvarslingForSystemUser(systemUserThatIsNull)
 
-        session.getAllEvents() `should be` 1
-        session.getEventsFailed() `should be` 1
+        session.getAllEventsFromKafka() `should be` 1
+        session.getEksternvarslingEventsFailed() `should be` 1
     }
 
     @Test
@@ -49,9 +49,9 @@ internal class EventMetricsSessionTest {
         val session = EventMetricsSession(Eventtype.BESKJED)
         val systemUser = "dummySystemUser"
 
-        session.countFailedEventForSystemUser(systemUser)
+        session.countFailedEksternvarslingForSystemUser(systemUser)
 
-        session.getAllEvents() `should be` 0
-        session.getEventsFailed() `should be` 1
+        session.getAllEventsFromKafka() `should be` 0
+        session.getEksternvarslingEventsFailed() `should be` 1
     }
 }

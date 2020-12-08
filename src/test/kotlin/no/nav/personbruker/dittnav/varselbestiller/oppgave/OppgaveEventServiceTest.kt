@@ -65,7 +65,7 @@ class OppgaveEventServiceTest {
         }
 
         coVerify(exactly = 0) { doknotifikasjonProducer.produceDoknotifikasjon(allAny()) }
-        coVerify (exactly = 1) { metricsSession.countFailedEventForSystemUser(any()) }
+        coVerify (exactly = 1) { metricsSession.countFailedEksternvarslingForSystemUser(any()) }
         confirmVerified(doknotifikasjonProducer)
     }
 
@@ -85,7 +85,7 @@ class OppgaveEventServiceTest {
         }
 
         coVerify(exactly = 0) { doknotifikasjonProducer.produceDoknotifikasjon(allAny()) }
-        coVerify (exactly = 1) { metricsSession.countFailedEventForSystemUser(any()) }
+        coVerify (exactly = 1) { metricsSession.countFailedEksternvarslingForSystemUser(any()) }
         coVerify (exactly = 1) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
         confirmVerified(doknotifikasjonProducer)
 
@@ -113,7 +113,7 @@ class OppgaveEventServiceTest {
 
         verify(exactly = oppgaveWithEksternVarslingRecords.count()) { DoknotifikasjonTransformer.createDoknotifikasjonFromOppgave(ofType(Nokkel::class), ofType(Oppgave::class)) }
         coVerify(exactly = 1) { doknotifikasjonProducer.produceDoknotifikasjon(allAny()) }
-        coVerify (exactly = oppgaveWithEksternVarslingRecords.count()) { metricsSession.countSuccessfulEventForSystemUser(any()) }
+        coVerify (exactly = oppgaveWithEksternVarslingRecords.count()) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
         coVerify (exactly = oppgaveWithEksternVarslingRecords.count() + oppgaveWithoutEksternVarslingRecords.count()) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
         capturedListOfEntities.captured.size `should be` oppgaveWithEksternVarslingRecords.count()
 
@@ -141,7 +141,7 @@ class OppgaveEventServiceTest {
 
         verify(exactly = oppgaveRecords.count()) { DoknotifikasjonTransformer.createDoknotifikasjonFromOppgave(ofType(Nokkel::class), ofType(Oppgave::class)) }
         coVerify(exactly = 1) { doknotifikasjonProducer.produceDoknotifikasjon(allAny()) }
-        coVerify (exactly = oppgaveRecords.count()) { metricsSession.countSuccessfulEventForSystemUser(any()) }
+        coVerify (exactly = oppgaveRecords.count()) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
         coVerify (exactly = oppgaveRecords.count()) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
         capturedListOfEntities.captured.size `should be` oppgaveRecords.count()
 
@@ -166,7 +166,7 @@ class OppgaveEventServiceTest {
         }
 
         coVerify(exactly = 1) { varselbestillingRepository.persistInOneBatch(allAny()) }
-        coVerify (exactly = oppgaveWithEksternVarslingRecords.count()) { metricsSession.countSuccessfulEventForSystemUser(any()) }
+        coVerify (exactly = oppgaveWithEksternVarslingRecords.count()) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
         coVerify (exactly = oppgaveWithEksternVarslingRecords.count() + oppgaveWithoutEksternVarslingRecords.count()) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
         capturedListOfEntities.captured.size `should be` oppgaveWithEksternVarslingRecords.count()
 
@@ -200,7 +200,7 @@ class OppgaveEventServiceTest {
         }
 
         coVerify(exactly = 1) { doknotifikasjonProducer.produceDoknotifikasjon(any()) }
-        coVerify(exactly = numberOfFailedTransformations) { metricsSession.countFailedEventForSystemUser(any()) }
+        coVerify(exactly = numberOfFailedTransformations) { metricsSession.countFailedEksternvarslingForSystemUser(any()) }
         coVerify(exactly = numberOfFailedTransformations + numberOfSuccessfulTransformations) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
         capturedListOfEntities.captured.size `should be` numberOfSuccessfulTransformations
 
@@ -225,7 +225,7 @@ class OppgaveEventServiceTest {
             eventService.processEvents(oppgaveWithEksternVarslingRecords)
         }
 
-        coVerify (exactly = numberOfRecords) { metricsSession.countSuccessfulEventForSystemUser(any()) }
+        coVerify (exactly = numberOfRecords) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
         coVerify (exactly = numberOfRecords) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
     }
 }

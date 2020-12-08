@@ -39,7 +39,7 @@ internal class MetricsCollectorTest {
 
         runBlocking {
             metricsCollector.recordMetrics(Eventtype.BESKJED) {
-                countSuccessfulEventForSystemUser(producerName)
+                countSuccessfulEksternvarslingForSystemUser(producerName)
             }
         }
 
@@ -67,7 +67,7 @@ internal class MetricsCollectorTest {
 
         runBlocking {
             metricsCollector.recordMetrics(Eventtype.BESKJED) {
-                countFailedEventForSystemUser(producerName)
+                countFailedEksternvarslingForSystemUser(producerName)
             }
         }
 
@@ -117,17 +117,17 @@ internal class MetricsCollectorTest {
         val capturedFieldsForFailed = slot<Map<String, Any>>()
         val capturedFieldsForAllEvents = slot<Map<String, Any>>()
 
-        coEvery { metricsReporter.registerDataPoint(KAFKA_EVENTS_SEEN, capture(capturedFieldsForSeen), any()) } returns Unit
-        coEvery { metricsReporter.registerDataPoint(KAFKA_EVENTS_PROCESSED, capture(capturedFieldsForProcessed), any()) } returns Unit
-        coEvery { metricsReporter.registerDataPoint(KAFKA_EVENTS_FAILED, capture(capturedFieldsForFailed), any()) } returns Unit
+        coEvery { metricsReporter.registerDataPoint(KAFKA_EKSTERNVARSLING_EVENTS_SEEN, capture(capturedFieldsForSeen), any()) } returns Unit
+        coEvery { metricsReporter.registerDataPoint(KAFKA_EKSTERNVARSLING_EVENTS_PROCESSED, capture(capturedFieldsForProcessed), any()) } returns Unit
+        coEvery { metricsReporter.registerDataPoint(KAFKA_EKSTERNVARSLING_EVENTS_FAILED, capture(capturedFieldsForFailed), any()) } returns Unit
         coEvery { metricsReporter.registerDataPoint(KAFKA_EVENTS_PROCESSING_TIME, any(), any()) } returns Unit
         coEvery { metricsReporter.registerDataPoint(KAFKA_ALL_EVENTS, capture(capturedFieldsForAllEvents), any()) } returns Unit
 
         runBlocking {
             metricsCollector.recordMetrics(Eventtype.BESKJED) {
-                countSuccessfulEventForSystemUser("producer")
-                countSuccessfulEventForSystemUser("producer")
-                countFailedEventForSystemUser("producer")
+                countSuccessfulEksternvarslingForSystemUser("producer")
+                countSuccessfulEksternvarslingForSystemUser("producer")
+                countFailedEksternvarslingForSystemUser("producer")
                 countAllEventsFromKafkaForSystemUser("producer")
             }
         }
