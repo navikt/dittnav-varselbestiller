@@ -1,5 +1,6 @@
 package no.nav.personbruker.dittnav.varselbestiller.varselbestilling
 
+import no.nav.personbruker.dittnav.common.util.database.fetching.mapList
 import no.nav.personbruker.dittnav.common.util.database.persisting.ListPersistActionResult
 import no.nav.personbruker.dittnav.common.util.database.persisting.executeBatchPersistQuery
 import no.nav.personbruker.dittnav.common.util.database.persisting.toBatchPersistResult
@@ -7,8 +8,8 @@ import java.sql.*
 import java.time.LocalDateTime
 
 fun Connection.createVarselbestillinger(varselbestillinger: List<Varselbestilling>): ListPersistActionResult<Varselbestilling> =
-        executeBatchPersistQuery("""INSERT INTO varselbestilling (bestillingsid, eventid, fodselsnummer, systembruker, eventtidspunkt) 
-                                    |VALUES (?, ?, ?, ?, ?)""".trimMargin()) {
+        executeBatchPersistQuery("""INSERT INTO varselbestilling (bestillingsid, eventid, fodselsnummer, systembruker, eventtidspunkt, avbestilt) 
+                                    |VALUES (?, ?, ?, ?, ?, ?)""".trimMargin()) {
                 varselbestillinger.forEach { varselbestilling ->
                         buildStatementForSingleRow(varselbestilling)
                         addBatch()
@@ -31,13 +32,24 @@ fun Connection.getVarselbestillingForEvent(eventId: String, systembruker: String
                     it.executeQuery().mapSingleResultNullable { toVarselbestilling() }
                 }
 
+fun Connection.setVarselbestillingAvbestiltFlag(varselbestillinger: List<Varselbestilling>, avbestilt: Boolean) {
+    executeBatchPersistQuery("""UPDATE varselbestilling SET avbestilt = ? WHERE bestillingsid = ?""", skipConflicting = false) {
+        varselbestillinger.forEach { varselbestilling ->
+            setBoolean(1, avbestilt)
+            setString(2, varselbestilling.bestillingsId)
+            addBatch()
+        }
+    }
+}
+
 fun ResultSet.toVarselbestilling(): Varselbestilling {
     return Varselbestilling(
             bestillingsId = getString("bestillingsid"),
             eventId = getString("eventid"),
             fodselsnummer = getString("fodselsnummer"),
             systembruker = getString("systembruker"),
-            bestillingstidspunkt = getUtcDateTime("eventtidspunkt")
+            bestillingstidspunkt = getUtcDateTime("eventtidspunkt"),
+            avbestilt = getBoolean("avbestilt")
     )
 }
 
@@ -47,6 +59,7 @@ private fun PreparedStatement.buildStatementForSingleRow(varselbestilling: Varse
         setString(3, varselbestilling.fodselsnummer)
         setString(4, varselbestilling.systembruker)
         setObject(5, varselbestilling.bestillingstidspunkt, Types.TIMESTAMP)
+        setObject(6, varselbestilling.avbestilt)
 }
 
 private fun ResultSet.getUtcDateTime(columnLabel: String): LocalDateTime = getTimestamp(columnLabel).toLocalDateTime()

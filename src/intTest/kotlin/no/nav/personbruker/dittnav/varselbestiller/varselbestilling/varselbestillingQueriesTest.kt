@@ -65,4 +65,26 @@ class varselbestillingQueriesTest {
             result.`should be null`()
         }
     }
+
+    @Test
+    fun `Setter avbestilt for Varselbestilling`() {
+        runBlocking {
+            database.dbQuery {
+                setVarselbestillingAvbestiltFlag(listOf(varselbestillingBeskjed), true)
+                val varselbestilling = getVarselbestillingForBestillingsId(varselbestillingBeskjed.bestillingsId)
+                varselbestilling?.avbestilt `should be equal to` true
+            }
+        }
+    }
+
+    @Test
+    fun `Persister ikke entitet dersom rad med samme bestillingsId finnes`() {
+        runBlocking {
+            database.dbQuery {
+                val numberOfEntities = getAllVarselbestilling().size
+                createVarselbestillinger(listOf(varselbestillingBeskjed, varselbestillingOppgave))
+                getAllVarselbestilling().size `should be equal to` numberOfEntities
+            }
+        }
+    }
 }

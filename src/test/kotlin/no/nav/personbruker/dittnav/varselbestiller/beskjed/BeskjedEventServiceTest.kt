@@ -39,6 +39,7 @@ class BeskjedEventServiceTest {
         clearMocks(varselbestillingRepository)
         clearMocks(metricsCollector)
         clearMocks(metricsSession)
+        coEvery { varselbestillingRepository.fetchVarselbestilling(any()) } returns null
     }
 
     @AfterAll
@@ -91,7 +92,7 @@ class BeskjedEventServiceTest {
     }
 
     @Test
-    fun `Skal skrive kun eventer som har ekstern varsling til Doknotifikasjon-topic`() {
+    fun `Skal opprette Doknotifikasjon kun for eventer som har ekstern varsling`() {
         val beskjedWithEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords = 4, topicName = "dummyTopic", withEksternVarsling = true)
         val beskjedWithoutEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords = 6, topicName = "dummyTopic", withEksternVarsling = false)
         val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, no.nav.doknotifikasjon.schemas.Doknotifikasjon>>>()
@@ -120,7 +121,7 @@ class BeskjedEventServiceTest {
     }
 
     @Test
-    fun `Skal skrive alle eventer som har ekstern varsling til Doknotifikasjon-topic`() {
+    fun `Skal opprette Doknotifikasjon for alle eventer som har ekstern varsling`() {
         val beskjedRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords = 5, topicName = "dummyTopic", withEksternVarsling = true)
         val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, no.nav.doknotifikasjon.schemas.Doknotifikasjon>>>()
 
@@ -146,6 +147,31 @@ class BeskjedEventServiceTest {
     }
 
     @Test
+    fun `Skal ikke opprette Doknotifikasjon for eventer som har tidligere bestilt ekstern varsling`() {
+        val beskjedRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords = 5, topicName = "dummyTopic", withEksternVarsling = true)
+        val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, no.nav.doknotifikasjon.schemas.Doknotifikasjon>>>()
+
+        val persistResult = successfulEvents(giveMeANumberOfVarselbestilling(numberOfEvents = 5))
+        coEvery { varselbestillingRepository.persistInOneBatch(any()) } returns persistResult
+        coEvery { varselbestillingRepository.fetchVarselbestilling(any()) } returns VarselbestillingObjectMother.createVarselbestilling(bestillingsId = "B-test-001", eventId = "001", fodselsnummer = "123")
+
+        val slot = slot<suspend EventMetricsSession.() -> Unit>()
+        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
+            slot.captured.invoke(metricsSession)
+        }
+        coEvery { doknotifikasjonProducer.produceDoknotifikasjon(capture(capturedListOfEntities)) } returns Unit
+
+        runBlocking {
+            eventService.processEvents(beskjedRecords)
+        }
+
+        verify { DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(ofType(Nokkel::class), ofType(Beskjed::class)) wasNot Called }
+        coVerify { doknotifikasjonProducer wasNot Called}
+        coVerify(exactly = 0) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
+        coVerify(exactly = beskjedRecords.count()) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
+    }
+
+    @Test
     fun `Skal skrive Doknotifikasjon til database for Beskjeder som har ekstern varsling`() {
         val beskjedWithEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords = 4, topicName = "dummyTopic", withEksternVarsling = true)
         val beskjedWithoutEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords = 6, topicName = "dummyTopic", withEksternVarsling = false)
@@ -166,8 +192,6 @@ class BeskjedEventServiceTest {
         coVerify(exactly = beskjedWithEksternVarslingRecords.count()) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
         coVerify(exactly = beskjedWithEksternVarslingRecords.count() + beskjedWithoutEksternVarslingRecords.count()) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
         capturedListOfEntities.captured.size `should be` beskjedWithEksternVarslingRecords.count()
-
-        confirmVerified(varselbestillingRepository)
     }
 
     @Test
@@ -206,7 +230,7 @@ class BeskjedEventServiceTest {
     }
 
     @Test
-    fun `skal rapportere hvert velykket event`() {
+    fun `Skal rapportere hvert velykket event`() {
         val numberOfRecords = 5
 
         val beskjedWithEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords, topicName = "dummyTopic", withEksternVarsling = true)
