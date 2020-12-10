@@ -1,10 +1,12 @@
 package no.nav.personbruker.dittnav.varselbestiller.varselbestilling
 
-import no.nav.personbruker.dittnav.common.util.database.fetching.mapList
 import no.nav.personbruker.dittnav.common.util.database.persisting.ListPersistActionResult
 import no.nav.personbruker.dittnav.common.util.database.persisting.executeBatchPersistQuery
 import no.nav.personbruker.dittnav.common.util.database.persisting.toBatchPersistResult
-import java.sql.*
+import java.sql.Connection
+import java.sql.PreparedStatement
+import java.sql.ResultSet
+import java.sql.Types
 import java.time.LocalDateTime
 
 fun Connection.createVarselbestillinger(varselbestillinger: List<Varselbestilling>): ListPersistActionResult<Varselbestilling> =
