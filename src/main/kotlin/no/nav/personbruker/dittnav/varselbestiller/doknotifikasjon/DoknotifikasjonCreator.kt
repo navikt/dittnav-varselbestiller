@@ -10,7 +10,7 @@ import no.nav.personbruker.dittnav.varselbestiller.common.validation.validateNon
 import no.nav.personbruker.dittnav.varselbestiller.common.validation.validateSikkerhetsnivaa
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 
-object DoknotifikasjonTransformer {
+object DoknotifikasjonCreator {
 
     fun createDoknotifikasjonFromBeskjed(nokkel: Nokkel, beskjed: Beskjed): no.nav.doknotifikasjon.schemas.Doknotifikasjon {
         val doknotifikasjonBuilder = no.nav.doknotifikasjon.schemas.Doknotifikasjon.newBuilder()
@@ -18,9 +18,9 @@ object DoknotifikasjonTransformer {
                 .setBestillerId(validateNonNullFieldMaxLength(nokkel.getSystembruker(), "systembruker", 100))
                 .setSikkerhetsnivaa(validateSikkerhetsnivaa(beskjed.getSikkerhetsnivaa()))
                 .setFodselsnummer(validateFodselsnummer(beskjed.getFodselsnummer()))
-                .setTittel("Du har fått en beskjed fra NAV")
-                .setEpostTekst("Beskjed fra NAV på e-post")
-                .setSmsTekst("Beskjed fra NAV på SMS")
+                .setTittel("Beskjed fra NAV")
+                .setEpostTekst(getDoknotifikasjonEmailText(Eventtype.BESKJED))
+                .setSmsTekst(getDoknotifikasjonSMSText(Eventtype.BESKJED))
                 .setAntallRenotifikasjoner(1)
                 .setRenotifikasjonIntervall(1)
                 .setPrefererteKanaler(listOf(PrefererteKanal.EPOST, PrefererteKanal.SMS))
@@ -45,11 +45,27 @@ object DoknotifikasjonTransformer {
                 .setSikkerhetsnivaa(validateSikkerhetsnivaa(oppgave.getSikkerhetsnivaa()))
                 .setFodselsnummer(validateFodselsnummer(oppgave.getFodselsnummer()))
                 .setTittel("Du har fått en oppgave fra NAV")
-                .setEpostTekst("Oppgave fra NAV på e-post")
-                .setSmsTekst("Oppgave fra NAV på SMS")
+                .setEpostTekst(getDoknotifikasjonEmailText(Eventtype.OPPGAVE))
+                .setSmsTekst(getDoknotifikasjonSMSText(Eventtype.OPPGAVE))
                 .setAntallRenotifikasjoner(1)
                 .setRenotifikasjonIntervall(1)
                 .setPrefererteKanaler(listOf(PrefererteKanal.EPOST, PrefererteKanal.SMS))
         return doknotifikasjonBuilder.build()
+    }
+
+    private fun getDoknotifikasjonEmailText(eventtype: Eventtype): String {
+        return when(eventtype) {
+            Eventtype.BESKJED -> this::class.java.getResource("/texts/epost_beskjed.txt").readText(Charsets.UTF_8)
+            Eventtype.OPPGAVE -> this::class.java.getResource("/texts/epost_oppgave.txt").readText(Charsets.UTF_8)
+            else -> throw FieldValidationException("Finnes ikke e-posttekst for $eventtype.")
+        }
+    }
+
+    private fun getDoknotifikasjonSMSText(eventtype: Eventtype): String {
+        return when(eventtype) {
+            Eventtype.BESKJED -> this::class.java.getResource("/texts/sms_beskjed.txt").readText(Charsets.UTF_8)
+            Eventtype.OPPGAVE -> this::class.java.getResource("/texts/sms_oppgave.txt").readText(Charsets.UTF_8)
+            else -> throw FieldValidationException("Finnes ikke SMS-tekst for $eventtype.")
+        }
     }
 }

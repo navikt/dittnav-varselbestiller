@@ -12,7 +12,7 @@ import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.giveMeANu
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.successfulEvents
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.AvroDoknotifikasjonObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
-import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonTransformer
+import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
@@ -34,7 +34,7 @@ class BeskjedEventServiceTest {
 
     @BeforeEach
     private fun resetMocks() {
-        mockkObject(DoknotifikasjonTransformer)
+        mockkObject(DoknotifikasjonCreator)
         clearMocks(doknotifikasjonProducer)
         clearMocks(varselbestillingRepository)
         clearMocks(metricsCollector)
@@ -111,7 +111,7 @@ class BeskjedEventServiceTest {
             eventService.processEvents(beskjedWithoutEksternVarslingRecords)
         }
 
-        verify(exactly = beskjedWithEksternVarslingRecords.count()) { DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(ofType(Nokkel::class), ofType(Beskjed::class)) }
+        verify(exactly = beskjedWithEksternVarslingRecords.count()) { DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(ofType(Nokkel::class), ofType(Beskjed::class)) }
         coVerify(exactly = 1) { doknotifikasjonProducer.produceDoknotifikasjon(allAny()) }
         coVerify(exactly = beskjedWithEksternVarslingRecords.count()) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
         coVerify(exactly = beskjedWithEksternVarslingRecords.count() + beskjedWithoutEksternVarslingRecords.count()) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
@@ -138,7 +138,7 @@ class BeskjedEventServiceTest {
             eventService.processEvents(beskjedRecords)
         }
 
-        verify(exactly = beskjedRecords.count()) { DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(ofType(Nokkel::class), ofType(Beskjed::class)) }
+        verify(exactly = beskjedRecords.count()) { DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(ofType(Nokkel::class), ofType(Beskjed::class)) }
         coVerify(exactly = 1) { doknotifikasjonProducer.produceDoknotifikasjon(any()) }
         coVerify(exactly = beskjedRecords.count()) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
         coVerify(exactly = beskjedRecords.count()) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
@@ -165,7 +165,7 @@ class BeskjedEventServiceTest {
             eventService.processEvents(beskjedRecords)
         }
 
-        verify { DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(ofType(Nokkel::class), ofType(Beskjed::class)) wasNot Called }
+        verify { DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(ofType(Nokkel::class), ofType(Beskjed::class)) wasNot Called }
         coVerify { doknotifikasjonProducer wasNot Called}
         coVerify(exactly = 0) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
         coVerify(exactly = beskjedRecords.count()) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
@@ -206,7 +206,7 @@ class BeskjedEventServiceTest {
 
         val fieldValidationException = FieldValidationException("Simulert feil i en test")
         val doknotifikasjoner = AvroDoknotifikasjonObjectMother.giveMeANumberOfDoknotifikasjoner(numberOfSuccessfulTransformations)
-        every { DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(ofType(Nokkel::class), ofType(Beskjed::class)) } throws fieldValidationException andThenMany doknotifikasjoner
+        every { DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(ofType(Nokkel::class), ofType(Beskjed::class)) } throws fieldValidationException andThenMany doknotifikasjoner
 
         val persistResult = successfulEvents(giveMeANumberOfVarselbestilling(numberOfSuccessfulTransformations))
         coEvery { varselbestillingRepository.persistInOneBatch(any()) } returns persistResult
