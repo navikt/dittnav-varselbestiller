@@ -41,8 +41,7 @@ class BeskjedEventService(
                 try {
                     val beskjedKey = event.getNonNullKey()
                     countAllEventsFromKafkaForSystemUser(beskjedKey.getSystembruker())
-
-                    if (skalVarsleEksternt(event.value())) {
+                    if (shouldCreateDoknotifikasjon(event)) {
                         val beskjed = event.value()
                         val doknotifikasjonKey = DoknotifikasjonTransformer.createDoknotifikasjonKey(beskjedKey, Eventtype.BESKJED)
                         val doknotifikasjon = DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(beskjedKey, beskjed)
@@ -67,7 +66,7 @@ class BeskjedEventService(
                 countDuplicateKeyEvents(result)
             }
             if (problematicEvents.isNotEmpty()) {
-                kastExceptionHvisMislykkedValidering(problematicEvents)
+                throwExceptionIfFailedValidation(problematicEvents)
             }
         }
     }
@@ -77,11 +76,27 @@ class BeskjedEventService(
         return varselbestillingRepository.persistInOneBatch(varselbestillinger)
     }
 
-    private fun skalVarsleEksternt(event: Beskjed?): Boolean {
-        return event != null && event.getEksternVarsling()
+    private suspend fun shouldCreateDoknotifikasjon(event: ConsumerRecord<Nokkel, Beskjed>): Boolean {
+        val beskjedKey = event.getNonNullKey()
+        val beskjed = event.value()
+        val bestillingsid = DoknotifikasjonTransformer.createDoknotifikasjonKey(beskjedKey, Eventtype.BESKJED)
+        var shouldCreate = false
+        if(beskjed.getEksternVarsling()) {
+            if(alreadyCreated(bestillingsid)) {
+                log.info("Varsel med bestillingsid $bestillingsid er allerede bestilt, bestiller ikke på nytt.")
+            } else {
+                shouldCreate = true
+            }
+        }
+        return shouldCreate
     }
 
-    private fun kastExceptionHvisMislykkedValidering(problematicEvents: MutableList<ConsumerRecord<Nokkel, Beskjed>>) {
+    private suspend fun alreadyCreated(bestillingsId: String): Boolean {
+        val varselbestilling = varselbestillingRepository.fetchVarselbestilling(bestillingsId = bestillingsId)
+        return varselbestilling != null
+    }
+
+    private fun throwExceptionIfFailedValidation(problematicEvents: MutableList<ConsumerRecord<Nokkel, Beskjed>>) {
         val message = "En eller flere beskjed-eventer kunne ikke sendes til varselbestiller fordi validering feilet."
         val exception = UnvalidatableRecordException(message)
         exception.addContext("antallMislykkedValidering", problematicEvents.size)
@@ -100,5 +115,4 @@ class BeskjedEventService(
             log.warn(msg)
         }
     }
-
 }
