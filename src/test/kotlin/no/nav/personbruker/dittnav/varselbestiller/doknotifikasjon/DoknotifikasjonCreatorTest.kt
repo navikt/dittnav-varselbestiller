@@ -5,19 +5,18 @@ import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.FieldValida
 import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.oppgave.AvroOppgaveObjectMother.createOppgaveWithFodselsnummer
 import no.nav.doknotifikasjon.schemas.PrefererteKanal
-import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.oppgave.AvroOppgaveObjectMother
 import org.amshove.kluent.*
 import org.junit.jupiter.api.Test
 
-class DoknotifikasjonTransformerTest {
+class DoknotifikasjonCreatorTest {
 
     @Test
-    fun `Skal transformere fra Beskjed til Doknotifikasjon`() {
+    fun `Skal opprette Doknotifikasjon fra Beskjed`() {
         val eventId = 1
         val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(eventId)
         val beskjed = AvroBeskjedObjectMother.createBeskjed(eventId)
-        val doknotifikasjon = DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
+        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
 
         doknotifikasjon.getBestillingsId() `should be equal to` "B-${nokkel.getSystembruker()}-${nokkel.getEventId()}"
         doknotifikasjon.getBestillerId() `should be equal to` nokkel.getSystembruker()
@@ -32,11 +31,11 @@ class DoknotifikasjonTransformerTest {
     }
 
     @Test
-    fun `Skal transformere fra Oppgave til Doknotifikasjon`() {
+    fun `Skal opprette Doknotifikasjon fra Oppgave`() {
         val eventId = 1
         val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(eventId)
         val oppgave = AvroOppgaveObjectMother.createOppgave(eventId)
-        val doknotifikasjon = DoknotifikasjonTransformer.createDoknotifikasjonFromOppgave(nokkel, oppgave)
+        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(nokkel, oppgave)
 
         doknotifikasjon.getBestillingsId() `should be equal to` "O-${nokkel.getSystembruker()}-${nokkel.getEventId()}"
         doknotifikasjon.getBestillerId() `should be equal to` nokkel.getSystembruker()
@@ -56,7 +55,7 @@ class DoknotifikasjonTransformerTest {
         val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(tooLongEventId)
         val beskjed = AvroBeskjedObjectMother.createBeskjed(1)
         invoking {
-            DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
+            DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
         } `should throw` FieldValidationException::class
     }
 
@@ -66,7 +65,7 @@ class DoknotifikasjonTransformerTest {
         val nokkel = AvroNokkelObjectMother.createNokkelWithSystembruker(tooLongSystembruker)
         val beskjed = AvroBeskjedObjectMother.createBeskjed(1)
         invoking {
-            DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
+            DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
         } `should throw` FieldValidationException::class
     }
 
@@ -76,7 +75,7 @@ class DoknotifikasjonTransformerTest {
         val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(3)
         val beskjed = AvroBeskjedObjectMother.createBeskjedWithFodselsnummer(fodselsnummerEmpty)
         invoking {
-            DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
+            DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
         } `should throw` FieldValidationException::class
     }
 
@@ -85,7 +84,7 @@ class DoknotifikasjonTransformerTest {
         val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(3)
         val beskjed = AvroBeskjedObjectMother.createBeskjedWithSikkerhetsnivaa(2)
         invoking {
-            DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
+            DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
         } `should throw` FieldValidationException::class
     }
 
@@ -95,7 +94,7 @@ class DoknotifikasjonTransformerTest {
         val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(tooLongEventId)
         val oppgave = AvroOppgaveObjectMother.createOppgave(1)
         invoking {
-            DoknotifikasjonTransformer.createDoknotifikasjonFromOppgave(nokkel, oppgave)
+            DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(nokkel, oppgave)
         } `should throw` FieldValidationException::class
     }
 
@@ -105,7 +104,7 @@ class DoknotifikasjonTransformerTest {
         val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(tooLongSystembruker)
         val oppgave = AvroOppgaveObjectMother.createOppgave(1)
         invoking {
-            DoknotifikasjonTransformer.createDoknotifikasjonFromOppgave(nokkel, oppgave)
+            DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(nokkel, oppgave)
         } `should throw` FieldValidationException::class
     }
 
@@ -115,7 +114,7 @@ class DoknotifikasjonTransformerTest {
         val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(3)
         val event = createOppgaveWithFodselsnummer(1, fodselsnummerEmpty)
         invoking {
-            DoknotifikasjonTransformer.createDoknotifikasjonFromOppgave(nokkel, event)
+            DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(nokkel, event)
         } `should throw` FieldValidationException::class
     }
 
@@ -124,7 +123,7 @@ class DoknotifikasjonTransformerTest {
         val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(3)
         val oppgave = AvroOppgaveObjectMother.createOppgaveWithSikkerhetsnivaa(2)
         invoking {
-            DoknotifikasjonTransformer.createDoknotifikasjonFromOppgave(nokkel, oppgave)
+            DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(nokkel, oppgave)
         } `should throw` FieldValidationException::class
     }
 

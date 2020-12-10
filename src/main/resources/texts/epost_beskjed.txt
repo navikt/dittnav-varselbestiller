@@ -1,0 +1,1 @@
+<!DOCTYPE html><html><head><title>Melding</title></head><body><p>Hei!</p><p>Du har fått en ny melding på Ditt NAV. Logg inn og se hva meldingen gjelder.</p><p>Vennlig hilsen</p><p>NAV</p></body></html>

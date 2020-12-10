@@ -12,7 +12,7 @@ import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.Unvalidatab
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.serializer.getNonNullKey
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
-import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonTransformer
+import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
@@ -42,8 +42,8 @@ class OppgaveEventService(
                     countAllEventsFromKafkaForSystemUser(oppgaveKey.getSystembruker())
                     if (shouldCreateDoknotifikasjon(event)) {
                         val oppgave = event.value()
-                        val doknotifikasjonKey = DoknotifikasjonTransformer.createDoknotifikasjonKey(oppgaveKey, Eventtype.OPPGAVE)
-                        val doknotifikasjon = DoknotifikasjonTransformer.createDoknotifikasjonFromOppgave(oppgaveKey, oppgave)
+                        val doknotifikasjonKey = DoknotifikasjonCreator.createDoknotifikasjonKey(oppgaveKey, Eventtype.OPPGAVE)
+                        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(oppgaveKey, oppgave)
                         successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonKey, doknotifikasjon))
                         varselbestillinger.add(VarselbestillingTransformer.fromOppgave(oppgaveKey, oppgave, doknotifikasjon))
                         countSuccessfulEksternvarslingForSystemUser(oppgaveKey.getSystembruker())
@@ -79,7 +79,7 @@ class OppgaveEventService(
     private suspend fun shouldCreateDoknotifikasjon(event: ConsumerRecord<Nokkel, Oppgave>): Boolean {
         val oppgaveKey = event.getNonNullKey()
         val oppgave = event.value()
-        val bestillingsid = DoknotifikasjonTransformer.createDoknotifikasjonKey(oppgaveKey, Eventtype.OPPGAVE)
+        val bestillingsid = DoknotifikasjonCreator.createDoknotifikasjonKey(oppgaveKey, Eventtype.OPPGAVE)
         var shouldCreate = false
         if(oppgave.getEksternVarsling()) {
             if(alreadyCreated(bestillingsid)) {

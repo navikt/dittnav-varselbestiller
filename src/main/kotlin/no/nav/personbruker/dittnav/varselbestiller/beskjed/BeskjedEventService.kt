@@ -12,7 +12,7 @@ import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.Unvalidatab
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.serializer.getNonNullKey
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
-import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonTransformer
+import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
@@ -43,8 +43,8 @@ class BeskjedEventService(
                     countAllEventsFromKafkaForSystemUser(beskjedKey.getSystembruker())
                     if (shouldCreateDoknotifikasjon(event)) {
                         val beskjed = event.value()
-                        val doknotifikasjonKey = DoknotifikasjonTransformer.createDoknotifikasjonKey(beskjedKey, Eventtype.BESKJED)
-                        val doknotifikasjon = DoknotifikasjonTransformer.createDoknotifikasjonFromBeskjed(beskjedKey, beskjed)
+                        val doknotifikasjonKey = DoknotifikasjonCreator.createDoknotifikasjonKey(beskjedKey, Eventtype.BESKJED)
+                        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(beskjedKey, beskjed)
                         successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonKey, doknotifikasjon))
                         varselbestillinger.add(VarselbestillingTransformer.fromBeskjed(beskjedKey, beskjed, doknotifikasjon))
                         countSuccessfulEksternvarslingForSystemUser(beskjedKey.getSystembruker())
@@ -79,7 +79,7 @@ class BeskjedEventService(
     private suspend fun shouldCreateDoknotifikasjon(event: ConsumerRecord<Nokkel, Beskjed>): Boolean {
         val beskjedKey = event.getNonNullKey()
         val beskjed = event.value()
-        val bestillingsid = DoknotifikasjonTransformer.createDoknotifikasjonKey(beskjedKey, Eventtype.BESKJED)
+        val bestillingsid = DoknotifikasjonCreator.createDoknotifikasjonKey(beskjedKey, Eventtype.BESKJED)
         var shouldCreate = false
         if(beskjed.getEksternVarsling()) {
             if(alreadyCreated(bestillingsid)) {
