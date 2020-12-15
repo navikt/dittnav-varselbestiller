@@ -4,9 +4,9 @@ import io.mockk.*
 import kotlinx.coroutines.runBlocking
 import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.brukernotifikasjon.schemas.Oppgave
+import no.nav.brukernotifikasjon.schemas.builders.exception.FieldValidationException
 import no.nav.personbruker.dittnav.common.util.database.persisting.ListPersistActionResult
 import no.nav.personbruker.dittnav.common.util.kafka.RecordKeyValueWrapper
-import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.FieldValidationException
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.ConsumerRecordsObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.giveMeANumberOfVarselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.successfulEvents
