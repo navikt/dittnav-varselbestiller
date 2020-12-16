@@ -3,11 +3,11 @@ package no.nav.personbruker.dittnav.varselbestiller.done
 import no.nav.brukernotifikasjon.schemas.Done
 import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.brukernotifikasjon.schemas.builders.exception.FieldValidationException
+import no.nav.brukernotifikasjon.schemas.builders.exception.UnknownEventtypeException
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
 import no.nav.personbruker.dittnav.common.util.kafka.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.varselbestiller.common.EventBatchProcessorService
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.NokkelNullException
-import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UnknownEventtypeException
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UnvalidatableRecordException
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.serializer.getNonNullKey
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype

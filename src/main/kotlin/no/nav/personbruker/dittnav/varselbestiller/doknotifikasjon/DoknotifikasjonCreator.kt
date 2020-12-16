@@ -3,9 +3,9 @@ package no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon
 import no.nav.brukernotifikasjon.schemas.Beskjed
 import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.brukernotifikasjon.schemas.Oppgave
+import no.nav.brukernotifikasjon.schemas.builders.exception.UnknownEventtypeException
 import no.nav.brukernotifikasjon.schemas.builders.util.ValidationUtil
 import no.nav.doknotifikasjon.schemas.PrefererteKanal
-import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UnknownEventtypeException
 import no.nav.personbruker.dittnav.varselbestiller.common.validation.throwExceptionIfBeskjedOrNokkelIsNotValid
 import no.nav.personbruker.dittnav.varselbestiller.common.validation.throwExceptionIfOppgaveOrNokkelIsNotValid
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
@@ -31,7 +31,7 @@ object DoknotifikasjonCreator {
     fun createDoknotifikasjonKey(nokkel: Nokkel, eventtype: Eventtype): String {
         val eventId = ValidationUtil.validateNonNullFieldMaxLength(nokkel.getEventId(), "eventId", ValidationUtil.MAX_LENGTH_EVENTID)
         val systembruker = ValidationUtil.validateNonNullFieldMaxLength(nokkel.getSystembruker(), "systembruker", ValidationUtil.MAX_LENGTH_SYSTEMBRUKER)
-        return when(eventtype) {
+        return when (eventtype) {
             Eventtype.BESKJED -> "B-$systembruker-$eventId"
             Eventtype.OPPGAVE -> "O-$systembruker-$eventId"
             Eventtype.DONE -> "D-$systembruker-$eventId"
@@ -56,7 +56,7 @@ object DoknotifikasjonCreator {
     }
 
     private fun getDoknotifikasjonEmailText(eventtype: Eventtype): String {
-        return when(eventtype) {
+        return when (eventtype) {
             Eventtype.BESKJED -> this::class.java.getResource("/texts/epost_beskjed.txt").readText(Charsets.UTF_8)
             Eventtype.OPPGAVE -> this::class.java.getResource("/texts/epost_oppgave.txt").readText(Charsets.UTF_8)
             else -> throw UnknownEventtypeException("Finnes ikke e-posttekst for $eventtype.")
@@ -64,7 +64,7 @@ object DoknotifikasjonCreator {
     }
 
     private fun getDoknotifikasjonSMSText(eventtype: Eventtype): String {
-        return when(eventtype) {
+        return when (eventtype) {
             Eventtype.BESKJED -> this::class.java.getResource("/texts/sms_beskjed.txt").readText(Charsets.UTF_8)
             Eventtype.OPPGAVE -> this::class.java.getResource("/texts/sms_oppgave.txt").readText(Charsets.UTF_8)
             else -> throw UnknownEventtypeException("Finnes ikke SMS-tekst for $eventtype.")

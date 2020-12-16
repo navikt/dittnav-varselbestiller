@@ -13,7 +13,6 @@ fun throwExceptionIfBeskjedOrNokkelIsNotValid(nokkel: Nokkel, beskjed: Beskjed) 
     ValidationUtil.validateNonNullFieldMaxLength(beskjed.getTekst(), "tekst", ValidationUtil.MAX_LENGTH_TEXT_BESKJED)
     ValidationUtil.validateLinkAndConvertToString(ValidationUtil.validateLinkAndConvertToURL(beskjed.getLink()), "link", ValidationUtil.MAX_LENGTH_LINK, ValidationUtil.isLinkRequired(Eventtype.BESKJED))
     ValidationUtil.validateSikkerhetsnivaa(beskjed.getSikkerhetsnivaa())
-    ValidationUtil.validateEksternvarsling(beskjed.getEksternVarsling())
 }
 
 fun throwExceptionIfOppgaveOrNokkelIsNotValid(nokkel: Nokkel, oppgave: Oppgave) {
@@ -23,7 +22,6 @@ fun throwExceptionIfOppgaveOrNokkelIsNotValid(nokkel: Nokkel, oppgave: Oppgave) 
     ValidationUtil.validateNonNullFieldMaxLength(oppgave.getTekst(), "tekst", ValidationUtil.MAX_LENGTH_TEXT_OPPGAVE)
     ValidationUtil.validateLinkAndConvertToString(ValidationUtil.validateLinkAndConvertToURL(oppgave.getLink()), "link", ValidationUtil.MAX_LENGTH_LINK, ValidationUtil.isLinkRequired(Eventtype.OPPGAVE))
     ValidationUtil.validateSikkerhetsnivaa(oppgave.getSikkerhetsnivaa())
-    ValidationUtil.validateEksternvarsling(oppgave.getEksternVarsling())
 }
 
 private fun throwExceptionIfNokkelIsNotValid(nokkel: Nokkel) {
