@@ -10,21 +10,31 @@ object AvroOppgaveObjectMother {
     private val defaultTekst = "Dette er oppgave til brukeren"
     private val defaultSikkerhetsnivaa = 4
     private val defaultEksternVarsling = false
+    private val defaultLink = "http://dummyUrl.no"
+    private val defaultGrupperingsid = "123"
 
     fun createOppgave(lopenummer: Int): Oppgave {
-        return createOppgave(lopenummer, defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling)
+        return createOppgave(lopenummer, defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling, defaultLink, defaultGrupperingsid)
     }
 
     fun createOppgaveWithFodselsnummer(lopenummer: Int, fodselsnummer: String): Oppgave {
-        return createOppgave(lopenummer, fodselsnummer, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling)
+        return createOppgave(lopenummer, fodselsnummer, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling, defaultLink, defaultGrupperingsid)
     }
 
     fun createOppgaveWithText(tekst: String): Oppgave {
-        return createOppgave(defaultLopenummer, defaultFodselsnr, tekst, defaultSikkerhetsnivaa, defaultEksternVarsling)
+        return createOppgave(defaultLopenummer, defaultFodselsnr, tekst, defaultSikkerhetsnivaa, defaultEksternVarsling, defaultLink, defaultGrupperingsid)
     }
 
     fun createOppgaveWithSikkerhetsnivaa(sikkerhetsnivaa: Int): Oppgave {
-        return createOppgave(defaultLopenummer, defaultFodselsnr, defaultTekst, sikkerhetsnivaa, defaultEksternVarsling)
+        return createOppgave(defaultLopenummer, defaultFodselsnr, defaultTekst, sikkerhetsnivaa, defaultEksternVarsling, defaultLink, defaultGrupperingsid)
+    }
+
+    fun createOppgaveWithLink(link: String): Oppgave {
+        return createOppgave(defaultLopenummer, defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling, link, defaultGrupperingsid)
+    }
+
+    fun createOppgaveWithGrupperingsid(grupperingsid: String): Oppgave {
+        return createOppgave(defaultLopenummer, defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling, defaultLink, grupperingsid)
     }
 
     fun createOppgaveWithEksternVarsling(lopenummer: Int, eksternVarsling: Boolean): Oppgave {
@@ -32,16 +42,16 @@ object AvroOppgaveObjectMother {
     }
 
     fun createOppgaveWithFodselsnummerOgEksternVarsling(lopenummer: Int, fodselsnummer: String, eksternVarsling: Boolean): Oppgave {
-        return createOppgave(lopenummer, fodselsnummer, defaultTekst, defaultSikkerhetsnivaa, eksternVarsling)
+        return createOppgave(lopenummer, fodselsnummer, defaultTekst, defaultSikkerhetsnivaa, eksternVarsling, defaultLink, defaultGrupperingsid)
     }
 
-    fun createOppgave(lopenummer: Int, fodselsnummer: String, tekst: String, sikkerhetsnivaa: Int, eksternVarsling: Boolean): Oppgave {
+    fun createOppgave(lopenummer: Int, fodselsnummer: String, tekst: String, sikkerhetsnivaa: Int, eksternVarsling: Boolean, link: String, grupperingsid: String): Oppgave {
         return Oppgave(
                 Instant.now().toEpochMilli(),
                 fodselsnummer,
-                "100$lopenummer",
+                grupperingsid,
                 tekst,
-                "https://nav.no/systemX/$lopenummer",
+                link,
                 sikkerhetsnivaa,
                 eksternVarsling
         )

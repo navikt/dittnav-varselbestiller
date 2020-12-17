@@ -1,45 +1,31 @@
 package no.nav.personbruker.dittnav.varselbestiller.common.validation
 
-import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.FieldValidationException
+import no.nav.brukernotifikasjon.schemas.Beskjed
+import no.nav.brukernotifikasjon.schemas.Nokkel
+import no.nav.brukernotifikasjon.schemas.Oppgave
+import no.nav.brukernotifikasjon.schemas.builders.domain.Eventtype
+import no.nav.brukernotifikasjon.schemas.builders.util.ValidationUtil
 
-private val fodselsnummerRegEx = """[\d]{1,11}""".toRegex()
-
-fun validateFodselsnummer(field: String): String {
-    validateNonNullField(field, "fødselsnummer")
-    if (isNotValidFodselsnummer(field)) {
-        val fve = FieldValidationException("Feltet fodselsnummer kan kun innholde siffer, og maks antall er 11.")
-        fve.addContext("rejectedFieldValue", field)
-        throw fve
-    }
-    return field
+fun throwExceptionIfBeskjedOrNokkelIsNotValid(nokkel: Nokkel, beskjed: Beskjed) {
+    throwExceptionIfNokkelIsNotValid(nokkel)
+    ValidationUtil.validateNonNullFieldMaxLength(beskjed.getFodselsnummer(), "fodselsnummer", ValidationUtil.MAX_LENGTH_FODSELSNUMMER)
+    ValidationUtil.validateNonNullFieldMaxLength(beskjed.getGrupperingsId(), "grupperingsId", ValidationUtil.MAX_LENGTH_GRUPPERINGSID)
+    ValidationUtil.validateNonNullFieldMaxLength(beskjed.getTekst(), "tekst", ValidationUtil.MAX_LENGTH_TEXT_BESKJED)
+    ValidationUtil.validateLinkAndConvertToString(ValidationUtil.validateLinkAndConvertToURL(beskjed.getLink()), "link", ValidationUtil.MAX_LENGTH_LINK, ValidationUtil.isLinkRequired(Eventtype.BESKJED))
+    ValidationUtil.validateSikkerhetsnivaa(beskjed.getSikkerhetsnivaa())
 }
 
-private fun isNotValidFodselsnummer(field: String) = !fodselsnummerRegEx.matches(field)
-
-fun validateNonNullFieldMaxLength(field: String, fieldName: String, maxLength: Int): String {
-    validateNonNullField(field, fieldName)
-    return validateMaxLength(field, fieldName, maxLength)
+fun throwExceptionIfOppgaveOrNokkelIsNotValid(nokkel: Nokkel, oppgave: Oppgave) {
+    throwExceptionIfNokkelIsNotValid(nokkel)
+    ValidationUtil.validateNonNullFieldMaxLength(oppgave.getFodselsnummer(), "fodselsnummer", ValidationUtil.MAX_LENGTH_FODSELSNUMMER)
+    ValidationUtil.validateNonNullFieldMaxLength(oppgave.getGrupperingsId(), "grupperingsId", ValidationUtil.MAX_LENGTH_GRUPPERINGSID)
+    ValidationUtil.validateNonNullFieldMaxLength(oppgave.getTekst(), "tekst", ValidationUtil.MAX_LENGTH_TEXT_OPPGAVE)
+    ValidationUtil.validateLinkAndConvertToString(ValidationUtil.validateLinkAndConvertToURL(oppgave.getLink()), "link", ValidationUtil.MAX_LENGTH_LINK, ValidationUtil.isLinkRequired(Eventtype.OPPGAVE))
+    ValidationUtil.validateSikkerhetsnivaa(oppgave.getSikkerhetsnivaa())
 }
 
-fun validateMaxLength(field: String, fieldName: String, maxLength: Int): String {
-    if (field.length > maxLength) {
-        val fve = FieldValidationException("Feltet $fieldName kan ikke inneholde mer enn $maxLength tegn.")
-        fve.addContext("rejectedFieldValue", field)
-        throw fve
-    }
-    return field
+private fun throwExceptionIfNokkelIsNotValid(nokkel: Nokkel) {
+    ValidationUtil.validateNonNullFieldMaxLength(nokkel.getSystembruker(), "systembruker", ValidationUtil.MAX_LENGTH_SYSTEMBRUKER)
+    ValidationUtil.validateNonNullFieldMaxLength(nokkel.getEventId(), "eventId", ValidationUtil.MAX_LENGTH_EVENTID)
 }
 
-fun validateNonNullField(field: String?, fieldName: String): String {
-    if (field.isNullOrBlank()) {
-        throw FieldValidationException("$fieldName var null eller tomt.")
-    }
-    return field
-}
-
-fun validateSikkerhetsnivaa(sikkerhetsnivaa: Int): Int {
-    return when (sikkerhetsnivaa) {
-        3, 4 -> sikkerhetsnivaa
-        else -> throw FieldValidationException("Sikkerhetsnivaa kan bare være 3 eller 4.")
-    }
-}

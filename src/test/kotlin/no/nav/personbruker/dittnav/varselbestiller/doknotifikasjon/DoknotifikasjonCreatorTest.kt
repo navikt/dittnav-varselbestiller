@@ -1,7 +1,7 @@
 package no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon
 
+import no.nav.brukernotifikasjon.schemas.builders.exception.FieldValidationException
 import no.nav.personbruker.dittnav.varselbestiller.beskjed.AvroBeskjedObjectMother
-import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.FieldValidationException
 import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.oppgave.AvroOppgaveObjectMother.createOppgaveWithFodselsnummer
 import no.nav.doknotifikasjon.schemas.PrefererteKanal

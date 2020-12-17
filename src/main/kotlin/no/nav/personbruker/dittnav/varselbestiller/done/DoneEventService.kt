@@ -2,10 +2,11 @@ package no.nav.personbruker.dittnav.varselbestiller.done
 
 import no.nav.brukernotifikasjon.schemas.Done
 import no.nav.brukernotifikasjon.schemas.Nokkel
+import no.nav.brukernotifikasjon.schemas.builders.exception.FieldValidationException
+import no.nav.brukernotifikasjon.schemas.builders.exception.UnknownEventtypeException
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
 import no.nav.personbruker.dittnav.common.util.kafka.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.varselbestiller.common.EventBatchProcessorService
-import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.FieldValidationException
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.NokkelNullException
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UnvalidatableRecordException
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.serializer.getNonNullKey
@@ -53,6 +54,9 @@ class DoneEventService(
                 } catch (e: FieldValidationException) {
                     countFailedEksternvarslingForSystemUser(event.systembruker ?: "NoProducerSpecified")
                     log.warn("Eventet kan ikke brukes fordi det inneholder valideringsfeil, done-eventet vil bli forkastet. EventId: ${event.eventId}", e)
+                } catch (e: UnknownEventtypeException) {
+                    countFailedEksternvarslingForSystemUser(event.systembruker ?: "NoProducerSpecified")
+                    log.warn("Eventet kan ikke brukes fordi det inneholder ukjent eventtype, done-eventet vil bli forkastet. EventId: ${event.eventId}", e)
                 } catch (e: Exception) {
                     problematicEvents.add(event)
                     countFailedEksternvarslingForSystemUser(event.systembruker ?: "NoProducerSpecified")
