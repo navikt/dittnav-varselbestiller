@@ -2,6 +2,6 @@
   "vault_namespace": "dev",
   "vault_secrets_root": "preprod",
   "ingresses": [
-    "https://dittnav-varselbestiller.personbruker.nais.oera-q.local"
+    "https://dittnav-varselbestiller.dev.nav.no"
   ]
 }
