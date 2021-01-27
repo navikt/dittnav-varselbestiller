@@ -9,4 +9,8 @@ class DoknotifikasjonProducer(private val doknotifikasjonKafkaProducer: KafkaPro
     fun produceDoknotifikasjon(events: List<RecordKeyValueWrapper<String, Doknotifikasjon>>) {
         doknotifikasjonKafkaProducer.sendEventsTransactionally(events)
     }
+
+    fun flushAndClose() {
+        doknotifikasjonKafkaProducer.flushAndClose()
+    }
 }

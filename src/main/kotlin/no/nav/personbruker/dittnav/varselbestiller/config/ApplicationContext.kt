@@ -40,10 +40,10 @@ class ApplicationContext {
     val metricsReporter = resolveMetricsReporter(environment)
     val metricsCollector = MetricsCollector(metricsReporter, nameScrubber)
 
-    private val doknotifikasjonBeskjedProducer = initializeDoknotifikasjonProducer(Eventtype.BESKJED)
-    private val doknotifikasjonOppgaveProducer = initializeDoknotifikasjonProducer(Eventtype.OPPGAVE)
-    private val doknotifikasjonStopProducer = initializeDoknotifikasjonStoppProducer()
-    private val doknotifikasjonRepository = VarselbestillingRepository(database)
+    val doknotifikasjonBeskjedProducer = initializeDoknotifikasjonProducer(Eventtype.BESKJED)
+    val doknotifikasjonOppgaveProducer = initializeDoknotifikasjonProducer(Eventtype.OPPGAVE)
+    val doknotifikasjonStopProducer = initializeDoknotifikasjonStoppProducer()
+    val doknotifikasjonRepository = VarselbestillingRepository(database)
 
     private val beskjedKafkaProps = Kafka.consumerProps(environment, Eventtype.BESKJED)
     private val beskjedEventService = BeskjedEventService(doknotifikasjonBeskjedProducer, doknotifikasjonRepository, metricsCollector)

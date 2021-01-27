@@ -9,4 +9,8 @@ class DoknotifikasjonStoppProducer(private val doknotifikasjonStoppKafkaProducer
     fun produceDoknotifikasjonStop(events: List<RecordKeyValueWrapper<String, DoknotifikasjonStopp>>) {
         doknotifikasjonStoppKafkaProducer.sendEventsTransactionally(events)
     }
+
+    fun flushAndClose() {
+        doknotifikasjonStoppKafkaProducer.flushAndClose()
+    }
 }
