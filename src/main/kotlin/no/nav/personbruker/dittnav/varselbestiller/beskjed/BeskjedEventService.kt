@@ -10,10 +10,10 @@ import no.nav.personbruker.dittnav.common.util.kafka.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.varselbestiller.common.EventBatchProcessorService
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.NokkelNullException
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UnvalidatableRecordException
+import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Producer
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.serializer.getNonNullKey
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator
-import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
@@ -25,7 +25,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class BeskjedEventService(
-        private val doknotifikasjonProducer: DoknotifikasjonProducer,
+        private val doknotifikasjonProducer: Producer<String, Doknotifikasjon>,
         private val varselbestillingRepository: VarselbestillingRepository,
         private val metricsCollector: MetricsCollector
 ) : EventBatchProcessorService<Nokkel, Beskjed> {
@@ -76,7 +76,7 @@ class BeskjedEventService(
     }
 
     private suspend fun produceDoknotifikasjonerAndPersistToDB(successfullyValidatedEvents: MutableList<RecordKeyValueWrapper<String, Doknotifikasjon>>, varselbestillinger: List<Varselbestilling>): ListPersistActionResult<Varselbestilling> {
-        doknotifikasjonProducer.produceDoknotifikasjon(successfullyValidatedEvents)
+        doknotifikasjonProducer.produceEvents(successfullyValidatedEvents)
         return varselbestillingRepository.persistInOneBatch(varselbestillinger)
     }
 
