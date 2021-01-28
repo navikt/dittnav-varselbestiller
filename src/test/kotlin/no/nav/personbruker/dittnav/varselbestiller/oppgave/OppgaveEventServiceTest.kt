@@ -5,13 +5,14 @@ import kotlinx.coroutines.runBlocking
 import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.brukernotifikasjon.schemas.Oppgave
 import no.nav.brukernotifikasjon.schemas.builders.exception.FieldValidationException
+import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.personbruker.dittnav.common.util.database.persisting.ListPersistActionResult
 import no.nav.personbruker.dittnav.common.util.kafka.RecordKeyValueWrapper
+import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Producer
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.ConsumerRecordsObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.giveMeANumberOfVarselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.successfulEvents
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.AvroDoknotifikasjonObjectMother
-import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
@@ -28,7 +29,7 @@ class OppgaveEventServiceTest {
 
     private val metricsCollector = mockk<MetricsCollector>(relaxed = true)
     private val metricsSession = mockk<EventMetricsSession>(relaxed = true)
-    private val doknotifikasjonProducer = mockk<DoknotifikasjonProducer>(relaxed = true)
+    private val doknotifikasjonProducer = mockk<Producer<String, Doknotifikasjon>>(relaxed = true)
     private val varselbestillingRepository = mockk<VarselbestillingRepository>(relaxed = true)
     private val eventService = OppgaveEventService(doknotifikasjonProducer, varselbestillingRepository, metricsCollector)
 
@@ -65,7 +66,7 @@ class OppgaveEventServiceTest {
             eventService.processEvents(records)
         }
 
-        coVerify(exactly = 0) { doknotifikasjonProducer.produceDoknotifikasjon(allAny()) }
+        coVerify(exactly = 0) { doknotifikasjonProducer.produceEvents(allAny()) }
         coVerify (exactly = 1) { metricsSession.countNokkelWasNull() }
         confirmVerified(doknotifikasjonProducer)
     }
@@ -85,7 +86,7 @@ class OppgaveEventServiceTest {
             eventService.processEvents(records)
         }
 
-        coVerify(exactly = 0) { doknotifikasjonProducer.produceDoknotifikasjon(allAny()) }
+        coVerify(exactly = 0) { doknotifikasjonProducer.produceEvents(allAny()) }
         coVerify (exactly = 1) { metricsSession.countFailedEksternvarslingForSystemUser(any()) }
         coVerify (exactly = 1) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
         confirmVerified(doknotifikasjonProducer)
@@ -106,14 +107,14 @@ class OppgaveEventServiceTest {
             slot.captured.invoke(metricsSession)
         }
 
-        coEvery { doknotifikasjonProducer.produceDoknotifikasjon(capture(capturedListOfEntities)) } returns Unit
+        coEvery { doknotifikasjonProducer.produceEvents(capture(capturedListOfEntities)) } returns Unit
         runBlocking {
             eventService.processEvents(oppgaveWithEksternVarslingRecords)
             eventService.processEvents(oppgaveWithoutEksternVarslingRecords)
         }
 
         verify(exactly = oppgaveWithEksternVarslingRecords.count()) { DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(ofType(Nokkel::class), ofType(Oppgave::class)) }
-        coVerify(exactly = 1) { doknotifikasjonProducer.produceDoknotifikasjon(allAny()) }
+        coVerify(exactly = 1) { doknotifikasjonProducer.produceEvents(allAny()) }
         coVerify (exactly = oppgaveWithEksternVarslingRecords.count()) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
         coVerify (exactly = oppgaveWithEksternVarslingRecords.count() + oppgaveWithoutEksternVarslingRecords.count()) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
         capturedListOfEntities.captured.size `should be` oppgaveWithEksternVarslingRecords.count()
@@ -134,14 +135,14 @@ class OppgaveEventServiceTest {
             slot.captured.invoke(metricsSession)
         }
 
-        coEvery { doknotifikasjonProducer.produceDoknotifikasjon(capture(capturedListOfEntities)) } returns Unit
+        coEvery { doknotifikasjonProducer.produceEvents(capture(capturedListOfEntities)) } returns Unit
 
         runBlocking {
             eventService.processEvents(oppgaveRecords)
         }
 
         verify(exactly = oppgaveRecords.count()) { DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(ofType(Nokkel::class), ofType(Oppgave::class)) }
-        coVerify(exactly = 1) { doknotifikasjonProducer.produceDoknotifikasjon(allAny()) }
+        coVerify(exactly = 1) { doknotifikasjonProducer.produceEvents(allAny()) }
         coVerify (exactly = oppgaveRecords.count()) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
         coVerify (exactly = oppgaveRecords.count()) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
         capturedListOfEntities.captured.size `should be` oppgaveRecords.count()
@@ -162,7 +163,7 @@ class OppgaveEventServiceTest {
         coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
             slot.captured.invoke(metricsSession)
         }
-        coEvery { doknotifikasjonProducer.produceDoknotifikasjon(capture(capturedListOfEntities)) } returns Unit
+        coEvery { doknotifikasjonProducer.produceEvents(capture(capturedListOfEntities)) } returns Unit
 
         runBlocking {
             eventService.processEvents(oppgaveRecords)
@@ -205,7 +206,7 @@ class OppgaveEventServiceTest {
 
         val oppgaveRecords = ConsumerRecordsObjectMother.giveMeANumberOfOppgaveRecords(numberOfRecords = totalNumberOfRecords, topicName = "dummyTopic", withEksternVarsling = true)
         val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, no.nav.doknotifikasjon.schemas.Doknotifikasjon>>>()
-        coEvery { doknotifikasjonProducer.produceDoknotifikasjon(capture(capturedListOfEntities)) } returns Unit
+        coEvery { doknotifikasjonProducer.produceEvents(capture(capturedListOfEntities)) } returns Unit
 
         val fieldValidationException = FieldValidationException("Simulert feil i en test")
         val doknotifikasjoner = AvroDoknotifikasjonObjectMother.giveMeANumberOfDoknotifikasjoner(5)
@@ -223,7 +224,7 @@ class OppgaveEventServiceTest {
             eventService.processEvents(oppgaveRecords)
         }
 
-        coVerify(exactly = 1) { doknotifikasjonProducer.produceDoknotifikasjon(any()) }
+        coVerify(exactly = 1) { doknotifikasjonProducer.produceEvents(any()) }
         coVerify(exactly = numberOfFailedTransformations) { metricsSession.countFailedEksternvarslingForSystemUser(any()) }
         coVerify(exactly = numberOfFailedTransformations + numberOfSuccessfulTransformations) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
         capturedListOfEntities.captured.size `should be` numberOfSuccessfulTransformations

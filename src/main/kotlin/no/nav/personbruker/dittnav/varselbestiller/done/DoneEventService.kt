@@ -9,9 +9,9 @@ import no.nav.personbruker.dittnav.common.util.kafka.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.varselbestiller.common.EventBatchProcessorService
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.NokkelNullException
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UnvalidatableRecordException
+import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Producer
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.serializer.getNonNullKey
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
-import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppTransformer
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
@@ -22,7 +22,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class DoneEventService(
-        private val doknotifikasjonStoppProducer: DoknotifikasjonStoppProducer,
+        private val doknotifikasjonStoppProducer: Producer<String, DoknotifikasjonStopp>,
         private val varselbestillingRepository: VarselbestillingRepository,
         private val metricsCollector: MetricsCollector
 ) : EventBatchProcessorService<Nokkel, Done> {
@@ -85,7 +85,7 @@ class DoneEventService(
     }
 
     private suspend fun produceDoknotifikasjonStoppAndPersistToDB(successfullyValidatedEvents: List<RecordKeyValueWrapper<String, DoknotifikasjonStopp>>, varselbestillingerToCancel: List<Varselbestilling>) {
-        doknotifikasjonStoppProducer.produceDoknotifikasjonStop(successfullyValidatedEvents)
+        doknotifikasjonStoppProducer.produceEvents(successfullyValidatedEvents)
         varselbestillingRepository.cancelVarselbestilling(varselbestillingerToCancel)
     }
 

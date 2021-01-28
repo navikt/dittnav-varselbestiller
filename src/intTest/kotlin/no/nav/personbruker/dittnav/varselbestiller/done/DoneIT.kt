@@ -15,15 +15,15 @@ import no.nav.personbruker.dittnav.varselbestiller.common.getClient
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Consumer
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaEmbed
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaTestUtil
+import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Producer
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.config.Kafka
-import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
-import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameResolver
 import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameScrubber
 import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.createVarselbestillinger
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.deleteAllVarselbestilling
 import org.amshove.kluent.`should be equal to`
@@ -93,7 +93,7 @@ class DoneIT {
         val producerProps = Kafka.producerProps(testEnvironment, Eventtype.DOKNOTIFIKASJON_STOPP, true)
         val kafkaProducer = KafkaProducer<String, DoknotifikasjonStopp>(producerProps)
         val kafkaProducerWrapper = KafkaProducerWrapper(Kafka.doknotifikasjonStopTopicName, kafkaProducer)
-        val doknotifikasjonStoppProducer = DoknotifikasjonStoppProducer(kafkaProducerWrapper)
+        val doknotifikasjonStoppProducer = Producer(kafkaProducerWrapper)
         val doknotifikasjonRepository = VarselbestillingRepository(database)
 
         val eventService = DoneEventService(doknotifikasjonStoppProducer, doknotifikasjonRepository, metricsCollector)

@@ -7,9 +7,9 @@ import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.brukernotifikasjon.schemas.builders.exception.FieldValidationException
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
 import no.nav.personbruker.dittnav.common.util.kafka.RecordKeyValueWrapper
+import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Producer
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.ConsumerRecordsObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.AvroDoknotifikasjonStoppObjectMother
-import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppTransformer
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Test
 
 class DoneEventServiceTest {
 
-    private val doknotifikasjonStoppProducer = mockk<DoknotifikasjonStoppProducer>(relaxed = true)
+    private val doknotifikasjonStoppProducer = mockk<Producer<String, DoknotifikasjonStopp>>(relaxed = true)
     private val varselbestillingRepository = mockk<VarselbestillingRepository>(relaxed = true)
     private val metricsCollector = mockk<MetricsCollector>(relaxed = true)
     private val metricsSession = mockk<EventMetricsSession>(relaxed = true)
@@ -62,7 +62,7 @@ class DoneEventServiceTest {
             eventService.processEvents(records)
         }
 
-        coVerify(exactly = 0) { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(allAny())}
+        coVerify(exactly = 0) { doknotifikasjonStoppProducer.produceEvents(allAny())}
         coVerify (exactly = 1) { metricsSession.countNokkelWasNull() }
         confirmVerified(doknotifikasjonStoppProducer)
     }
@@ -78,13 +78,13 @@ class DoneEventServiceTest {
         }
 
         coEvery { varselbestillingRepository.fetchVarselbestilling(any(), any(), any()) } returns VarselbestillingObjectMother.createVarselbestilling("B-test-001", "1", "123")
-        coEvery { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(capture(capturedListOfEntities)) } returns Unit
+        coEvery { doknotifikasjonStoppProducer.produceEvents(capture(capturedListOfEntities)) } returns Unit
 
         runBlocking {
             eventService.processEvents(doneRecords)
         }
 
-        coVerify(exactly = 1) { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(any()) }
+        coVerify(exactly = 1) { doknotifikasjonStoppProducer.produceEvents(any()) }
         coVerify (exactly = 5) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
         coVerify (exactly = 5) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
         capturedListOfEntities.captured.size `should be` doneRecords.count()
@@ -111,13 +111,13 @@ class DoneEventServiceTest {
         coEvery { varselbestillingRepository.fetchVarselbestilling(eventId = doneEventId1, any(), any()) } returns VarselbestillingObjectMother.createVarselbestilling("B-test-001", doneEventId1, "123")
         coEvery { varselbestillingRepository.fetchVarselbestilling(eventId = doneEventId2, any(), any()) } returns VarselbestillingObjectMother.createVarselbestilling("B-test-002", doneEventId2, "123")
         coEvery { varselbestillingRepository.fetchVarselbestilling(eventId = doneEventId3, any(), any()) } returns null
-        coEvery { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(capture(capturedListOfEntities)) } returns Unit
+        coEvery { doknotifikasjonStoppProducer.produceEvents(capture(capturedListOfEntities)) } returns Unit
 
         runBlocking {
             eventService.processEvents(records)
         }
 
-        coVerify(exactly = 1) { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(any())}
+        coVerify(exactly = 1) { doknotifikasjonStoppProducer.produceEvents(any())}
         coVerify (exactly = 2) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
         coVerify (exactly = 3) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
         capturedListOfEntities.captured.size `should be` 2
@@ -148,13 +148,13 @@ class DoneEventServiceTest {
         coEvery { varselbestillingRepository.fetchVarselbestilling(eventId = doneEventId1, any(), any()) } returns varselbestilling1Avbestilt
         coEvery { varselbestillingRepository.fetchVarselbestilling(eventId = doneEventId2, any(), any()) } returns varselbestilling2Avbestilt
         coEvery { varselbestillingRepository.fetchVarselbestilling(eventId = doneEventId3, any(), any()) } returns varselbestilling3IkkeAvbestilt
-        coEvery { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(capture(capturedListOfEntities)) } returns Unit
+        coEvery { doknotifikasjonStoppProducer.produceEvents(capture(capturedListOfEntities)) } returns Unit
 
         runBlocking {
             eventService.processEvents(records)
         }
 
-        coVerify(exactly = 1) { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(any())}
+        coVerify(exactly = 1) { doknotifikasjonStoppProducer.produceEvents(any())}
         coVerify (exactly = 1) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
         capturedListOfEntities.captured.size `should be` 1
         confirmVerified(doknotifikasjonStoppProducer)
@@ -173,7 +173,7 @@ class DoneEventServiceTest {
 
         val records = ConsumerRecordsObjectMother.giveMeANumberOfDoneRecords(numberOfRecords = totalNumberOfRecords, topicName = "dummyTopic", )
         val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, DoknotifikasjonStopp>>>()
-        coEvery { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(capture(capturedListOfEntities)) } returns Unit
+        coEvery { doknotifikasjonStoppProducer.produceEvents(capture(capturedListOfEntities)) } returns Unit
         coEvery { varselbestillingRepository.fetchVarselbestilling(any(), any(), any()) } returns VarselbestillingObjectMother.createVarselbestilling("B-test-001", "1", "123")
 
         val fieldValidationException = FieldValidationException("Simulert feil i en test")
@@ -184,7 +184,7 @@ class DoneEventServiceTest {
             eventService.processEvents(records)
         }
 
-        coVerify(exactly = 1) { doknotifikasjonStoppProducer.produceDoknotifikasjonStop(any()) }
+        coVerify(exactly = 1) { doknotifikasjonStoppProducer.produceEvents(any()) }
         coVerify(exactly = numberOfFailedTransformations) { metricsSession.countFailedEksternvarslingForSystemUser(any()) }
         coVerify (exactly = numberOfSuccessfulTransformations) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
         coVerify (exactly = numberOfSuccessfulTransformations + numberOfFailedTransformations) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
