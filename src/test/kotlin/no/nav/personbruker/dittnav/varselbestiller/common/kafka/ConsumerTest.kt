@@ -6,9 +6,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import no.nav.brukernotifikasjon.schemas.Beskjed
 import no.nav.brukernotifikasjon.schemas.Nokkel
-import no.nav.personbruker.dittnav.common.util.database.exception.RetriableDatabaseException
-import no.nav.personbruker.dittnav.common.util.database.exception.UnretriableDatabaseException
 import no.nav.personbruker.dittnav.varselbestiller.common.EventBatchProcessorService
+import no.nav.personbruker.dittnav.varselbestiller.common.database.exception.RetriableDatabaseException
+import no.nav.personbruker.dittnav.varselbestiller.common.database.exception.UnretriableDatabaseException
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UnvalidatableRecordException
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.ConsumerRecordsObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.health.Status

@@ -1,6 +1,6 @@
 package no.nav.personbruker.dittnav.varselbestiller.varselbestilling
 
-import no.nav.personbruker.dittnav.common.util.database.fetching.mapList
+import no.nav.personbruker.dittnav.varselbestiller.common.database.mapList
 import java.sql.Connection
 
 fun Connection.deleteAllVarselbestilling() =

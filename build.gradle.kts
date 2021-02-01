@@ -39,6 +39,7 @@ configurations["intTestRuntimeOnly"].extendsFrom(configurations.testRuntimeOnly.
 
 dependencies {
     implementation(Brukernotifikasjon.schemas)
+    implementation(DittNAV.Common.influx)
     implementation(DittNAV.Common.utils)
     implementation(Doknotifikasjon.schemas)
     implementation(Flyway.core)
@@ -55,7 +56,6 @@ dependencies {
     implementation(Prometheus.common)
     implementation(Prometheus.hotspot)
     implementation(Prometheus.logback)
-    implementation(DittNAV.Common.metrics)
     implementation(Ktor.clientApache)
     implementation(Ktor.clientJson)
     implementation(Ktor.clientJackson)
@@ -103,7 +103,7 @@ tasks {
         environment("NAIS_CLUSTER_NAME", "dev-sbs")
         environment("NAIS_NAMESPACE", "q1")
         environment("SENSU_HOST", "stub")
-        environment("SENSU_PORT", "")
+        environment("SENSU_PORT", "0")
         environment("PRODUCER_ALIASES", "")
 
         main = application.mainClassName

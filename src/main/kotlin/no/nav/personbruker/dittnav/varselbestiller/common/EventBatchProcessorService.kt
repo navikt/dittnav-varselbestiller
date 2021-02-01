@@ -1,7 +1,7 @@
 package no.nav.personbruker.dittnav.varselbestiller.common
 
 import no.nav.brukernotifikasjon.schemas.Nokkel
-import no.nav.personbruker.dittnav.common.util.kafka.RecordKeyValueWrapper
+import no.nav.personbruker.dittnav.varselbestiller.common.kafka.RecordKeyValueWrapper
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
 

@@ -2,8 +2,8 @@ package no.nav.personbruker.dittnav.varselbestiller
 
 import kotlinx.atomicfu.locks.ReentrantLock
 import kotlinx.atomicfu.locks.withLock
-import no.nav.personbruker.dittnav.common.util.kafka.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.varselbestiller.common.EventBatchProcessorService
+import no.nav.personbruker.dittnav.varselbestiller.common.kafka.RecordKeyValueWrapper
 import org.apache.kafka.clients.consumer.ConsumerRecords
 
 class CapturingEventProcessor<K, V> : EventBatchProcessorService<K, V> {

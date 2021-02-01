@@ -1,8 +1,8 @@
 package no.nav.personbruker.dittnav.varselbestiller.varselbestilling
 
-import no.nav.personbruker.dittnav.common.util.database.persisting.ListPersistActionResult
-import no.nav.personbruker.dittnav.common.util.database.persisting.executeBatchPersistQuery
-import no.nav.personbruker.dittnav.common.util.database.persisting.toBatchPersistResult
+import no.nav.personbruker.dittnav.varselbestiller.common.database.ListPersistActionResult
+import no.nav.personbruker.dittnav.varselbestiller.common.database.executeBatchPersistQuery
+import no.nav.personbruker.dittnav.varselbestiller.common.database.toBatchPersistResult
 import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.ResultSet

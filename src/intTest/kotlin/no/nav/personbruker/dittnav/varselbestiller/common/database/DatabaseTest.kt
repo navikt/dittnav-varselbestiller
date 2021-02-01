@@ -1,7 +1,7 @@
 package no.nav.personbruker.dittnav.varselbestiller.common.database
 
-import no.nav.personbruker.dittnav.common.util.database.exception.RetriableDatabaseException
-import no.nav.personbruker.dittnav.common.util.database.exception.UnretriableDatabaseException
+import no.nav.personbruker.dittnav.varselbestiller.common.database.exception.RetriableDatabaseException
+import no.nav.personbruker.dittnav.varselbestiller.common.database.exception.UnretriableDatabaseException
 import org.amshove.kluent.`should be`
 import org.amshove.kluent.`should throw`
 import org.amshove.kluent.invoking
