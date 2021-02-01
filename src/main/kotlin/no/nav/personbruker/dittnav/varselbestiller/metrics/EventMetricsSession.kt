@@ -1,6 +1,6 @@
 package no.nav.personbruker.dittnav.varselbestiller.metrics
 
-import no.nav.personbruker.dittnav.common.util.database.persisting.ListPersistActionResult
+import no.nav.personbruker.dittnav.varselbestiller.common.database.ListPersistActionResult
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
 

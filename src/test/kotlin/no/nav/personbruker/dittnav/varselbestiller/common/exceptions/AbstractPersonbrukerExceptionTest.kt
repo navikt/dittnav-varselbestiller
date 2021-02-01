@@ -1,6 +1,6 @@
 package no.nav.personbruker.dittnav.varselbestiller.common.exceptions
 
-import no.nav.personbruker.dittnav.common.util.database.exception.RetriableDatabaseException
+import no.nav.personbruker.dittnav.varselbestiller.common.database.exception.RetriableDatabaseException
 import org.amshove.kluent.`should contain`
 import org.amshove.kluent.`should not contain`
 import org.junit.jupiter.api.Test

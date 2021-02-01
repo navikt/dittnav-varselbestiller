@@ -1,7 +1,5 @@
 package no.nav.personbruker.dittnav.varselbestiller.common.kafka
 
-import no.nav.personbruker.dittnav.common.util.kafka.RecordKeyValueWrapper
-import no.nav.personbruker.dittnav.common.util.kafka.producer.KafkaProducerWrapper
 
 class Producer<K, V>(private val kafkaProducer: KafkaProducerWrapper<K, V>) {
 

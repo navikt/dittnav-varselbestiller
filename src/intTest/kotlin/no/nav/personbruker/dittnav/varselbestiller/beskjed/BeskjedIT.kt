@@ -7,11 +7,10 @@ import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.common.KafkaEnvironment
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.personbruker.dittnav.common.metrics.StubMetricsReporter
-import no.nav.personbruker.dittnav.common.util.kafka.RecordKeyValueWrapper
-import no.nav.personbruker.dittnav.common.util.kafka.producer.KafkaProducerWrapper
 import no.nav.personbruker.dittnav.varselbestiller.CapturingEventProcessor
 import no.nav.personbruker.dittnav.varselbestiller.common.database.H2Database
 import no.nav.personbruker.dittnav.varselbestiller.common.getClient
+import no.nav.personbruker.dittnav.varselbestiller.common.kafka.*
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Consumer
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaEmbed
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaTestUtil
