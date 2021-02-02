@@ -3,8 +3,8 @@ package no.nav.personbruker.dittnav.varselbestiller.common.database
 import com.zaxxer.hikari.HikariDataSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import no.nav.personbruker.dittnav.common.util.database.exception.RetriableDatabaseException
-import no.nav.personbruker.dittnav.common.util.database.exception.UnretriableDatabaseException
+import no.nav.personbruker.dittnav.varselbestiller.common.database.exception.RetriableDatabaseException
+import no.nav.personbruker.dittnav.varselbestiller.common.database.exception.UnretriableDatabaseException
 import no.nav.personbruker.dittnav.varselbestiller.health.HealthCheck
 import no.nav.personbruker.dittnav.varselbestiller.health.HealthStatus
 import no.nav.personbruker.dittnav.varselbestiller.health.Status

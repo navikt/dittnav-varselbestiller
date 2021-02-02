@@ -6,7 +6,7 @@ import no.nav.brukernotifikasjon.schemas.Done
 import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.brukernotifikasjon.schemas.builders.exception.FieldValidationException
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
-import no.nav.personbruker.dittnav.common.util.kafka.RecordKeyValueWrapper
+import no.nav.personbruker.dittnav.varselbestiller.common.kafka.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Producer
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.ConsumerRecordsObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.AvroDoknotifikasjonStoppObjectMother

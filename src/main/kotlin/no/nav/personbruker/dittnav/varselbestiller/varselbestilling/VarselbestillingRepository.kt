@@ -1,7 +1,7 @@
 package no.nav.personbruker.dittnav.varselbestiller.varselbestilling
 
-import no.nav.personbruker.dittnav.common.util.database.persisting.ListPersistActionResult
 import no.nav.personbruker.dittnav.varselbestiller.common.database.Database
+import no.nav.personbruker.dittnav.varselbestiller.common.database.ListPersistActionResult
 
 class VarselbestillingRepository(private val database: Database) {
 

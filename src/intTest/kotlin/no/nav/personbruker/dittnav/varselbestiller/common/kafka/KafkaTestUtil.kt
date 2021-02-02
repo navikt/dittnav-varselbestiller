@@ -43,7 +43,7 @@ object KafkaTestUtil {
                 clusterName = "clusterNameIkkeIBrukHer",
                 namespace = "namespaceIkkeIBrukHer",
                 sensuHost = "sensuHostIkkeIBrukHer",
-                sensuPort = "sensuPortIkkeIBrukHer",
+                sensuPort = 0,
                 eventHandlerURL = URL("http://event-handler")
         )
     }
