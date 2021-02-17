@@ -23,6 +23,7 @@ import org.amshove.kluent.`should be`
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class BeskjedEventServiceTest {
@@ -93,6 +94,7 @@ class BeskjedEventServiceTest {
     }
 
     @Test
+    @Disabled
     fun `Skal opprette Doknotifikasjon kun for eventer som har ekstern varsling`() {
         val beskjedWithEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords = 4, topicName = "dummyTopic", withEksternVarsling = true)
         val beskjedWithoutEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords = 6, topicName = "dummyTopic", withEksternVarsling = false)
@@ -122,6 +124,7 @@ class BeskjedEventServiceTest {
     }
 
     @Test
+    @Disabled
     fun `Skal opprette Doknotifikasjon for alle eventer som har ekstern varsling`() {
         val beskjedRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords = 5, topicName = "dummyTopic", withEksternVarsling = true)
         val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, Doknotifikasjon>>>()
@@ -173,6 +176,7 @@ class BeskjedEventServiceTest {
     }
 
     @Test
+    @Disabled
     fun `Skal skrive Doknotifikasjon til database for Beskjeder som har ekstern varsling`() {
         val beskjedWithEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords = 4, topicName = "dummyTopic", withEksternVarsling = true)
         val beskjedWithoutEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords = 6, topicName = "dummyTopic", withEksternVarsling = false)
@@ -196,6 +200,7 @@ class BeskjedEventServiceTest {
     }
 
     @Test
+    @Disabled
     fun `Skal haandtere at enkelte valideringer feiler og fortsette aa validere resten av batch-en`() {
         val totalNumberOfRecords = 5
         val numberOfFailedTransformations = 1
@@ -231,6 +236,7 @@ class BeskjedEventServiceTest {
     }
 
     @Test
+    @Disabled
     fun `Skal rapportere hvert velykket event`() {
         val numberOfRecords = 5
 

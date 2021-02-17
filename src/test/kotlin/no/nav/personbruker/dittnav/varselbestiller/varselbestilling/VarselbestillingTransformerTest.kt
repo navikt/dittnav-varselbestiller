@@ -8,7 +8,7 @@ import org.amshove.kluent.`should be equal to`
 import org.amshove.kluent.`should not be null`
 import org.junit.jupiter.api.Test
 
-class VarselbestillingTransformerTest {
+internal class VarselbestillingTransformerTest {
 
     @Test
     fun `Skal transformere fra Beskjed`() {

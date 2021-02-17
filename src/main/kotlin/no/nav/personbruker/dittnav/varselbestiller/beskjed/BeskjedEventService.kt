@@ -48,7 +48,7 @@ class BeskjedEventService(
                         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(beskjedKey, beskjed)
                         successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonKey, doknotifikasjon))
                         varselbestillinger.add(VarselbestillingTransformer.fromBeskjed(beskjedKey, beskjed, doknotifikasjon))
-                        countSuccessfulEksternvarslingForSystemUser(beskjedKey.getSystembruker())
+                        //countSuccessfulEksternvarslingForSystemUser(beskjedKey.getSystembruker())
                     }
                 } catch (nne: NokkelNullException) {
                     countNokkelWasNull()
@@ -66,8 +66,9 @@ class BeskjedEventService(
                 }
             }
             if (successfullyValidatedEvents.isNotEmpty()) {
-                val result = produceDoknotifikasjonerAndPersistToDB(successfullyValidatedEvents, varselbestillinger)
-                countDuplicateKeyEvents(result)
+                //val result = produceDoknotifikasjonerAndPersistToDB(successfullyValidatedEvents, varselbestillinger)
+                //countDuplicateKeyEvents(result)
+                log.warn("Det ble funnet ${successfullyValidatedEvents.size} beskjeder der ekstern varsling var satt til true. Bestiller ikke varsel. Eventene det gjaldt var $varselbestillinger")
             }
             if (problematicEvents.isNotEmpty()) {
                 throwExceptionIfFailedValidation(problematicEvents)
