@@ -42,7 +42,7 @@ class BeskjedEventService(
                 try {
                     val beskjedKey = event.getNonNullKey()
                     countAllEventsFromKafkaForSystemUser(beskjedKey.getSystembruker())
-                    if (shouldCreateDoknotifikasjon(event)) {
+                    if (shouldCreateDoknotifikasjon(this, event)) {
                         val beskjed = event.value()
                         val doknotifikasjonKey = DoknotifikasjonCreator.createDoknotifikasjonKey(beskjedKey, Eventtype.BESKJED)
                         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(beskjedKey, beskjed)
@@ -80,7 +80,7 @@ class BeskjedEventService(
         return varselbestillingRepository.persistInOneBatch(varselbestillinger)
     }
 
-    private suspend fun shouldCreateDoknotifikasjon(event: ConsumerRecord<Nokkel, Beskjed>): Boolean {
+    private suspend fun shouldCreateDoknotifikasjon(eventMetricsSession: EventMetricsSession, event: ConsumerRecord<Nokkel, Beskjed>): Boolean {
         val beskjedKey = event.getNonNullKey()
         val beskjed = event.value()
         val bestillingsid = DoknotifikasjonCreator.createDoknotifikasjonKey(beskjedKey, Eventtype.BESKJED)
@@ -88,6 +88,7 @@ class BeskjedEventService(
         if (beskjed.getEksternVarsling()) {
             if (alreadyCreated(bestillingsid)) {
                 log.info("Varsel med bestillingsid $bestillingsid er allerede bestilt, bestiller ikke på nytt.")
+                eventMetricsSession.countDuplicateEksternvarslingForSystemUser(beskjedKey.getSystembruker())
             } else {
                 shouldCreate = true
             }

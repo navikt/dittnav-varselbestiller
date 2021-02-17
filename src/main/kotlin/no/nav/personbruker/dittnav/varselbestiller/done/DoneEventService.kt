@@ -13,6 +13,7 @@ import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Producer
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.serializer.getNonNullKey
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppTransformer
+import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
@@ -41,7 +42,7 @@ class DoneEventService(
                     countAllEventsFromKafkaForSystemUser(doneKey.getSystembruker())
 
                     val varselbestilling: Varselbestilling? = fetchVarselbestilling(event)
-                    if (shouldCreateDoknotifikasjonStopp(varselbestilling)) {
+                    if (shouldCreateDoknotifikasjonStopp(this, varselbestilling)) {
                         val doknotifikasjonStoppKey = varselbestilling!!.bestillingsId
                         val doknotifikasjonStoppEvent = DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(varselbestilling)
                         successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonStoppKey, doknotifikasjonStoppEvent))
@@ -72,11 +73,12 @@ class DoneEventService(
         }
     }
 
-    private fun shouldCreateDoknotifikasjonStopp(varselbestilling: Varselbestilling?): Boolean {
+    private fun shouldCreateDoknotifikasjonStopp(eventMetricsSession: EventMetricsSession, varselbestilling: Varselbestilling?): Boolean {
         var shouldCancel = false
         if (varselbestilling != null) {
             if (varselbestilling.avbestilt) {
                 log.info("Varsel med bestillingsid ${varselbestilling.bestillingsId} allerede avbestilt, avbestiller ikke på nytt.")
+                eventMetricsSession.countDuplicateEksternvarslingForSystemUser(varselbestilling.systembruker)
             } else {
                 shouldCancel = true
             }

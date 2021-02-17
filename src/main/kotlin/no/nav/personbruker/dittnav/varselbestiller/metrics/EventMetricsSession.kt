@@ -28,6 +28,10 @@ class EventMetricsSession(val eventtype: Eventtype) {
         countFailedEksternvarslingBySysUser[systemUser] = countFailedEksternvarslingBySysUser.getOrDefault(systemUser, 0).inc()
     }
 
+    fun countDuplicateEksternvarslingForSystemUser(systemUser: String) {
+        countDuplicateKeyEksternvarslingBySysUser[systemUser] = countDuplicateKeyEksternvarslingBySysUser.getOrDefault(systemUser, 0).inc()
+    }
+
     fun countDuplicateKeyEksternvarslingBySystemUser(result: ListPersistActionResult<Varselbestilling>) {
         result.getConflictingEntities()
                 .groupingBy { varselbestilling -> varselbestilling.systembruker }
