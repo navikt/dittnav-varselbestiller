@@ -22,8 +22,7 @@ object DoknotifikasjonCreator {
                 .setTittel("Beskjed fra NAV")
                 .setEpostTekst(getDoknotifikasjonEmailText(Eventtype.BESKJED))
                 .setSmsTekst(getDoknotifikasjonSMSText(Eventtype.BESKJED))
-                .setAntallRenotifikasjoner(1)
-                .setRenotifikasjonIntervall(1)
+                .setAntallRenotifikasjoner(0)
                 .setPrefererteKanaler(listOf(PrefererteKanal.EPOST, PrefererteKanal.SMS))
         return doknotifikasjonBuilder.build()
     }
@@ -50,7 +49,7 @@ object DoknotifikasjonCreator {
                 .setEpostTekst(getDoknotifikasjonEmailText(Eventtype.OPPGAVE))
                 .setSmsTekst(getDoknotifikasjonSMSText(Eventtype.OPPGAVE))
                 .setAntallRenotifikasjoner(1)
-                .setRenotifikasjonIntervall(1)
+                .setRenotifikasjonIntervall(7)
                 .setPrefererteKanaler(listOf(PrefererteKanal.EPOST, PrefererteKanal.SMS))
         return doknotifikasjonBuilder.build()
     }
