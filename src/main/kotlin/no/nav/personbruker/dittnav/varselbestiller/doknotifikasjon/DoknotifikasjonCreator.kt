@@ -23,7 +23,6 @@ object DoknotifikasjonCreator {
                 .setEpostTekst(getDoknotifikasjonEmailText(Eventtype.BESKJED))
                 .setSmsTekst(getDoknotifikasjonSMSText(Eventtype.BESKJED))
                 .setAntallRenotifikasjoner(0)
-                .setPrefererteKanaler(listOf(PrefererteKanal.EPOST, PrefererteKanal.SMS))
         return doknotifikasjonBuilder.build()
     }
 
@@ -50,7 +49,6 @@ object DoknotifikasjonCreator {
                 .setSmsTekst(getDoknotifikasjonSMSText(Eventtype.OPPGAVE))
                 .setAntallRenotifikasjoner(1)
                 .setRenotifikasjonIntervall(7)
-                .setPrefererteKanaler(listOf(PrefererteKanal.EPOST, PrefererteKanal.SMS))
         return doknotifikasjonBuilder.build()
     }
 

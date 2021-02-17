@@ -27,7 +27,7 @@ class DoknotifikasjonCreatorTest {
         doknotifikasjon.getSmsTekst().`should not be null or empty`()
         doknotifikasjon.getAntallRenotifikasjoner() `should be equal to` 0
         doknotifikasjon.getRenotifikasjonIntervall().`should be null`()
-        doknotifikasjon.getPrefererteKanaler() `should contain any` {it == PrefererteKanal.SMS || it == PrefererteKanal.EPOST}
+        doknotifikasjon.getPrefererteKanaler().`should be empty`()
     }
 
     @Test
@@ -46,7 +46,7 @@ class DoknotifikasjonCreatorTest {
         doknotifikasjon.getSmsTekst().`should not be null or empty`()
         doknotifikasjon.getAntallRenotifikasjoner() `should be equal to` 1
         doknotifikasjon.getRenotifikasjonIntervall() `should be equal to` 7
-        doknotifikasjon.getPrefererteKanaler() `should contain any` {it == PrefererteKanal.SMS || it == PrefererteKanal.EPOST}
+        doknotifikasjon.getPrefererteKanaler().`should be empty`()
     }
 
     @Test
