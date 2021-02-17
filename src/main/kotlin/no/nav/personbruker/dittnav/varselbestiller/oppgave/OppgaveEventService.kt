@@ -41,7 +41,7 @@ class OppgaveEventService(
                 try {
                     val oppgaveKey = event.getNonNullKey()
                     countAllEventsFromKafkaForSystemUser(oppgaveKey.getSystembruker())
-                    if (shouldCreateDoknotifikasjon(event)) {
+                    if (shouldCreateDoknotifikasjon(this, event)) {
                         val oppgave = event.value()
                         val doknotifikasjonKey = DoknotifikasjonCreator.createDoknotifikasjonKey(oppgaveKey, Eventtype.OPPGAVE)
                         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(oppgaveKey, oppgave)
@@ -80,7 +80,7 @@ class OppgaveEventService(
         return varselbestillingRepository.persistInOneBatch(varselbestillinger)
     }
 
-    private suspend fun shouldCreateDoknotifikasjon(event: ConsumerRecord<Nokkel, Oppgave>): Boolean {
+    private suspend fun shouldCreateDoknotifikasjon(eventMetricsSession: EventMetricsSession, event: ConsumerRecord<Nokkel, Oppgave>): Boolean {
         val oppgaveKey = event.getNonNullKey()
         val oppgave = event.value()
         val bestillingsid = DoknotifikasjonCreator.createDoknotifikasjonKey(oppgaveKey, Eventtype.OPPGAVE)
@@ -88,6 +88,7 @@ class OppgaveEventService(
         if (oppgave.getEksternVarsling()) {
             if (alreadyCreated(bestillingsid)) {
                 log.info("Varsel med bestillingsid $bestillingsid er allerede bestilt, bestiller ikke på nytt.")
+                eventMetricsSession.countDuplicateEksternvarslingForSystemUser(oppgaveKey.getSystembruker())
             } else {
                 shouldCreate = true
             }
