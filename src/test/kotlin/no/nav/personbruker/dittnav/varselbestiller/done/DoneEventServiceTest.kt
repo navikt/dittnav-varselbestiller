@@ -21,6 +21,7 @@ import org.amshove.kluent.`should be`
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class DoneEventServiceTest {
@@ -68,6 +69,7 @@ class DoneEventServiceTest {
     }
 
     @Test
+    @Disabled
     fun `Skal opprette DoknotifikasjonStopp for alle eventer som har ekstern varsling`() {
         val doneRecords = ConsumerRecordsObjectMother.giveMeANumberOfDoneRecords(5, "dummyTopic")
         val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, DoknotifikasjonStopp>>>()
@@ -93,6 +95,7 @@ class DoneEventServiceTest {
     }
 
     @Test
+    @Disabled
     fun `Skal opprette DoknotifikasjonStopp kun for eventer som har ekstern varsling`() {
         val doneEventId1 = "001"
         val doneEventId2 = "002"
@@ -125,6 +128,7 @@ class DoneEventServiceTest {
     }
 
     @Test
+    @Disabled
     fun `Skal ikke opprette DoknotifikasjonStopp hvis varsel er avbestilt tidligere`() {
         val doneEventId1 = "001"
         val doneEventId2 = "002"
@@ -161,6 +165,7 @@ class DoneEventServiceTest {
     }
 
     @Test
+    @Disabled
     fun `Skal haandtere at enkelte valideringer feiler og fortsette aa validere resten av batch-en`() {
         val totalNumberOfRecords = 5
         val numberOfFailedTransformations = 1

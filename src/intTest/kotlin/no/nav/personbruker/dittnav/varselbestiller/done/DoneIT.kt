@@ -27,6 +27,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class DoneIT {
@@ -67,6 +68,7 @@ class DoneIT {
     }
 
     @Test
+    @Disabled
     fun `Should read Done-events and send to DoknotifikasjonStopp-topic`() {
         `Create varselbestillinger in DB`()
 

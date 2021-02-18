@@ -65,7 +65,8 @@ class DoneEventService(
                 }
             }
             if (successfullyValidatedEvents.isNotEmpty()) {
-                produceDoknotifikasjonStoppAndPersistToDB(successfullyValidatedEvents, varselbestillingerToCancel)
+                //produceDoknotifikasjonStoppAndPersistToDB(successfullyValidatedEvents, varselbestillingerToCancel)
+                log.warn("Det ble funnet ${successfullyValidatedEvents.size} done-eventer der ekstern varsling var satt til true. Avbestiller ikke varsel")
             }
             if (problematicEvents.isNotEmpty()) {
                 throwExceptionIfFailedValidation(problematicEvents)
