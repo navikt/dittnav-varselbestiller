@@ -37,6 +37,8 @@ class BeskjedEventService(
         val problematicEvents = mutableListOf<ConsumerRecord<Nokkel, Beskjed>>()
         val varselbestillinger = mutableListOf<Varselbestilling>()
 
+        log.info("Fant ${events.count()} Beskjed-eventer")
+
         metricsCollector.recordMetrics(eventType = Eventtype.BESKJED) {
             events.forEach { event ->
                 try {
