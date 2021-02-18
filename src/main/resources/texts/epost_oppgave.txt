@@ -1,1 +1,1 @@
-<!DOCTYPE html><html><head><title>Oppgave</title></head><body><p>Hei!</p><p>Du har fått en ny oppgave på Ditt NAV. Logg inn og se hva meldingen gjelder.</p><p>Vennlig hilsen</p><p>NAV</p></body></html>
+<!DOCTYPE html><html><head><title>Oppgave</title></head><body><p>Hei!</p><p>Du har fått en ny oppgave på Ditt NAV. Logg inn og se hva oppgaven gjelder.</p><p>Vennlig hilsen</p><p>NAV</p></body></html>
