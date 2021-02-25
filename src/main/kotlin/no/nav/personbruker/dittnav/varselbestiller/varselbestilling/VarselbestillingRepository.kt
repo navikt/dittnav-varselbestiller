@@ -14,7 +14,7 @@ class VarselbestillingRepository(private val database: Database) {
     suspend fun fetchVarselbestilling(eventId: String, systembruker: String, fodselsnummer: String): Varselbestilling? {
         var resultat: Varselbestilling? = null
         database.queryWithExceptionTranslation {
-            resultat = getVarselbestillingForEvent(eventId = eventId, systembruker = systembruker, fodselsnummer = fodselsnummer)
+            resultat = getVarselbestillingForEvents(eventId = eventId, systembruker = systembruker, fodselsnummer = fodselsnummer)
         }
         return resultat
     }
@@ -23,6 +23,14 @@ class VarselbestillingRepository(private val database: Database) {
         var resultat: Varselbestilling? = null
         database.queryWithExceptionTranslation {
             resultat = getVarselbestillingForBestillingsId(bestillingsId = bestillingsId)
+        }
+        return resultat
+    }
+
+    suspend fun fetchVarselbestillingerForBestillingIds(bestillingsIds: List<String>): List<Varselbestilling> {
+        var resultat = emptyList<Varselbestilling>()
+        database.queryWithExceptionTranslation {
+            resultat = getVarselbestillingerForBestillingsIds(bestillingsIds)
         }
         return resultat
     }

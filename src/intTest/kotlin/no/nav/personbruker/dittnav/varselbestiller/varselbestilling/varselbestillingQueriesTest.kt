@@ -53,7 +53,7 @@ class varselbestillingQueriesTest {
     @Test
     fun `Finner Varselbestilling med eventId`() {
         runBlocking {
-            val result = database.dbQuery { getVarselbestillingForEvent(varselbestillingBeskjed.eventId, varselbestillingBeskjed.systembruker, varselbestillingBeskjed.fodselsnummer) }
+            val result = database.dbQuery { getVarselbestillingForEvents(varselbestillingBeskjed.eventId, varselbestillingBeskjed.systembruker, varselbestillingBeskjed.fodselsnummer) }
             result `should be equal to` varselbestillingBeskjed
         }
     }
@@ -61,7 +61,7 @@ class varselbestillingQueriesTest {
     @Test
     fun `Returnerer null hvis Varselbestilling med eventId ikke finnes`() {
         runBlocking {
-            val result = database.dbQuery { getVarselbestillingForEvent("idFinnesIkke", varselbestillingBeskjed.systembruker, varselbestillingBeskjed.fodselsnummer) }
+            val result = database.dbQuery { getVarselbestillingForEvents("idFinnesIkke", varselbestillingBeskjed.systembruker, varselbestillingBeskjed.fodselsnummer) }
             result.`should be null`()
         }
     }

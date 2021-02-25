@@ -1,13 +1,8 @@
 package no.nav.personbruker.dittnav.varselbestiller.varselbestilling
 
-import no.nav.personbruker.dittnav.varselbestiller.common.database.ListPersistActionResult
-import no.nav.personbruker.dittnav.varselbestiller.common.database.executeBatchPersistQuery
-import no.nav.personbruker.dittnav.varselbestiller.common.database.toBatchPersistResult
-import java.sql.Connection
-import java.sql.PreparedStatement
-import java.sql.ResultSet
-import java.sql.Types
-import java.time.LocalDateTime
+import no.nav.personbruker.dittnav.varselbestiller.common.database.*
+import java.sql.*
+import java.sql.Array
 
 fun Connection.createVarselbestillinger(varselbestillinger: List<Varselbestilling>): ListPersistActionResult<Varselbestilling> =
         executeBatchPersistQuery("""INSERT INTO varselbestilling (bestillingsid, eventid, fodselsnummer, systembruker, eventtidspunkt, avbestilt) 
@@ -25,7 +20,15 @@ fun Connection.getVarselbestillingForBestillingsId(bestillingsId: String): Varse
                     it.executeQuery().mapSingleResultNullable { toVarselbestilling() }
                 }
 
-fun Connection.getVarselbestillingForEvent(eventId: String, systembruker: String, fodselsnummer: String): Varselbestilling? =
+fun Connection.getVarselbestillingerForBestillingsIds(bestillingsIds: List<String>): List<Varselbestilling> =
+        prepareStatement("""SELECT varselbestilling.* FROM varselbestilling WHERE bestillingsid = ANY(?)""")
+                .use {
+                    it.setArray(1, toVarcharArray(bestillingsIds))
+                    it.executeQuery().mapList { toVarselbestilling() }
+                }
+
+
+fun Connection.getVarselbestillingForEvents(eventId: String, systembruker: String, fodselsnummer: String): Varselbestilling? =
         prepareStatement("""SELECT varselbestilling.* FROM varselbestilling WHERE eventid = ? AND systembruker = ? AND fodselsnummer = ?""")
                 .use {
                     it.setString(1, eventId)
@@ -64,11 +67,8 @@ private fun PreparedStatement.buildStatementForSingleRow(varselbestilling: Varse
         setObject(6, varselbestilling.avbestilt)
 }
 
-private fun ResultSet.getUtcDateTime(columnLabel: String): LocalDateTime = getTimestamp(columnLabel).toLocalDateTime()
+private fun Connection.toVarcharArray(stringList: List<String>): Array {
+    return createArrayOf("VARCHAR", stringList.toTypedArray())
+}
 
-private fun <T> ResultSet.mapSingleResultNullable(result: ResultSet.() -> T): T? =
-        if (next()) {
-            result()
-        } else {
-            null
-        }
+
