@@ -78,17 +78,17 @@ class OppgaveEventService(
                                                                varselbestillinger: List<Varselbestilling>): ListPersistActionResult<Varselbestilling> {
         val duplicateVarselbestillinger = varselbestillingRepository.fetchVarselbestillingerForBestillingIds(successfullyValidatedEvents.keys.toList())
         return if(duplicateVarselbestillinger.isEmpty()) {
-            order(successfullyValidatedEvents, varselbestillinger)
+            produce(successfullyValidatedEvents, varselbestillinger)
         } else {
             val duplicateBestillingIds = duplicateVarselbestillinger.map { it.bestillingsId }
             val remainingValidatedEvents = successfullyValidatedEvents.filterKeys { bestillingsId -> !duplicateBestillingIds.contains(bestillingsId) }
             val varselbestillingerToOrder = varselbestillinger.filter { !duplicateBestillingIds.contains(it.bestillingsId)}
             logDuplicateVarselbestillinger(eventMetricsSession, duplicateVarselbestillinger)
-            order(remainingValidatedEvents, varselbestillingerToOrder)
+            produce(remainingValidatedEvents, varselbestillingerToOrder)
         }
     }
 
-    private suspend fun order(successfullyValidatedEvents: Map<String, Doknotifikasjon>, varselbestillinger: List<Varselbestilling>): ListPersistActionResult<Varselbestilling> {
+    private suspend fun produce(successfullyValidatedEvents: Map<String, Doknotifikasjon>, varselbestillinger: List<Varselbestilling>): ListPersistActionResult<Varselbestilling> {
         val events = successfullyValidatedEvents.map { RecordKeyValueWrapper(it.key, it.value) }
         doknotifikasjonProducer.produceEvents(events)
         return varselbestillingRepository.persistInOneBatch(varselbestillinger)

@@ -37,32 +37,34 @@ class varselbestillingQueriesTest {
     @Test
     fun `Finner Varselbestilling med bestillingsId`() {
         runBlocking {
-            val result = database.dbQuery { getVarselbestillingForBestillingsId(varselbestillingBeskjed.bestillingsId) }
-            result `should be equal to` varselbestillingBeskjed
+            val result = database.dbQuery { getVarselbestillingerForBestillingsIds(listOf(varselbestillingBeskjed.bestillingsId, varselbestillingOppgave.bestillingsId)) }
+            result.size `should be equal to` 2
+            result `should contain all` listOf(varselbestillingBeskjed, varselbestillingOppgave)
         }
     }
 
     @Test
-    fun `Returnerer null hvis Varselbestilling med bestillingsId ikke finnes`() {
+    fun `Returnerer tom liste hvis Varselbestilling med bestillingsId ikke finnes`() {
         runBlocking {
-            val result = database.dbQuery { getVarselbestillingForBestillingsId("idFinnesIkke") }
-            result.`should be null`()
+            val result = database.dbQuery { getVarselbestillingerForBestillingsIds(listOf("idFinnesIkke")) }
+            result.`should be empty`()
         }
     }
 
     @Test
-    fun `Finner Varselbestilling med eventId`() {
+    fun `Finner Varselbestillinger med eventIds`() {
         runBlocking {
-            val result = database.dbQuery { getVarselbestillingForEvents(varselbestillingBeskjed.eventId, varselbestillingBeskjed.systembruker, varselbestillingBeskjed.fodselsnummer) }
-            result `should be equal to` varselbestillingBeskjed
+            val result = database.dbQuery { getVarselbestillingerForEventIds(listOf(varselbestillingBeskjed.eventId, varselbestillingOppgave.eventId)) }
+            result.size `should be equal to` 2
+            result `should contain all` listOf(varselbestillingBeskjed, varselbestillingOppgave)
         }
     }
 
     @Test
-    fun `Returnerer null hvis Varselbestilling med eventId ikke finnes`() {
+    fun `Returnerer tom liste hvis Varselbestilling med eventId ikke finnes`() {
         runBlocking {
-            val result = database.dbQuery { getVarselbestillingForEvents("idFinnesIkke", varselbestillingBeskjed.systembruker, varselbestillingBeskjed.fodselsnummer) }
-            result.`should be null`()
+            val result = database.dbQuery { getVarselbestillingerForEventIds(listOf("idFinnesIkke")) }
+            result.`should be empty`()
         }
     }
 
@@ -70,9 +72,10 @@ class varselbestillingQueriesTest {
     fun `Setter avbestilt for Varselbestilling`() {
         runBlocking {
             database.dbQuery {
-                setVarselbestillingAvbestiltFlag(listOf(varselbestillingBeskjed), true)
-                val varselbestilling = getVarselbestillingForBestillingsId(varselbestillingBeskjed.bestillingsId)
-                varselbestilling?.avbestilt `should be equal to` true
+                setVarselbestillingAvbestiltFlag(listOf(varselbestillingBeskjed.bestillingsId), true)
+                val result = getVarselbestillingerForBestillingsIds(listOf(varselbestillingBeskjed.bestillingsId))
+                result.first().bestillingsId `should be equal to` varselbestillingBeskjed.bestillingsId
+                result.first().avbestilt `should be equal to` true
             }
         }
     }

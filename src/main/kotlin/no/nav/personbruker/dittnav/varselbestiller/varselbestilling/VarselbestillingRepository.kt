@@ -11,22 +11,6 @@ class VarselbestillingRepository(private val database: Database) {
         }
     }
 
-    suspend fun fetchVarselbestilling(eventId: String, systembruker: String, fodselsnummer: String): Varselbestilling? {
-        var resultat: Varselbestilling? = null
-        database.queryWithExceptionTranslation {
-            resultat = getVarselbestillingForEvents(eventId = eventId, systembruker = systembruker, fodselsnummer = fodselsnummer)
-        }
-        return resultat
-    }
-
-    suspend fun fetchVarselbestilling(bestillingsId: String): Varselbestilling? {
-        var resultat: Varselbestilling? = null
-        database.queryWithExceptionTranslation {
-            resultat = getVarselbestillingForBestillingsId(bestillingsId = bestillingsId)
-        }
-        return resultat
-    }
-
     suspend fun fetchVarselbestillingerForBestillingIds(bestillingsIds: List<String>): List<Varselbestilling> {
         var resultat = emptyList<Varselbestilling>()
         database.queryWithExceptionTranslation {
@@ -35,9 +19,17 @@ class VarselbestillingRepository(private val database: Database) {
         return resultat
     }
 
-    suspend fun cancelVarselbestilling(entities: List<Varselbestilling>) {
+    suspend fun fetchVarselbestillingerForEventIds(eventIds: List<String>): List<Varselbestilling> {
+        var resultat = emptyList<Varselbestilling>()
         database.queryWithExceptionTranslation {
-            setVarselbestillingAvbestiltFlag(entities, true)
+            resultat = getVarselbestillingerForEventIds(eventIds)
+        }
+        return resultat
+    }
+
+    suspend fun cancelVarselbestilling(bestillingsIds: List<String>) {
+        database.queryWithExceptionTranslation {
+            setVarselbestillingAvbestiltFlag(bestillingsIds, true)
         }
     }
 }

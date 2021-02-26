@@ -41,7 +41,7 @@ class BeskjedEventServiceTest {
         clearMocks(varselbestillingRepository)
         clearMocks(metricsCollector)
         clearMocks(metricsSession)
-        coEvery { varselbestillingRepository.fetchVarselbestilling(any()) } returns null
+        coEvery { varselbestillingRepository.fetchVarselbestillingerForEventIds(allAny()) } returns Collections.emptyList()
     }
 
     @AfterAll
@@ -60,8 +60,6 @@ class BeskjedEventServiceTest {
         coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
             slot.captured.invoke(metricsSession)
         }
-
-        coEvery { varselbestillingRepository.fetchVarselbestilling(any(), any(), any()) } returns VarselbestillingObjectMother.createVarselbestilling("B-test-001", "1", "123")
 
         runBlocking {
             eventService.processEvents(records)

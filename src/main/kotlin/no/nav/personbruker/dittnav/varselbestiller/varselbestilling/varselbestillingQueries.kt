@@ -13,12 +13,6 @@ fun Connection.createVarselbestillinger(varselbestillinger: List<Varselbestillin
                 }
         }.toBatchPersistResult(varselbestillinger)
 
-fun Connection.getVarselbestillingForBestillingsId(bestillingsId: String): Varselbestilling? =
-        prepareStatement("""SELECT varselbestilling.* FROM varselbestilling WHERE bestillingsid = ?""")
-                .use {
-                    it.setString(1, bestillingsId)
-                    it.executeQuery().mapSingleResultNullable { toVarselbestilling() }
-                }
 
 fun Connection.getVarselbestillingerForBestillingsIds(bestillingsIds: List<String>): List<Varselbestilling> =
         prepareStatement("""SELECT varselbestilling.* FROM varselbestilling WHERE bestillingsid = ANY(?)""")
@@ -27,21 +21,18 @@ fun Connection.getVarselbestillingerForBestillingsIds(bestillingsIds: List<Strin
                     it.executeQuery().mapList { toVarselbestilling() }
                 }
 
-
-fun Connection.getVarselbestillingForEvents(eventId: String, systembruker: String, fodselsnummer: String): Varselbestilling? =
-        prepareStatement("""SELECT varselbestilling.* FROM varselbestilling WHERE eventid = ? AND systembruker = ? AND fodselsnummer = ?""")
+fun Connection.getVarselbestillingerForEventIds(eventIds: List<String>): List<Varselbestilling> =
+        prepareStatement("""SELECT varselbestilling.* FROM varselbestilling WHERE eventid = ANY(?) """)
                 .use {
-                    it.setString(1, eventId)
-                    it.setString(2, systembruker)
-                    it.setString(3, fodselsnummer)
-                    it.executeQuery().mapSingleResultNullable { toVarselbestilling() }
+                    it.setArray(1, toVarcharArray(eventIds))
+                    it.executeQuery().mapList { toVarselbestilling() }
                 }
 
-fun Connection.setVarselbestillingAvbestiltFlag(varselbestillinger: List<Varselbestilling>, avbestilt: Boolean) {
+fun Connection.setVarselbestillingAvbestiltFlag(bestillingsIds: List<String>, avbestilt: Boolean) {
     executeBatchPersistQuery("""UPDATE varselbestilling SET avbestilt = ? WHERE bestillingsid = ?""", skipConflicting = false) {
-        varselbestillinger.forEach { varselbestilling ->
+        bestillingsIds.forEach { bestillingsId ->
             setBoolean(1, avbestilt)
-            setString(2, varselbestilling.bestillingsId)
+            setString(2, bestillingsId)
             addBatch()
         }
     }
