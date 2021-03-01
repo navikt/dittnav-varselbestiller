@@ -1,6 +1,7 @@
 package no.nav.personbruker.dittnav.varselbestiller.common.database
 
 import java.sql.*
+import java.time.LocalDateTime
 
 fun Connection.executeBatchPersistQuery(sql: String, skipConflicting: Boolean = true, paramInit: PreparedStatement.() -> Unit): IntArray {
     autoCommit = false
@@ -29,4 +30,13 @@ fun <T> ResultSet.mapList(result: ResultSet.() -> T): List<T> =
             while (next()) {
                 add(result())
             }
+        }
+
+fun ResultSet.getUtcDateTime(columnLabel: String): LocalDateTime = getTimestamp(columnLabel).toLocalDateTime()
+
+fun <T> ResultSet.mapSingleResultNullable(result: ResultSet.() -> T): T? =
+        if (next()) {
+            result()
+        } else {
+            null
         }

@@ -24,6 +24,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.util.*
 
 class BeskjedEventServiceTest {
 
@@ -40,7 +41,7 @@ class BeskjedEventServiceTest {
         clearMocks(varselbestillingRepository)
         clearMocks(metricsCollector)
         clearMocks(metricsSession)
-        coEvery { varselbestillingRepository.fetchVarselbestilling(any()) } returns null
+        coEvery { varselbestillingRepository.fetchVarselbestillingerForEventIds(allAny()) } returns Collections.emptyList()
     }
 
     @AfterAll
@@ -59,8 +60,6 @@ class BeskjedEventServiceTest {
         coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
             slot.captured.invoke(metricsSession)
         }
-
-        coEvery { varselbestillingRepository.fetchVarselbestilling(any(), any(), any()) } returns VarselbestillingObjectMother.createVarselbestilling("B-test-001", "1", "123")
 
         runBlocking {
             eventService.processEvents(records)
@@ -93,13 +92,14 @@ class BeskjedEventServiceTest {
     }
 
     @Test
-    fun `Skal opprette Doknotifikasjon kun for eventer som har ekstern varsling`() {
+    fun `Skal opprette Doknotifikasjon for alle eventer som har ekstern varsling`() {
         val beskjedWithEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords = 4, topicName = "dummyTopic", withEksternVarsling = true)
         val beskjedWithoutEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords = 6, topicName = "dummyTopic", withEksternVarsling = false)
-        val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, no.nav.doknotifikasjon.schemas.Doknotifikasjon>>>()
+        val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, Doknotifikasjon>>>()
 
         val persistResult = successfulEvents(giveMeANumberOfVarselbestilling(numberOfEvents = 4))
         coEvery { varselbestillingRepository.persistInOneBatch(any()) } returns persistResult
+        coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns Collections.emptyList()
 
         val slot = slot<suspend EventMetricsSession.() -> Unit>()
         coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
@@ -122,12 +122,13 @@ class BeskjedEventServiceTest {
     }
 
     @Test
-    fun `Skal opprette Doknotifikasjon for alle eventer som har ekstern varsling`() {
+    fun `Skal ikke opprette Doknotifikasjon for eventer som har tidligere bestilt ekstern varsling`() {
         val beskjedRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords = 5, topicName = "dummyTopic", withEksternVarsling = true)
         val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, Doknotifikasjon>>>()
 
-        val persistResult = successfulEvents(giveMeANumberOfVarselbestilling(numberOfEvents = beskjedRecords.count()))
+        val persistResult = successfulEvents(giveMeANumberOfVarselbestilling(numberOfEvents = 5))
         coEvery { varselbestillingRepository.persistInOneBatch(any()) } returns persistResult
+        coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns listOf(VarselbestillingObjectMother.createVarselbestilling(bestillingsId = "B-dummySystembruker-1", eventId = "1", fodselsnummer = "123"))
 
         val slot = slot<suspend EventMetricsSession.() -> Unit>()
         coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
@@ -140,36 +141,12 @@ class BeskjedEventServiceTest {
         }
 
         verify(exactly = beskjedRecords.count()) { DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(ofType(Nokkel::class), ofType(Beskjed::class)) }
-        coVerify(exactly = 1) { doknotifikasjonProducer.produceEvents(any()) }
         coVerify(exactly = beskjedRecords.count()) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
+        coVerify(exactly = 1 ) { metricsSession.countDuplicateVarselbestillingForSystemUser(any()) }
         coVerify(exactly = beskjedRecords.count()) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
-
+        coVerify(exactly = 1) { doknotifikasjonProducer.produceEvents(any()) }
+        capturedListOfEntities.captured.size `should be` 4
         confirmVerified(doknotifikasjonProducer)
-    }
-
-    @Test
-    fun `Skal ikke opprette Doknotifikasjon for eventer som har tidligere bestilt ekstern varsling`() {
-        val beskjedRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords = 5, topicName = "dummyTopic", withEksternVarsling = true)
-        val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, no.nav.doknotifikasjon.schemas.Doknotifikasjon>>>()
-
-        val persistResult = successfulEvents(giveMeANumberOfVarselbestilling(numberOfEvents = 5))
-        coEvery { varselbestillingRepository.persistInOneBatch(any()) } returns persistResult
-        coEvery { varselbestillingRepository.fetchVarselbestilling(any()) } returns VarselbestillingObjectMother.createVarselbestilling(bestillingsId = "B-test-001", eventId = "001", fodselsnummer = "123")
-
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
-        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
-        }
-        coEvery { doknotifikasjonProducer.produceEvents(capture(capturedListOfEntities)) } returns Unit
-
-        runBlocking {
-            eventService.processEvents(beskjedRecords)
-        }
-
-        verify { DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(ofType(Nokkel::class), ofType(Beskjed::class)) wasNot Called }
-        coVerify { doknotifikasjonProducer wasNot Called}
-        coVerify(exactly = 0) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
-        coVerify(exactly = beskjedRecords.count()) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
     }
 
     @Test
@@ -182,6 +159,8 @@ class BeskjedEventServiceTest {
         coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
             slot.captured.invoke(metricsSession)
         }
+
+        coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns Collections.emptyList()
         coEvery { varselbestillingRepository.persistInOneBatch(capture(capturedListOfEntities)) } returns ListPersistActionResult.emptyInstance()
 
         runBlocking {
@@ -202,7 +181,7 @@ class BeskjedEventServiceTest {
         val numberOfSuccessfulTransformations = totalNumberOfRecords - numberOfFailedTransformations
 
         val beskjedRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords = totalNumberOfRecords, topicName = "dummyTopic", withEksternVarsling = true)
-        val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, no.nav.doknotifikasjon.schemas.Doknotifikasjon>>>()
+        val capturedListOfEntities = slot<List<RecordKeyValueWrapper<String, Doknotifikasjon>>>()
         coEvery { doknotifikasjonProducer.produceEvents(capture(capturedListOfEntities)) } returns Unit
 
         val fieldValidationException = FieldValidationException("Simulert feil i en test")
@@ -211,6 +190,7 @@ class BeskjedEventServiceTest {
 
         val persistResult = successfulEvents(giveMeANumberOfVarselbestilling(numberOfSuccessfulTransformations))
         coEvery { varselbestillingRepository.persistInOneBatch(any()) } returns persistResult
+        coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns emptyList()
 
         val slot = slot<suspend EventMetricsSession.() -> Unit>()
         coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
@@ -239,6 +219,7 @@ class BeskjedEventServiceTest {
 
         val persistResult = successfulEvents(giveMeANumberOfVarselbestilling(numberOfRecords))
         coEvery { varselbestillingRepository.persistInOneBatch(any()) } returns persistResult
+        coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns emptyList()
 
         coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
             slot.captured.invoke(metricsSession)

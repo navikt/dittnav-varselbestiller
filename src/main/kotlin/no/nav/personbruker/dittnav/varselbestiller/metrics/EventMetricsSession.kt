@@ -28,7 +28,7 @@ class EventMetricsSession(val eventtype: Eventtype) {
         countFailedEksternvarslingBySysUser[systemUser] = countFailedEksternvarslingBySysUser.getOrDefault(systemUser, 0).inc()
     }
 
-    fun countDuplicateEksternvarslingForSystemUser(systemUser: String) {
+    fun countDuplicateVarselbestillingForSystemUser(systemUser: String) {
         countDuplicateKeyEksternvarslingBySysUser[systemUser] = countDuplicateKeyEksternvarslingBySysUser.getOrDefault(systemUser, 0).inc()
     }
 

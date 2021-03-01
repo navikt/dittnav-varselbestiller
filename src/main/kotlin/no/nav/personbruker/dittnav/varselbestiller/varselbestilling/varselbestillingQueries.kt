@@ -1,13 +1,8 @@
 package no.nav.personbruker.dittnav.varselbestiller.varselbestilling
 
-import no.nav.personbruker.dittnav.varselbestiller.common.database.ListPersistActionResult
-import no.nav.personbruker.dittnav.varselbestiller.common.database.executeBatchPersistQuery
-import no.nav.personbruker.dittnav.varselbestiller.common.database.toBatchPersistResult
-import java.sql.Connection
-import java.sql.PreparedStatement
-import java.sql.ResultSet
-import java.sql.Types
-import java.time.LocalDateTime
+import no.nav.personbruker.dittnav.varselbestiller.common.database.*
+import java.sql.*
+import java.sql.Array
 
 fun Connection.createVarselbestillinger(varselbestillinger: List<Varselbestilling>): ListPersistActionResult<Varselbestilling> =
         executeBatchPersistQuery("""INSERT INTO varselbestilling (bestillingsid, eventid, fodselsnummer, systembruker, eventtidspunkt, avbestilt) 
@@ -18,27 +13,26 @@ fun Connection.createVarselbestillinger(varselbestillinger: List<Varselbestillin
                 }
         }.toBatchPersistResult(varselbestillinger)
 
-fun Connection.getVarselbestillingForBestillingsId(bestillingsId: String): Varselbestilling? =
-        prepareStatement("""SELECT varselbestilling.* FROM varselbestilling WHERE bestillingsid = ?""")
+
+fun Connection.getVarselbestillingerForBestillingsIds(bestillingsIds: List<String>): List<Varselbestilling> =
+        prepareStatement("""SELECT varselbestilling.* FROM varselbestilling WHERE bestillingsid = ANY(?)""")
                 .use {
-                    it.setString(1, bestillingsId)
-                    it.executeQuery().mapSingleResultNullable { toVarselbestilling() }
+                    it.setArray(1, toVarcharArray(bestillingsIds))
+                    it.executeQuery().mapList { toVarselbestilling() }
                 }
 
-fun Connection.getVarselbestillingForEvent(eventId: String, systembruker: String, fodselsnummer: String): Varselbestilling? =
-        prepareStatement("""SELECT varselbestilling.* FROM varselbestilling WHERE eventid = ? AND systembruker = ? AND fodselsnummer = ?""")
+fun Connection.getVarselbestillingerForEventIds(eventIds: List<String>): List<Varselbestilling> =
+        prepareStatement("""SELECT varselbestilling.* FROM varselbestilling WHERE eventid = ANY(?) """)
                 .use {
-                    it.setString(1, eventId)
-                    it.setString(2, systembruker)
-                    it.setString(3, fodselsnummer)
-                    it.executeQuery().mapSingleResultNullable { toVarselbestilling() }
+                    it.setArray(1, toVarcharArray(eventIds))
+                    it.executeQuery().mapList { toVarselbestilling() }
                 }
 
-fun Connection.setVarselbestillingAvbestiltFlag(varselbestillinger: List<Varselbestilling>, avbestilt: Boolean) {
+fun Connection.setVarselbestillingAvbestiltFlag(bestillingsIds: List<String>, avbestilt: Boolean) {
     executeBatchPersistQuery("""UPDATE varselbestilling SET avbestilt = ? WHERE bestillingsid = ?""", skipConflicting = false) {
-        varselbestillinger.forEach { varselbestilling ->
+        bestillingsIds.forEach { bestillingsId ->
             setBoolean(1, avbestilt)
-            setString(2, varselbestilling.bestillingsId)
+            setString(2, bestillingsId)
             addBatch()
         }
     }
@@ -64,11 +58,8 @@ private fun PreparedStatement.buildStatementForSingleRow(varselbestilling: Varse
         setObject(6, varselbestilling.avbestilt)
 }
 
-private fun ResultSet.getUtcDateTime(columnLabel: String): LocalDateTime = getTimestamp(columnLabel).toLocalDateTime()
+private fun Connection.toVarcharArray(stringList: List<String>): Array {
+    return createArrayOf("VARCHAR", stringList.toTypedArray())
+}
 
-private fun <T> ResultSet.mapSingleResultNullable(result: ResultSet.() -> T): T? =
-        if (next()) {
-            result()
-        } else {
-            null
-        }
+

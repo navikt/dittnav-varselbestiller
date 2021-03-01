@@ -32,7 +32,7 @@ class OppgaveEventService(
     private val log = LoggerFactory.getLogger(OppgaveEventService::class.java)
 
     override suspend fun processEvents(events: ConsumerRecords<Nokkel, Oppgave>) {
-        val successfullyValidatedEvents = mutableListOf<RecordKeyValueWrapper<String, Doknotifikasjon>>()
+        val successfullyValidatedEvents = mutableMapOf<String, Doknotifikasjon>()
         val problematicEvents = mutableListOf<ConsumerRecord<Nokkel, Oppgave>>()
         val varselbestillinger = mutableListOf<Varselbestilling>()
 
@@ -40,13 +40,13 @@ class OppgaveEventService(
             events.forEach { event ->
                 try {
                     val oppgaveKey = event.getNonNullKey()
+                    val oppgaveEvent = event.value()
                     countAllEventsFromKafkaForSystemUser(oppgaveKey.getSystembruker())
-                    if (shouldCreateDoknotifikasjon(this, event)) {
-                        val oppgave = event.value()
+                    if (oppgaveEvent.getEksternVarsling()) {
                         val doknotifikasjonKey = DoknotifikasjonCreator.createDoknotifikasjonKey(oppgaveKey, Eventtype.OPPGAVE)
-                        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(oppgaveKey, oppgave)
-                        successfullyValidatedEvents.add(RecordKeyValueWrapper(doknotifikasjonKey, doknotifikasjon))
-                        varselbestillinger.add(VarselbestillingTransformer.fromOppgave(oppgaveKey, oppgave, doknotifikasjon))
+                        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(oppgaveKey, oppgaveEvent)
+                        successfullyValidatedEvents[doknotifikasjonKey] = doknotifikasjon
+                        varselbestillinger.add(VarselbestillingTransformer.fromOppgave(oppgaveKey, oppgaveEvent, doknotifikasjon))
                         countSuccessfulEksternvarslingForSystemUser(oppgaveKey.getSystembruker())
                     }
                 } catch (e: NokkelNullException) {
@@ -64,10 +64,8 @@ class OppgaveEventService(
                     log.warn("Validering av oppgave-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
                 }
             }
-
             if (successfullyValidatedEvents.isNotEmpty()) {
-                val result = produceDoknotifikasjonerAndPersistToDB(successfullyValidatedEvents, varselbestillinger)
-                countDuplicateKeyEvents(result)
+                produceDoknotifikasjonerAndPersistToDB(this, successfullyValidatedEvents, varselbestillinger)
             }
             if (problematicEvents.isNotEmpty()) {
                 throwExceptionIfValidationFailed(problematicEvents)
@@ -75,30 +73,32 @@ class OppgaveEventService(
         }
     }
 
-    private suspend fun produceDoknotifikasjonerAndPersistToDB(successfullyValidatedEvents: MutableList<RecordKeyValueWrapper<String, Doknotifikasjon>>, varselbestillinger: List<Varselbestilling>): ListPersistActionResult<Varselbestilling> {
-        doknotifikasjonProducer.produceEvents(successfullyValidatedEvents)
+    private suspend fun produceDoknotifikasjonerAndPersistToDB(eventMetricsSession: EventMetricsSession,
+                                                               successfullyValidatedEvents: Map<String, Doknotifikasjon>,
+                                                               varselbestillinger: List<Varselbestilling>): ListPersistActionResult<Varselbestilling> {
+        val duplicateVarselbestillinger = varselbestillingRepository.fetchVarselbestillingerForBestillingIds(successfullyValidatedEvents.keys.toList())
+        return if(duplicateVarselbestillinger.isEmpty()) {
+            produce(successfullyValidatedEvents, varselbestillinger)
+        } else {
+            val duplicateBestillingIds = duplicateVarselbestillinger.map { it.bestillingsId }
+            val remainingValidatedEvents = successfullyValidatedEvents.filterKeys { bestillingsId -> !duplicateBestillingIds.contains(bestillingsId) }
+            val varselbestillingerToOrder = varselbestillinger.filter { !duplicateBestillingIds.contains(it.bestillingsId)}
+            logDuplicateVarselbestillinger(eventMetricsSession, duplicateVarselbestillinger)
+            produce(remainingValidatedEvents, varselbestillingerToOrder)
+        }
+    }
+
+    private suspend fun produce(successfullyValidatedEvents: Map<String, Doknotifikasjon>, varselbestillinger: List<Varselbestilling>): ListPersistActionResult<Varselbestilling> {
+        val events = successfullyValidatedEvents.map { RecordKeyValueWrapper(it.key, it.value) }
+        doknotifikasjonProducer.produceEvents(events)
         return varselbestillingRepository.persistInOneBatch(varselbestillinger)
     }
 
-    private suspend fun shouldCreateDoknotifikasjon(eventMetricsSession: EventMetricsSession, event: ConsumerRecord<Nokkel, Oppgave>): Boolean {
-        val oppgaveKey = event.getNonNullKey()
-        val oppgave = event.value()
-        val bestillingsid = DoknotifikasjonCreator.createDoknotifikasjonKey(oppgaveKey, Eventtype.OPPGAVE)
-        var shouldCreate = false
-        if (oppgave.getEksternVarsling()) {
-            if (alreadyCreated(bestillingsid)) {
-                log.info("Varsel med bestillingsid $bestillingsid er allerede bestilt, bestiller ikke på nytt.")
-                eventMetricsSession.countDuplicateEksternvarslingForSystemUser(oppgaveKey.getSystembruker())
-            } else {
-                shouldCreate = true
-            }
+    private fun logDuplicateVarselbestillinger(eventMetricsSession: EventMetricsSession, duplicateVarselbestillinger: List<Varselbestilling>) {
+        duplicateVarselbestillinger.forEach{
+            log.info("Varsel med bestillingsid ${it.bestillingsId} er allerede bestilt, bestiller ikke på nytt.")
+            eventMetricsSession.countDuplicateVarselbestillingForSystemUser(it.systembruker)
         }
-        return shouldCreate
-    }
-
-    private suspend fun alreadyCreated(bestillingsId: String): Boolean {
-        val varselbestilling = varselbestillingRepository.fetchVarselbestilling(bestillingsId = bestillingsId)
-        return varselbestilling != null
     }
 
     private fun throwExceptionIfValidationFailed(problematicEvents: MutableList<ConsumerRecord<Nokkel, Oppgave>>) {
@@ -106,18 +106,5 @@ class OppgaveEventService(
         val exception = UnvalidatableRecordException(message)
         exception.addContext("antallMislykkedValidering", problematicEvents.size)
         throw exception
-    }
-
-    private fun EventMetricsSession.countDuplicateKeyEvents(result: ListPersistActionResult<Varselbestilling>) {
-        if (result.foundConflictingKeys()) {
-            val constraintErrors = result.getConflictingEntities().size
-            val totalEntities = result.getAllEntities().size
-
-            countDuplicateKeyEksternvarslingBySystemUser(result)
-
-            val msg = """Traff $constraintErrors feil på duplikate eventId-er ved behandling av $totalEntities oppgave-eventer.
-                           | Feilene ble produsert av: ${getEksternvarslingDuplicateKeys()}""".trimMargin()
-            log.warn(msg)
-        }
     }
 }
