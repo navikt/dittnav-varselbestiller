@@ -4,6 +4,8 @@ import kotlinx.coroutines.runBlocking
 import no.nav.personbruker.dittnav.varselbestiller.common.database.H2Database
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.*
 import org.amshove.kluent.`should be equal to`
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
 class VarselbestillingTeardownQueriesTest {
@@ -13,6 +15,20 @@ class VarselbestillingTeardownQueriesTest {
     private val varselbestilling1 = VarselbestillingObjectMother.createVarselbestilling(bestillingsId = "B-test-001", eventId = "001", fodselsnummer = "123")
     private val varselbestilling2 = VarselbestillingObjectMother.createVarselbestilling(bestillingsId = "B-test-002", eventId = "002", fodselsnummer = "123")
     private val varselbestilling3 = VarselbestillingObjectMother.createVarselbestilling(bestillingsId = "O-test-001", eventId = "001", fodselsnummer = "234")
+
+    @BeforeAll
+    fun setup() {
+        runBlocking {
+            deleteAllVarselbestillinger()
+        }
+    }
+
+    @AfterAll
+    fun tearDown() {
+        runBlocking {
+            deleteAllVarselbestillinger()
+        }
+    }
 
     @Test
     fun `Skal slette alle rader i varselbestilling-tabellen`() {
