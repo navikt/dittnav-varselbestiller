@@ -47,6 +47,9 @@ dependencies {
     implementation(Influxdb.java)
     implementation(Kafka.Apache.clients)
     implementation(Kafka.Confluent.avroSerializer)
+    implementation(Ktor.clientApache)
+    implementation(Ktor.clientJson)
+    implementation(Ktor.clientSerializationJvm)
     implementation(Ktor.htmlBuilder)
     implementation(Ktor.serverNetty)
     implementation(Logback.classic)
@@ -56,10 +59,8 @@ dependencies {
     implementation(Prometheus.common)
     implementation(Prometheus.hotspot)
     implementation(Prometheus.logback)
-    implementation(Ktor.clientApache)
-    implementation(Ktor.clientJson)
-    implementation(Ktor.clientJackson)
-    implementation(Jackson.dataTypeJsr310)
+
+
 
 
     testImplementation(H2Database.h2)

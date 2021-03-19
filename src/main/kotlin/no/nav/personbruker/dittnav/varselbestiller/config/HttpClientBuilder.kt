@@ -9,9 +9,7 @@ object HttpClientBuilder {
 
     fun build(): HttpClient {
         return HttpClient(Apache) {
-            install(JsonFeature) {
-                serializer = buildJsonSerializer()
-            }
+            install(JsonFeature)
             install(HttpTimeout)
         }
     }

@@ -4,7 +4,6 @@ import io.ktor.client.*
 import io.ktor.client.engine.mock.*
 import io.ktor.client.features.json.*
 import io.ktor.http.*
-import no.nav.personbruker.dittnav.varselbestiller.config.buildJsonSerializer
 
 fun getClient(producerNameAlias: String): HttpClient {
     return HttpClient(MockEngine) {
@@ -17,8 +16,6 @@ fun getClient(producerNameAlias: String): HttpClient {
                 }
             }
         }
-        install(JsonFeature) {
-            serializer = buildJsonSerializer()
-        }
+        install(JsonFeature)
     }
 }

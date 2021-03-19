@@ -6,7 +6,6 @@ import io.ktor.client.features.json.*
 import io.ktor.http.*
 import io.mockk.clearAllMocks
 import kotlinx.coroutines.runBlocking
-import no.nav.personbruker.dittnav.varselbestiller.config.buildJsonSerializer
 import org.amshove.kluent.`should be equal to`
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -58,10 +57,7 @@ internal class ProducerNameResolverTest {
                     }
                 }
             }
-            install(JsonFeature) {
-                serializer = buildJsonSerializer()
-            }
+            install(JsonFeature)
         }
     }
-
 }
