@@ -37,7 +37,7 @@ class OppgaveIT {
 
     private val database = H2Database()
 
-    private val oppgaveEvents = (1..10).map { AvroNokkelObjectMother.createNokkelWithEventId(it) to AvroOppgaveObjectMother.createOppgaveWithEksternVarsling(it, eksternVarsling = true) }.toMap()
+    private val oppgaveEvents = (1..10).map { AvroNokkelObjectMother.createNokkelWithEventId(it) to AvroOppgaveObjectMother.createOppgaveWithEksternVarsling(eksternVarsling = true) }.toMap()
 
     private val capturedDoknotifikasjonRecords = ArrayList<RecordKeyValueWrapper<String, Doknotifikasjon>>()
 

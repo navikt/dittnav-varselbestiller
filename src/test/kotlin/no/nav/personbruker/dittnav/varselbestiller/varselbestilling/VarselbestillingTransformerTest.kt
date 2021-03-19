@@ -13,7 +13,7 @@ class VarselbestillingTransformerTest {
     @Test
     fun `Skal transformere fra Beskjed`() {
         val avroNokkel = AvroNokkelObjectMother.createNokkelWithEventId(1)
-        val avroBeskjed =  AvroBeskjedObjectMother.createBeskjed(1)
+        val avroBeskjed =  AvroBeskjedObjectMother.createBeskjed()
         val avroDoknotifikasjon = AvroDoknotifikasjonObjectMother.createDoknotifikasjon("B-test-001")
         val varselbestilling = VarselbestillingTransformer.fromBeskjed(avroNokkel, avroBeskjed, avroDoknotifikasjon)
 
@@ -27,7 +27,7 @@ class VarselbestillingTransformerTest {
     @Test
     fun `Skal transformere fra Oppgave`() {
         val avroNokkel = AvroNokkelObjectMother.createNokkelWithEventId(1)
-        val avroOppgave =  AvroOppgaveObjectMother.createOppgave(1)
+        val avroOppgave =  AvroOppgaveObjectMother.createOppgave()
         val avroDoknotifikasjon = AvroDoknotifikasjonObjectMother.createDoknotifikasjon("O-test-001")
         val varselbestilling = VarselbestillingTransformer.fromOppgave(avroNokkel, avroOppgave, avroDoknotifikasjon)
 

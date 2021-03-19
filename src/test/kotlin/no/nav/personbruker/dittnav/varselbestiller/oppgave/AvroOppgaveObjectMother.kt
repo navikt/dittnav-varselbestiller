@@ -5,7 +5,6 @@ import java.time.Instant
 
 object AvroOppgaveObjectMother {
 
-    private val defaultLopenummer = 1
     private val defaultFodselsnr = "12345"
     private val defaultTekst = "Dette er oppgave til brukeren"
     private val defaultSikkerhetsnivaa = 4
@@ -13,39 +12,39 @@ object AvroOppgaveObjectMother {
     private val defaultLink = "http://dummyUrl.no"
     private val defaultGrupperingsid = "123"
 
-    fun createOppgave(lopenummer: Int): Oppgave {
-        return createOppgave(lopenummer, defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling, defaultLink, defaultGrupperingsid)
+    fun createOppgave(): Oppgave {
+        return createOppgave(defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling, defaultLink, defaultGrupperingsid)
     }
 
-    fun createOppgaveWithFodselsnummer(lopenummer: Int, fodselsnummer: String): Oppgave {
-        return createOppgave(lopenummer, fodselsnummer, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling, defaultLink, defaultGrupperingsid)
+    fun createOppgaveWithFodselsnummer(fodselsnummer: String): Oppgave {
+        return createOppgave(fodselsnummer, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling, defaultLink, defaultGrupperingsid)
     }
 
     fun createOppgaveWithText(tekst: String): Oppgave {
-        return createOppgave(defaultLopenummer, defaultFodselsnr, tekst, defaultSikkerhetsnivaa, defaultEksternVarsling, defaultLink, defaultGrupperingsid)
+        return createOppgave(defaultFodselsnr, tekst, defaultSikkerhetsnivaa, defaultEksternVarsling, defaultLink, defaultGrupperingsid)
     }
 
     fun createOppgaveWithSikkerhetsnivaa(sikkerhetsnivaa: Int): Oppgave {
-        return createOppgave(defaultLopenummer, defaultFodselsnr, defaultTekst, sikkerhetsnivaa, defaultEksternVarsling, defaultLink, defaultGrupperingsid)
+        return createOppgave(defaultFodselsnr, defaultTekst, sikkerhetsnivaa, defaultEksternVarsling, defaultLink, defaultGrupperingsid)
     }
 
     fun createOppgaveWithLink(link: String): Oppgave {
-        return createOppgave(defaultLopenummer, defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling, link, defaultGrupperingsid)
+        return createOppgave(defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling, link, defaultGrupperingsid)
     }
 
     fun createOppgaveWithGrupperingsid(grupperingsid: String): Oppgave {
-        return createOppgave(defaultLopenummer, defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling, defaultLink, grupperingsid)
+        return createOppgave(defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling, defaultLink, grupperingsid)
     }
 
-    fun createOppgaveWithEksternVarsling(lopenummer: Int, eksternVarsling: Boolean): Oppgave {
-        return createOppgaveWithFodselsnummerOgEksternVarsling(lopenummer, defaultFodselsnr, eksternVarsling)
+    fun createOppgaveWithEksternVarsling(eksternVarsling: Boolean): Oppgave {
+        return createOppgaveWithFodselsnummerOgEksternVarsling(defaultFodselsnr, eksternVarsling)
     }
 
-    fun createOppgaveWithFodselsnummerOgEksternVarsling(lopenummer: Int, fodselsnummer: String, eksternVarsling: Boolean): Oppgave {
-        return createOppgave(lopenummer, fodselsnummer, defaultTekst, defaultSikkerhetsnivaa, eksternVarsling, defaultLink, defaultGrupperingsid)
+    fun createOppgaveWithFodselsnummerOgEksternVarsling(fodselsnummer: String, eksternVarsling: Boolean): Oppgave {
+        return createOppgave(fodselsnummer, defaultTekst, defaultSikkerhetsnivaa, eksternVarsling, defaultLink, defaultGrupperingsid)
     }
 
-    fun createOppgave(lopenummer: Int, fodselsnummer: String, tekst: String, sikkerhetsnivaa: Int, eksternVarsling: Boolean, link: String, grupperingsid: String): Oppgave {
+    fun createOppgave(fodselsnummer: String, tekst: String, sikkerhetsnivaa: Int, eksternVarsling: Boolean, link: String, grupperingsid: String): Oppgave {
         return Oppgave(
                 Instant.now().toEpochMilli(),
                 fodselsnummer,

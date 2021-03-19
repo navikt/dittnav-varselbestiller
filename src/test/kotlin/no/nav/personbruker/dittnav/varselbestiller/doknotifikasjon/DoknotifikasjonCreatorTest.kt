@@ -15,7 +15,7 @@ class DoknotifikasjonCreatorTest {
     fun `Skal opprette Doknotifikasjon fra Beskjed`() {
         val eventId = 1
         val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(eventId)
-        val beskjed = AvroBeskjedObjectMother.createBeskjed(eventId)
+        val beskjed = AvroBeskjedObjectMother.createBeskjed()
         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
 
         doknotifikasjon.getBestillingsId() `should be equal to` "B-${nokkel.getSystembruker()}-${nokkel.getEventId()}"
@@ -34,7 +34,7 @@ class DoknotifikasjonCreatorTest {
     fun `Skal opprette Doknotifikasjon fra Oppgave`() {
         val eventId = 1
         val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(eventId)
-        val oppgave = AvroOppgaveObjectMother.createOppgave(eventId)
+        val oppgave = AvroOppgaveObjectMother.createOppgave()
         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(nokkel, oppgave)
 
         doknotifikasjon.getBestillingsId() `should be equal to` "O-${nokkel.getSystembruker()}-${nokkel.getEventId()}"
@@ -53,7 +53,7 @@ class DoknotifikasjonCreatorTest {
     fun `Skal kaste FieldValidationException hvis eventId for Beskjed er for lang`() {
         val tooLongEventId = "1".repeat(51)
         val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(tooLongEventId)
-        val beskjed = AvroBeskjedObjectMother.createBeskjed(1)
+        val beskjed = AvroBeskjedObjectMother.createBeskjed()
         invoking {
             DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
         } `should throw` FieldValidationException::class
@@ -63,7 +63,7 @@ class DoknotifikasjonCreatorTest {
     fun `Skal kaste FieldValidationException hvis systembruker for Beskjed er for lang`() {
         val tooLongSystembruker = "A".repeat(101)
         val nokkel = AvroNokkelObjectMother.createNokkelWithSystembruker(tooLongSystembruker)
-        val beskjed = AvroBeskjedObjectMother.createBeskjed(1)
+        val beskjed = AvroBeskjedObjectMother.createBeskjed()
         invoking {
             DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
         } `should throw` FieldValidationException::class
@@ -92,7 +92,7 @@ class DoknotifikasjonCreatorTest {
     fun `Skal kaste FieldValidationException hvis eventId for Oppgave er for lavt`() {
         val tooLongEventId = "1".repeat(51)
         val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(tooLongEventId)
-        val oppgave = AvroOppgaveObjectMother.createOppgave(1)
+        val oppgave = AvroOppgaveObjectMother.createOppgave()
         invoking {
             DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(nokkel, oppgave)
         } `should throw` FieldValidationException::class
@@ -102,7 +102,7 @@ class DoknotifikasjonCreatorTest {
     fun `Skal kaste FieldValidationException hvis systembruker for Oppgave er for lang`() {
         val tooLongSystembruker = "A".repeat(101)
         val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(tooLongSystembruker)
-        val oppgave = AvroOppgaveObjectMother.createOppgave(1)
+        val oppgave = AvroOppgaveObjectMother.createOppgave()
         invoking {
             DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(nokkel, oppgave)
         } `should throw` FieldValidationException::class
@@ -112,7 +112,7 @@ class DoknotifikasjonCreatorTest {
     fun `Skal kaste FieldValidationException hvis fodselsnummer for Oppgave er tomt`() {
         val fodselsnummerEmpty = ""
         val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(3)
-        val event = createOppgaveWithFodselsnummer(1, fodselsnummerEmpty)
+        val event = createOppgaveWithFodselsnummer(fodselsnummerEmpty)
         invoking {
             DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(nokkel, event)
         } `should throw` FieldValidationException::class

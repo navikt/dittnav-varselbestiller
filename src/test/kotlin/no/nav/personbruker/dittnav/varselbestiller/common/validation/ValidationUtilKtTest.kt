@@ -164,7 +164,7 @@ internal class ValidationUtilKtTest {
     fun `Skal kaste exception hvis fodselsnummer er for lang i oppgave-eventet`() {
         val tooLongFnr = "f".repeat(MAX_LENGTH_FODSELSNUMMER + 1)
         val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(eventId = 1)
-        val oppgave = AvroOppgaveObjectMother.createOppgaveWithFodselsnummer(lopenummer = 1, fodselsnummer =  tooLongFnr)
+        val oppgave = AvroOppgaveObjectMother.createOppgaveWithFodselsnummer(fodselsnummer =  tooLongFnr)
 
         val cr: ConsumerRecord<Nokkel, Oppgave> = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName = "oppgave", actualKey = nokkel, actualEvent = oppgave)
         val records = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(cr)
