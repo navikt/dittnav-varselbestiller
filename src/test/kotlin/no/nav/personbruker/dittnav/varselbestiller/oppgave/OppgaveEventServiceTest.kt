@@ -51,8 +51,7 @@ class OppgaveEventServiceTest {
 
     @Test
     fun `Skal forkaste eventer som mangler nokkel`() {
-        val defaultLopenummer = 1
-        val oppgave = AvroOppgaveObjectMother.createOppgave(defaultLopenummer)
+        val oppgave = AvroOppgaveObjectMother.createOppgave()
         val cr: ConsumerRecord<Nokkel, Oppgave> = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName = "oppgave", actualKey = null, actualEvent = oppgave)
         val records = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(cr)
 
@@ -72,7 +71,7 @@ class OppgaveEventServiceTest {
 
     @Test
     fun `Skal forkaste eventer som mangler fodselsnummer`() {
-        val oppgaveWithoutFodselsnummer = AvroOppgaveObjectMother.createOppgaveWithFodselsnummerOgEksternVarsling(1, "", true)
+        val oppgaveWithoutFodselsnummer = AvroOppgaveObjectMother.createOppgaveWithFodselsnummerOgEksternVarsling("", true)
         val cr = ConsumerRecordsObjectMother.createConsumerRecord("oppgave", oppgaveWithoutFodselsnummer)
         val records = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(cr)
 

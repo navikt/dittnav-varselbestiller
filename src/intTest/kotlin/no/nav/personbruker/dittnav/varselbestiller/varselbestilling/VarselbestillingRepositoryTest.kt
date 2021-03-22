@@ -4,6 +4,7 @@ import kotlinx.coroutines.runBlocking
 import no.nav.personbruker.dittnav.varselbestiller.common.database.H2Database
 import org.amshove.kluent.`should contain same`
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
 class VarselbestillingRepositoryTest {
@@ -14,6 +15,15 @@ class VarselbestillingRepositoryTest {
     private val varselbestilling1 = VarselbestillingObjectMother.createVarselbestilling(bestillingsId = "B-test-001", eventId = "001", fodselsnummer = "123")
     private val varselbestilling2 = VarselbestillingObjectMother.createVarselbestilling(bestillingsId = "B-test-002", eventId = "002", fodselsnummer = "123")
     private val varselbestilling3 = VarselbestillingObjectMother.createVarselbestilling(bestillingsId = "O-test-001", eventId = "001", fodselsnummer = "123")
+
+    @BeforeAll
+    fun setup() {
+        runBlocking {
+            database.dbQuery {
+                deleteAllVarselbestilling()
+            }
+        }
+    }
 
     @AfterEach
     fun tearDown() {

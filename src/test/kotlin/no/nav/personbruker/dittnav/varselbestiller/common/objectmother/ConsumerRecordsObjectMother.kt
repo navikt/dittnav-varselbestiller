@@ -33,7 +33,7 @@ object ConsumerRecordsObjectMother {
     private fun createBeskjedRecords(topicName: String, totalNumber: Int, withEksternVarsling: Boolean): List<ConsumerRecord<Nokkel, Beskjed>> {
         val allRecords = mutableListOf<ConsumerRecord<Nokkel, Beskjed>>()
         for (i in 0 until totalNumber) {
-            val schemaRecord = AvroBeskjedObjectMother.createBeskjedWithEksternVarsling(i, withEksternVarsling)
+            val schemaRecord = AvroBeskjedObjectMother.createBeskjedWithEksternVarsling(withEksternVarsling)
             val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(i)
 
             allRecords.add(ConsumerRecord(topicName, i, i.toLong(), nokkel, schemaRecord))
@@ -77,7 +77,7 @@ object ConsumerRecordsObjectMother {
     private fun createOppgaveRecords(topicName: String, totalNumber: Int, withEksternVarsling: Boolean): List<ConsumerRecord<Nokkel, Oppgave>> {
         val allRecords = mutableListOf<ConsumerRecord<Nokkel, Oppgave>>()
         for (i in 0 until totalNumber) {
-            val schemaRecord = AvroOppgaveObjectMother.createOppgaveWithEksternVarsling(i, withEksternVarsling)
+            val schemaRecord = AvroOppgaveObjectMother.createOppgaveWithEksternVarsling(withEksternVarsling)
             val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(i)
             allRecords.add(ConsumerRecord(topicName, i, i.toLong(), nokkel, schemaRecord))
         }

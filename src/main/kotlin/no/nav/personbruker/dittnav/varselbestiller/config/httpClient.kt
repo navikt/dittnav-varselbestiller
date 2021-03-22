@@ -8,7 +8,7 @@ import kotlinx.coroutines.withContext
 import java.net.URL
 
 suspend inline fun <reified T> HttpClient.get(url: URL, systembruker: String): T = withContext(Dispatchers.IO) {
-    request<T> {
+    request {
         url(url)
         method = HttpMethod.Get
         parameter("systembruker", systembruker)
