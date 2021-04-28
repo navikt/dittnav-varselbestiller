@@ -99,7 +99,7 @@ class Consumer<K, V>(
             log.info("Denne coroutine-en ble stoppet. ${ce.message}", ce)
 
         } catch (tae: TopicAuthorizationException) {
-            log.warn("Pauser polling i ${timeToPauseInCaseOfPeriodicErrorsInMs}ms, er ikke autorisert for å lese: ${tae.unauthorizedTopics()}", tae)
+            log.warn("Pauser polling i ${timeToPauseInCaseOfPeriodicErrorsInMs}ms, klarte ikke å logge på for å lese topic-en: ${tae.unauthorizedTopics()}", tae)
             delay(timeToPauseInCaseOfPeriodicErrorsInMs)
 
         } catch (e: Exception) {
