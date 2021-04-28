@@ -12,6 +12,7 @@ import no.nav.personbruker.dittnav.varselbestiller.health.Status
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.errors.RetriableException
+import org.apache.kafka.common.errors.TopicAuthorizationException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.time.Duration
@@ -22,10 +23,15 @@ class Consumer<K, V>(
         val topic: String,
         val kafkaConsumer: KafkaConsumer<K, V>,
         val eventBatchProcessorService: EventBatchProcessorService<K, V>,
-        val job: Job = Job()
+        val job: Job = Job(),
+        val timeToPauseInCaseOfPeriodicErrorsInMs : Long = ONE_MINUTE_IN_MS
 ) : CoroutineScope, HealthCheck {
 
     private val log: Logger = LoggerFactory.getLogger(Consumer::class.java)
+
+    companion object {
+        private const val ONE_MINUTE_IN_MS = 60000L
+    }
 
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Default + job
@@ -91,6 +97,10 @@ class Consumer<K, V>(
 
         } catch (ce: CancellationException) {
             log.info("Denne coroutine-en ble stoppet. ${ce.message}", ce)
+
+        } catch (tae: TopicAuthorizationException) {
+            log.warn("Pauser polling i ${timeToPauseInCaseOfPeriodicErrorsInMs}ms, er ikke autorisert for å lese: ${tae.unauthorizedTopics()}", tae)
+            delay(timeToPauseInCaseOfPeriodicErrorsInMs)
 
         } catch (e: Exception) {
             log.error("Noe uventet feilet, stopper polling. Topic: $topic", e)
