@@ -14,8 +14,9 @@ import no.nav.personbruker.dittnav.varselbestiller.beskjed.BeskjedEventService
 import no.nav.personbruker.dittnav.varselbestiller.common.database.Database
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Consumer
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaProducerWrapper
-import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Producer
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.polling.PeriodicConsumerPollingCheck
+import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
+import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.done.DoneEventService
 import no.nav.personbruker.dittnav.varselbestiller.health.HealthService
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
@@ -39,10 +40,10 @@ class ApplicationContext {
     val metricsReporter = resolveMetricsReporter(environment)
     val metricsCollector = MetricsCollector(metricsReporter, nameScrubber)
 
+    val doknotifikasjonRepository = VarselbestillingRepository(database)
     val doknotifikasjonBeskjedProducer = initializeDoknotifikasjonProducer(Eventtype.BESKJED)
     val doknotifikasjonOppgaveProducer = initializeDoknotifikasjonProducer(Eventtype.OPPGAVE)
     val doknotifikasjonStopProducer = initializeDoknotifikasjonStoppProducer()
-    val doknotifikasjonRepository = VarselbestillingRepository(database)
 
     var beskjedConsumer = initializeBeskjedConsumer()
     var oppgaveConsumer = initializeOppgaveConsumer()
@@ -71,20 +72,20 @@ class ApplicationContext {
         return KafkaConsumerSetup.setupConsumerForTheDoneTopic(doneKafkaProps, doneEventService)
     }
 
-    private fun initializeDoknotifikasjonProducer(eventtype: Eventtype): Producer<String, Doknotifikasjon> {
+    private fun initializeDoknotifikasjonProducer(eventtype: Eventtype): DoknotifikasjonProducer {
         val producerProps = Kafka.producerProps(environment, eventtype)
         val kafkaProducer = KafkaProducer<String, Doknotifikasjon>(producerProps)
         kafkaProducer.initTransactions()
         val kafkaProducerDoknotifikasjon = KafkaProducerWrapper(Kafka.doknotifikasjonTopicName, kafkaProducer)
-        return Producer(kafkaProducerDoknotifikasjon)
+        return DoknotifikasjonProducer(kafkaProducerDoknotifikasjon, doknotifikasjonRepository)
     }
 
-    private fun initializeDoknotifikasjonStoppProducer(): Producer<String, DoknotifikasjonStopp> {
+    private fun initializeDoknotifikasjonStoppProducer(): DoknotifikasjonStoppProducer {
         val producerProps = Kafka.producerProps(environment, Eventtype.DOKNOTIFIKASJON_STOPP)
         val kafkaProducer = KafkaProducer<String, DoknotifikasjonStopp>(producerProps)
         kafkaProducer.initTransactions()
         val kafkaProducerDoknotifikasjonStopp = KafkaProducerWrapper(Kafka.doknotifikasjonStopTopicName, kafkaProducer)
-        return Producer(kafkaProducerDoknotifikasjonStopp)
+        return DoknotifikasjonStoppProducer(kafkaProducerDoknotifikasjonStopp, doknotifikasjonRepository)
     }
 
     private fun initializePeriodicConsumerPollingCheck() = PeriodicConsumerPollingCheck(this)
