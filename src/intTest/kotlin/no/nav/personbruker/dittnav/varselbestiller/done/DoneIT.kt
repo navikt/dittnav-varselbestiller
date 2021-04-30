@@ -13,6 +13,7 @@ import no.nav.personbruker.dittnav.varselbestiller.common.getClient
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.*
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.config.Kafka
+import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameResolver
 import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameScrubber
@@ -88,8 +89,8 @@ class DoneIT {
         val producerProps = Kafka.producerProps(testEnvironment, Eventtype.DOKNOTIFIKASJON_STOPP, true)
         val kafkaProducer = KafkaProducer<String, DoknotifikasjonStopp>(producerProps)
         val kafkaProducerWrapper = KafkaProducerWrapper(Kafka.doknotifikasjonStopTopicName, kafkaProducer)
-        val doknotifikasjonStoppProducer = Producer(kafkaProducerWrapper)
         val doknotifikasjonRepository = VarselbestillingRepository(database)
+        val doknotifikasjonStoppProducer = DoknotifikasjonStoppProducer(kafkaProducerWrapper, doknotifikasjonRepository)
 
         val eventService = DoneEventService(doknotifikasjonStoppProducer, doknotifikasjonRepository, metricsCollector)
         val consumer = Consumer(Kafka.doneTopicName, kafkaConsumer, eventService)

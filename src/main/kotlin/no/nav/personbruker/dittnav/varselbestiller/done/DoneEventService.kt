@@ -8,10 +8,9 @@ import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
 import no.nav.personbruker.dittnav.varselbestiller.common.EventBatchProcessorService
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.NokkelNullException
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UnvalidatableRecordException
-import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Producer
-import no.nav.personbruker.dittnav.varselbestiller.common.kafka.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.serializer.getNonNullKey
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
+import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppTransformer
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
@@ -21,7 +20,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class DoneEventService(
-        private val doknotifikasjonStoppProducer: Producer<String, DoknotifikasjonStopp>,
+        private val doknotifikasjonStoppProducer: DoknotifikasjonStoppProducer,
         private val varselbestillingRepository: VarselbestillingRepository,
         private val metricsCollector: MetricsCollector
 ) : EventBatchProcessorService<Nokkel, Done> {
@@ -89,9 +88,7 @@ class DoneEventService(
     }
 
     private suspend fun produceDoknotifikasjonStoppAndPersistToDB(successfullyValidatedEvents: Map<String, DoknotifikasjonStopp>) {
-        val events = successfullyValidatedEvents.map { RecordKeyValueWrapper(it.key, it.value) }
-        doknotifikasjonStoppProducer.produceEvents(events)
-        varselbestillingRepository.cancelVarselbestilling(successfullyValidatedEvents.keys.toList())
+        doknotifikasjonStoppProducer.sendEventsAndPersistCancellation(successfullyValidatedEvents)
     }
 
     private fun throwExceptionIfFailedValidation(problematicEvents: MutableMap<Nokkel, Done>) {

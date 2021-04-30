@@ -9,11 +9,10 @@ import no.nav.personbruker.dittnav.varselbestiller.common.EventBatchProcessorSer
 import no.nav.personbruker.dittnav.varselbestiller.common.database.ListPersistActionResult
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.NokkelNullException
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UnvalidatableRecordException
-import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Producer
-import no.nav.personbruker.dittnav.varselbestiller.common.kafka.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.serializer.getNonNullKey
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator
+import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
@@ -24,7 +23,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.slf4j.LoggerFactory
 
 class OppgaveEventService(
-        private val doknotifikasjonProducer: Producer<String, Doknotifikasjon>,
+        private val doknotifikasjonProducer: DoknotifikasjonProducer,
         private val varselbestillingRepository: VarselbestillingRepository,
         private val metricsCollector: MetricsCollector
 ) : EventBatchProcessorService<Nokkel, Oppgave> {
@@ -89,9 +88,7 @@ class OppgaveEventService(
     }
 
     private suspend fun produce(successfullyValidatedEvents: Map<String, Doknotifikasjon>, varselbestillinger: List<Varselbestilling>): ListPersistActionResult<Varselbestilling> {
-        val events = successfullyValidatedEvents.map { RecordKeyValueWrapper(it.key, it.value) }
-        doknotifikasjonProducer.produceEvents(events)
-        return varselbestillingRepository.persistInOneBatch(varselbestillinger)
+        return doknotifikasjonProducer.sendAndPersistEvents(successfullyValidatedEvents, varselbestillinger)
     }
 
     private fun logDuplicateVarselbestillinger(eventMetricsSession: EventMetricsSession, duplicateVarselbestillinger: List<Varselbestilling>) {

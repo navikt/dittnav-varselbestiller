@@ -6,6 +6,7 @@ import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.KafkaException
 import org.slf4j.LoggerFactory
+import java.lang.IllegalStateException
 
 class KafkaProducerWrapper<K, V>(
     private val topicName: String,
@@ -14,13 +15,12 @@ class KafkaProducerWrapper<K, V>(
 
     val log = LoggerFactory.getLogger(KafkaProducerWrapper::class.java)
 
-    fun sendEventsTransactionally(events: List<RecordKeyValueWrapper<K, V>>) {
+    fun sendEventsAndLeaveTransactionOpen(events: List<RecordKeyValueWrapper<K, V>>) {
         try {
             kafkaProducer.beginTransaction()
             events.forEach { event ->
                 sendSingleEvent(event)
             }
-            kafkaProducer.commitTransaction()
         } catch (e: KafkaException) {
             kafkaProducer.abortTransaction()
             throw RetriableKafkaException("Et eller flere eventer feilet med en periodisk feil ved sending til kafka", e)
@@ -28,6 +28,22 @@ class KafkaProducerWrapper<K, V>(
             kafkaProducer.close()
             throw UnretriableKafkaException("Fant en uventet feil ved sending av eventer til kafka", e)
         }
+    }
+
+    fun abortCurrentTransaction() {
+        try {
+            kafkaProducer.abortTransaction()
+        } catch (e: IllegalStateException) {
+            /*
+                KafkaProducer lar oss ikke sjekke state på transaction før vi faktisk kaller abortTransaction her.
+                Fordi det kan skje at vi kaller denne etter vi allerede har kalt abortTransaction() eller close(),
+                må vi gardere oss for at det kan feile her, men vi trenger ikke videre behandling.
+            */
+        }
+    }
+
+    fun commitCurrentTransaction() {
+        kafkaProducer.commitTransaction()
     }
 
     private fun sendSingleEvent(event: RecordKeyValueWrapper<K, V>) {
