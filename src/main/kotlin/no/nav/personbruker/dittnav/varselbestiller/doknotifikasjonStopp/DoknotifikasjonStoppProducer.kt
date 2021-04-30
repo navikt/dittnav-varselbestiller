@@ -19,7 +19,6 @@ class DoknotifikasjonStoppProducer(
             varselbestillingRepository.cancelVarselbestilling(keys)
             producer.commitCurrentTransaction()
         } catch (e: Exception) {
-            System.out.println(e.message)
             producer.abortCurrentTransaction()
             throw e
         }
