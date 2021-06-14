@@ -38,7 +38,7 @@ val intTestImplementation by configurations.getting {
 configurations["intTestRuntimeOnly"].extendsFrom(configurations.testRuntimeOnly.get())
 
 dependencies {
-    implementation(Brukernotifikasjon.schemas)
+    implementation("com.github.navikt:brukernotifikasjon-schemas:preferert-kanal-SNAPSHOT")
     implementation(DittNAV.Common.influx)
     implementation(DittNAV.Common.utils)
     implementation(Doknotifikasjon.schemas)
@@ -59,10 +59,6 @@ dependencies {
     implementation(Prometheus.common)
     implementation(Prometheus.hotspot)
     implementation(Prometheus.logback)
-
-
-
-
     testImplementation(H2Database.h2)
     testImplementation(Junit.api)
     testImplementation(Junit.engine)

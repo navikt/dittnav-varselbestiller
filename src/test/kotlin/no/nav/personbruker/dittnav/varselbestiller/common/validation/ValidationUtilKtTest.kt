@@ -1,5 +1,6 @@
 package no.nav.personbruker.dittnav.varselbestiller.common.validation
 
+import `with message containing`
 import no.nav.brukernotifikasjon.schemas.Beskjed
 import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.brukernotifikasjon.schemas.Oppgave
@@ -29,7 +30,7 @@ internal class ValidationUtilKtTest {
             records.forEach { record ->
                 throwExceptionIfBeskjedOrNokkelIsNotValid(record.key(), record.value())
             }
-        } `should throw` FieldValidationException::class
+        } `should throw` FieldValidationException::class `with message containing` "link"
     }
 
     @Test
@@ -45,7 +46,7 @@ internal class ValidationUtilKtTest {
             records.forEach { record ->
                 throwExceptionIfOppgaveOrNokkelIsNotValid(record.key(), record.value())
             }
-        } `should throw` FieldValidationException::class
+        } `should throw` FieldValidationException::class `with message containing` "link"
     }
 
     @Test
@@ -77,7 +78,7 @@ internal class ValidationUtilKtTest {
             records.forEach { record ->
                 throwExceptionIfOppgaveOrNokkelIsNotValid(record.key(), record.value())
             }
-        } `should throw` FieldValidationException::class
+        } `should throw` FieldValidationException::class `with message containing` "link"
     }
 
     @Test
@@ -93,7 +94,7 @@ internal class ValidationUtilKtTest {
             records.forEach { record ->
                 throwExceptionIfBeskjedOrNokkelIsNotValid(record.key(), record.value())
             }
-        } `should throw` FieldValidationException::class
+        } `should throw` FieldValidationException::class `with message containing` "tekst"
     }
 
     @Test
@@ -109,7 +110,7 @@ internal class ValidationUtilKtTest {
             records.forEach { record ->
                 throwExceptionIfOppgaveOrNokkelIsNotValid(record.key(), record.value())
             }
-        } `should throw` FieldValidationException::class
+        } `should throw` FieldValidationException::class `with message containing` "tekst"
     }
 
     @Test
@@ -125,7 +126,7 @@ internal class ValidationUtilKtTest {
             records.forEach { record ->
                 throwExceptionIfBeskjedOrNokkelIsNotValid(record.key(), record.value())
             }
-        } `should throw` FieldValidationException::class
+        } `should throw` FieldValidationException::class `with message containing` "grupperingsId"
     }
 
     @Test
@@ -141,7 +142,7 @@ internal class ValidationUtilKtTest {
             records.forEach { record ->
                 throwExceptionIfOppgaveOrNokkelIsNotValid(record.key(), record.value())
             }
-        } `should throw` FieldValidationException::class
+        } `should throw` FieldValidationException::class `with message containing` "grupperingsId"
     }
 
     @Test
@@ -157,7 +158,7 @@ internal class ValidationUtilKtTest {
             records.forEach { record ->
                 throwExceptionIfBeskjedOrNokkelIsNotValid(record.key(), record.value())
             }
-        } `should throw` FieldValidationException::class
+        } `should throw` FieldValidationException::class `with message containing` "fodselsnummer"
     }
 
     @Test
@@ -173,7 +174,7 @@ internal class ValidationUtilKtTest {
             records.forEach { record ->
                 throwExceptionIfOppgaveOrNokkelIsNotValid(record.key(), record.value())
             }
-        } `should throw` FieldValidationException::class
+        } `should throw` FieldValidationException::class `with message containing` "fodselsnummer"
     }
 
     @Test
@@ -189,7 +190,7 @@ internal class ValidationUtilKtTest {
             records.forEach { record ->
                 throwExceptionIfBeskjedOrNokkelIsNotValid(record.key(), record.value())
             }
-        } `should throw` FieldValidationException::class
+        } `should throw` FieldValidationException::class `with message containing` "Sikkerhetsnivaa"
     }
 
     @Test
@@ -205,7 +206,7 @@ internal class ValidationUtilKtTest {
             records.forEach { record ->
                 throwExceptionIfOppgaveOrNokkelIsNotValid(record.key(), record.value())
             }
-        } `should throw` FieldValidationException::class
+        } `should throw` FieldValidationException::class `with message containing` "Sikkerhetsnivaa"
     }
 
     @Test
@@ -221,7 +222,7 @@ internal class ValidationUtilKtTest {
             records.forEach { record ->
                 throwExceptionIfBeskjedOrNokkelIsNotValid(record.key(), record.value())
             }
-        } `should throw` FieldValidationException::class
+        } `should throw` FieldValidationException::class `with message containing` "systembruker"
     }
 
     @Test
@@ -237,7 +238,7 @@ internal class ValidationUtilKtTest {
             records.forEach { record ->
                 throwExceptionIfBeskjedOrNokkelIsNotValid(record.key(), record.value())
             }
-        } `should throw` FieldValidationException::class
+        } `should throw` FieldValidationException::class `with message containing` "eventId"
     }
 
 }
