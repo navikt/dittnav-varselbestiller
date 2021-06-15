@@ -24,7 +24,7 @@ internal class DoknotifikasjonProducerTest {
             .map { it.getBestillingsId() to it }.toMap()
 
     val varselBestillinger = listOf (
-            VarselbestillingObjectMother.createVarselbestilling("bestId", "eventId", "123")
+            VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId("B-dummy-001", "001")
     )
 
     @AfterEach

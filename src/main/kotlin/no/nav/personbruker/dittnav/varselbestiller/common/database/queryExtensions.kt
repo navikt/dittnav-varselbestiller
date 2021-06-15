@@ -34,9 +34,12 @@ fun <T> ResultSet.mapList(result: ResultSet.() -> T): List<T> =
 
 fun ResultSet.getUtcDateTime(columnLabel: String): LocalDateTime = getTimestamp(columnLabel).toLocalDateTime()
 
-fun <T> ResultSet.mapSingleResultNullable(result: ResultSet.() -> T): T? =
-        if (next()) {
-            result()
-        } else {
-            null
-        }
+fun ResultSet.getListFromSeparatedString(columnLabel: String, separator: String): List<String> {
+    var stringValue = getString(columnLabel)
+    return if(stringValue.isNullOrEmpty()) {
+        emptyList()
+    }
+    else {
+        stringValue.split(separator)
+    }
+}

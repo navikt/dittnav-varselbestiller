@@ -10,7 +10,7 @@ object AvroDoneObjectMother {
     fun createDone(eventId: String): Done {
         return Done(
                 Instant.now().toEpochMilli(),
-                "12345",
+                "12345678901",
                 "100${eventId}"
         )
     }
@@ -18,7 +18,7 @@ object AvroDoneObjectMother {
     fun createDone(eventId: Int): Done {
         return Done(
                 Instant.now().toEpochMilli(),
-                "12345",
+                "12345678901",
                 "100${eventId}"
         )
     }

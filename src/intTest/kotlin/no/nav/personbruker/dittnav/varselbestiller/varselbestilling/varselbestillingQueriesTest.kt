@@ -10,8 +10,8 @@ class varselbestillingQueriesTest {
 
     private val database = H2Database()
 
-    private val varselbestillingBeskjed: Varselbestilling = VarselbestillingObjectMother.createVarselbestilling(bestillingsId = "B-test-001", eventId = "001", fodselsnummer = "123")
-    private val varselbestillingOppgave: Varselbestilling = VarselbestillingObjectMother.createVarselbestilling(bestillingsId = "O-test-001", eventId = "001", fodselsnummer = "123")
+    private val varselbestillingBeskjed: Varselbestilling = VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-test-001", eventId = "001")
+    private val varselbestillingOppgave: Varselbestilling = VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "O-test-001", eventId = "001")
 
     init {
         createVarselbestillinger(listOf(varselbestillingBeskjed, varselbestillingOppgave))
@@ -35,7 +35,7 @@ class varselbestillingQueriesTest {
     }
 
     @Test
-    fun `Finner Varselbestilling med bestillingsId`() {
+    fun `Finner Varselbestillinger med bestillingsIds`() {
         runBlocking {
             val result = database.dbQuery { getVarselbestillingerForBestillingsIds(listOf(varselbestillingBeskjed.bestillingsId, varselbestillingOppgave.bestillingsId)) }
             result.size `should be equal to` 2
@@ -88,6 +88,18 @@ class varselbestillingQueriesTest {
                 createVarselbestillinger(listOf(varselbestillingBeskjed, varselbestillingOppgave))
                 getAllVarselbestilling().size `should be equal to` numberOfEntities
             }
+        }
+    }
+
+    @Test
+    fun `Skal haantere at prefererteKanaler er tom`() {
+        val varselbestilling = VarselbestillingObjectMother.createVarselbestillingWithPrefererteKanaler(prefererteKanaler = emptyList())
+        runBlocking {
+            database.dbQuery { createVarselbestillinger(listOf(varselbestilling)) }
+            val result = database.dbQuery { getVarselbestillingerForBestillingsIds(listOf(varselbestilling.bestillingsId)) }
+            result.size `should be equal to` 1
+            result `should contain all` listOf(varselbestilling)
+            result[0].prefererteKanaler.`should be empty`()
         }
     }
 }

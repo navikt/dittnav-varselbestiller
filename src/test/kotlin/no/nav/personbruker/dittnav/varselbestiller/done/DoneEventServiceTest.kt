@@ -55,7 +55,7 @@ class DoneEventServiceTest {
             slot.captured.invoke(metricsSession)
         }
 
-        coEvery { varselbestillingRepository.fetchVarselbestillingerForEventIds(allAny()) } returns listOf(VarselbestillingObjectMother.createVarselbestilling("B-test-001", "1", "123"))
+        coEvery { varselbestillingRepository.fetchVarselbestillingerForEventIds(allAny()) } returns listOf(VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-test-001", eventId = "001"))
 
         runBlocking {
             eventService.processEvents(records)
@@ -82,9 +82,9 @@ class DoneEventServiceTest {
         }
         val capturedListOfEntities = slot<Map<String, DoknotifikasjonStopp>>()
         coEvery { varselbestillingRepository.fetchVarselbestillingerForEventIds(listOf(doneEventId1, doneEventId2, doneEventId3)) } returns
-                listOf(VarselbestillingObjectMother.createVarselbestilling("B-test-001", doneEventId1, "12345"),
-                        VarselbestillingObjectMother.createVarselbestilling("B-test-002", doneEventId2, "12345"),
-                        VarselbestillingObjectMother.createVarselbestilling("B-test-003", doneEventId3, "12345"))
+                listOf(VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId("B-test-001", doneEventId1),
+                        VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId("B-test-002", doneEventId2),
+                        VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId("B-test-003", doneEventId3))
         coEvery { doknotifikasjonStoppProducer.sendEventsAndPersistCancellation(capture(capturedListOfEntities)) } returns Unit
 
         runBlocking {
@@ -116,8 +116,8 @@ class DoneEventServiceTest {
 
         val capturedListOfEntities = slot<Map<String, DoknotifikasjonStopp>>()
         coEvery { varselbestillingRepository.fetchVarselbestillingerForEventIds(listOf(doneEventId1, doneEventId2, doneEventId3)) } returns
-                listOf(VarselbestillingObjectMother.createVarselbestilling("B-test-001", doneEventId1, "12345"),
-                        VarselbestillingObjectMother.createVarselbestilling("B-test-002", doneEventId2, "12345"))
+                listOf(VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId("B-test-001", doneEventId1),
+                        VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId("B-test-002", doneEventId2))
         coEvery { doknotifikasjonStoppProducer.sendEventsAndPersistCancellation(capture(capturedListOfEntities)) } returns Unit
 
         runBlocking {
@@ -146,9 +146,9 @@ class DoneEventServiceTest {
             slot.captured.invoke(metricsSession)
         }
 
-        val varselbestilling1Avbestilt = VarselbestillingObjectMother.createVarselbestilling("B-test-001", doneEventId1, "12345").copy(avbestilt = true)
-        val varselbestilling2Avbestilt = VarselbestillingObjectMother.createVarselbestilling("B-test-002", doneEventId2, "12345").copy(avbestilt = true)
-        val varselbestilling3IkkeAvbestilt = VarselbestillingObjectMother.createVarselbestilling("B-test-002", doneEventId3, "12345")
+        val varselbestilling1Avbestilt = VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId("B-test-001", doneEventId1).copy(avbestilt = true)
+        val varselbestilling2Avbestilt = VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId("B-test-002", doneEventId2).copy(avbestilt = true)
+        val varselbestilling3IkkeAvbestilt = VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId("B-test-002", doneEventId3)
 
 
         val capturedListOfEntities = slot<Map<String, DoknotifikasjonStopp>>()
@@ -180,10 +180,10 @@ class DoneEventServiceTest {
         val capturedListOfEntities = slot<Map<String, DoknotifikasjonStopp>>()
         coEvery { doknotifikasjonStoppProducer.sendEventsAndPersistCancellation(capture(capturedListOfEntities)) } returns Unit
         coEvery { varselbestillingRepository.fetchVarselbestillingerForEventIds(allAny()) } returns listOf(
-                VarselbestillingObjectMother.createVarselbestilling("B-dummySystembruker-0", "0", "12345"),
-                VarselbestillingObjectMother.createVarselbestilling("B-dummySystembruker-2", "1", "12345"),
-                VarselbestillingObjectMother.createVarselbestilling("B-dummySystembruker-3", "2", "12345"),
-                VarselbestillingObjectMother.createVarselbestilling("B-dummySystembruker-4", "3", "12345")
+                VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-dummySystembruker-0", eventId = "0"),
+                VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-dummySystembruker-1", eventId = "1"),
+                VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-dummySystembruker-2", eventId = "2"),
+                VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-dummySystembruker-3", eventId = "3")
         )
 
         val fieldValidationException = FieldValidationException("Simulert feil i en test")

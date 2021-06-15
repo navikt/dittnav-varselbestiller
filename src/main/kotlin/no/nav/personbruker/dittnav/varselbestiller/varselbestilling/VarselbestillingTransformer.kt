@@ -15,7 +15,8 @@ object VarselbestillingTransformer {
                 eventId = key.getEventId(),
                 fodselsnummer = beskjed.getFodselsnummer(),
                 systembruker = key.getSystembruker(),
-                bestillingstidspunkt = LocalDateTime.now(ZoneId.of("UTC"))
+                bestillingstidspunkt = LocalDateTime.now(ZoneId.of("UTC")),
+                prefererteKanaler = beskjed.getPrefererteKanaler()
         )
     }
 
@@ -25,7 +26,8 @@ object VarselbestillingTransformer {
                 eventId = key.getEventId(),
                 fodselsnummer = oppgave.getFodselsnummer(),
                 systembruker = key.getSystembruker(),
-                bestillingstidspunkt = LocalDateTime.now(ZoneId.of("UTC"))
+                bestillingstidspunkt = LocalDateTime.now(ZoneId.of("UTC")),
+                prefererteKanaler = oppgave.getPrefererteKanaler()
         )
     }
 }

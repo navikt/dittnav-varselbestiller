@@ -6,7 +6,7 @@ import java.time.Instant
 
 object AvroOppgaveObjectMother {
 
-    private val defaultFodselsnr = "12345"
+    private val defaultFodselsnr = "12345678901"
     private val defaultTekst = "Dette er oppgave til brukeren"
     private val defaultSikkerhetsnivaa = 4
     private val defaultEksternVarsling = true
