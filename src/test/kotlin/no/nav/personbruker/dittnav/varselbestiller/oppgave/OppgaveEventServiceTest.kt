@@ -6,6 +6,7 @@ import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.brukernotifikasjon.schemas.Oppgave
 import no.nav.brukernotifikasjon.schemas.builders.exception.FieldValidationException
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
+import no.nav.personbruker.dittnav.varselbestiller.beskjed.AvroBeskjedObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.common.database.ListPersistActionResult
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.ConsumerRecordsObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.successfulEvents
@@ -19,6 +20,7 @@ import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestil
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import org.amshove.kluent.`should be`
 import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -204,6 +206,27 @@ class OppgaveEventServiceTest {
     }
 
     @Test
+    fun `Skal haandtere at et event med feil type har havnet paa topic`() {
+        val malplacedBeskjed = AvroBeskjedObjectMother.createBeskjed()
+        val cr = ConsumerRecordsObjectMother.createConsumerRecord("oppgave", malplacedBeskjed)
+        val malplacedRecords = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(cr)
+        val records = malplacedRecords as ConsumerRecords<Nokkel, Oppgave>
+
+        val slot = slot<suspend EventMetricsSession.() -> Unit>()
+        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
+            slot.captured.invoke(metricsSession)
+        }
+
+        runBlocking {
+            eventService.processEvents(records)
+        }
+
+        coVerify(exactly = 0) { doknotifikasjonProducer.sendAndPersistEvents(allAny(), any()) }
+        coVerify (exactly = 1) { metricsSession.countFailedEksternvarslingForSystemUser(any()) }
+        confirmVerified(doknotifikasjonProducer)
+    }
+
+    @Test
     fun `Skal rapportere hvert velykket event`() {
         val numberOfRecords = 5
 
@@ -225,4 +248,5 @@ class OppgaveEventServiceTest {
         coVerify (exactly = numberOfRecords) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
         coVerify (exactly = numberOfRecords) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
     }
+
 }
