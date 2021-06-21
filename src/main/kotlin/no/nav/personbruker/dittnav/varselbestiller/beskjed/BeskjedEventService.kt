@@ -58,6 +58,12 @@ class BeskjedEventService(
                 } catch (e: UnknownEventtypeException) {
                     countFailedEksternvarslingForSystemUser(event.systembruker ?: "NoProducerSpecified")
                     log.warn("Eventet kan ikke brukes fordi det inneholder ukjent eventtype, beskjed-eventet vil bli forkastet. EventId: ${event.eventId}", e)
+                } catch(cce: ClassCastException) {
+                    countFailedEksternvarslingForSystemUser(event.systembruker ?: "NoProducerSpecified")
+                    val funnetType = event.javaClass.name
+                    val eventId = event.eventId
+                    val systembruker = event.systembruker
+                    log.warn("Feil eventtype funnet på beskjed-topic. Fant et event av typen $funnetType. Eventet blir forkastet. EventId: $eventId, systembruker: $systembruker", cce)
                 } catch (e: Exception) {
                     countFailedEksternvarslingForSystemUser(event.systembruker ?: "NoProducerSpecified")
                     problematicEvents.add(event)

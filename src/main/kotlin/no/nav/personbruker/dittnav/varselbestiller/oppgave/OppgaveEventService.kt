@@ -57,7 +57,13 @@ class OppgaveEventService(
                 } catch (e: UnknownEventtypeException) {
                     countFailedEksternvarslingForSystemUser(event.systembruker ?: "NoProducerSpecified")
                     log.warn("Eventet kan ikke brukes fordi det inneholder ukjent eventtype, oppgave-eventet vil bli forkastet. EventId: ${event.eventId}", e)
-                } catch (e: Exception) {
+                } catch (cce: ClassCastException) {
+                    countFailedEksternvarslingForSystemUser(event.systembruker ?: "NoProducerSpecified")
+                    val funnetType = event.javaClass.name
+                    val eventId = event.eventId
+                    val systembruker = event.systembruker
+                    log.warn("Feil eventtype funnet på oppgave-topic. Fant et event av typen $funnetType. Eventet blir forkastet. EventId: $eventId, systembruker: $systembruker", cce)
+                }  catch (e: Exception) {
                     countFailedEksternvarslingForSystemUser(event.systembruker ?: "NoProducerSpecified")
                     problematicEvents.add(event)
                     log.warn("Validering av oppgave-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
