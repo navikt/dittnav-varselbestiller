@@ -32,37 +32,39 @@ class DoneEventService(
         val problematicEvents = mutableMapOf<Nokkel, Done>()
         metricsCollector.recordMetrics(eventType = Eventtype.DONE) {
             val doneEvents = getDoneEventsMap(this, events)
-            val varselbestillingerForEventIds = varselbestillingRepository.fetchVarselbestillingerForEventIds(doneEvents.keys.map { it.getEventId() })
-            if (varselbestillingerForEventIds.isNotEmpty()) {
-                doneEvents.forEach { (nokkel, event) ->
-                    try {
-                        val varselbestilling = varselbestillingerForEventIds.firstOrNull{ it.eventId == nokkel.getEventId() && it.systembruker == nokkel.getSystembruker() && it.fodselsnummer == event.getFodselsnummer() }
-                        if(varselbestilling != null) {
-                            if(varselbestilling.avbestilt) {
-                                log.info("Varsel med bestillingsid ${varselbestilling.bestillingsId} allerede avbestilt, avbestiller ikke på nytt.")
-                                countDuplicateVarselbestillingForSystemUser(varselbestilling.systembruker)
-                            } else {
-                                doknotifikasjonStopp[varselbestilling.bestillingsId] = DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(varselbestilling)
-                                countSuccessfulEksternvarslingForSystemUser(varselbestilling.systembruker)
+            if(doneEvents.isNotEmpty()) {
+                val varselbestillingerForEventIds = varselbestillingRepository.fetchVarselbestillingerForEventIds(doneEvents.keys.map { it.getEventId() })
+                if (varselbestillingerForEventIds.isNotEmpty()) {
+                    doneEvents.forEach { (nokkel, event) ->
+                        try {
+                            val varselbestilling = varselbestillingerForEventIds.firstOrNull{ it.eventId == nokkel.getEventId() && it.systembruker == nokkel.getSystembruker() && it.fodselsnummer == event.getFodselsnummer() }
+                            if(varselbestilling != null) {
+                                if(varselbestilling.avbestilt) {
+                                    log.info("Varsel med bestillingsid ${varselbestilling.bestillingsId} allerede avbestilt, avbestiller ikke på nytt.")
+                                    countDuplicateVarselbestillingForSystemUser(varselbestilling.systembruker)
+                                } else {
+                                    doknotifikasjonStopp[varselbestilling.bestillingsId] = DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(varselbestilling)
+                                    countSuccessfulEksternvarslingForSystemUser(varselbestilling.systembruker)
+                                }
                             }
+                        } catch (e: FieldValidationException) {
+                            countFailedEksternvarslingForSystemUser(nokkel.getSystembruker() ?: "NoProducerSpecified")
+                            log.warn("Eventet kan ikke brukes fordi det inneholder valideringsfeil, done-eventet vil bli forkastet. EventId: ${nokkel.getEventId()}", e)
+                        } catch (e: UnknownEventtypeException) {
+                            countFailedEksternvarslingForSystemUser(nokkel.getSystembruker() ?: "NoProducerSpecified")
+                            log.warn("Eventet kan ikke brukes fordi det inneholder ukjent eventtype, done-eventet vil bli forkastet. EventId: ${nokkel.getEventId()}", e)
+                        } catch (e: Exception) {
+                            countFailedEksternvarslingForSystemUser(nokkel.getSystembruker() ?: "NoProducerSpecified")
+                            problematicEvents[nokkel] = event
+                            log.warn("Eventet kan ikke brukes pga en ukjent feil, done-eventet vil bli forkastet. EventId: ${nokkel.getEventId()}", e)
                         }
-                    } catch (e: FieldValidationException) {
-                        countFailedEksternvarslingForSystemUser(nokkel.getSystembruker() ?: "NoProducerSpecified")
-                        log.warn("Eventet kan ikke brukes fordi det inneholder valideringsfeil, done-eventet vil bli forkastet. EventId: ${nokkel.getEventId()}", e)
-                    } catch (e: UnknownEventtypeException) {
-                        countFailedEksternvarslingForSystemUser(nokkel.getSystembruker() ?: "NoProducerSpecified")
-                        log.warn("Eventet kan ikke brukes fordi det inneholder ukjent eventtype, done-eventet vil bli forkastet. EventId: ${nokkel.getEventId()}", e)
-                    } catch (e: Exception) {
-                        countFailedEksternvarslingForSystemUser(nokkel.getSystembruker() ?: "NoProducerSpecified")
-                        problematicEvents[nokkel] = event
-                        log.warn("Eventet kan ikke brukes pga en ukjent feil, done-eventet vil bli forkastet. EventId: ${nokkel.getEventId()}", e)
                     }
-                }
-                if (doknotifikasjonStopp.isNotEmpty()) {
-                    produceDoknotifikasjonStoppAndPersistToDB(doknotifikasjonStopp)
-                }
-                if(problematicEvents.isNotEmpty()) {
-                    throwExceptionIfFailedValidation(problematicEvents)
+                    if (doknotifikasjonStopp.isNotEmpty()) {
+                        produceDoknotifikasjonStoppAndPersistToDB(doknotifikasjonStopp)
+                    }
+                    if(problematicEvents.isNotEmpty()) {
+                        throwExceptionIfFailedValidation(problematicEvents)
+                    }
                 }
             }
         }
@@ -79,6 +81,12 @@ class DoneEventService(
             } catch (e: NokkelNullException) {
                 eventMetricsSession.countNokkelWasNull()
                 log.warn("Done-eventet manglet nøkkel, blir forkastet. Topic: ${event.topic()}, Partition: ${event.partition()}, Offset: ${event.offset()}", e)
+            } catch (cce: ClassCastException) {
+                eventMetricsSession.countFailedEksternvarslingForSystemUser(event.systembruker ?: "NoProducerSpecified")
+                val funnetType = event.javaClass.name
+                val eventId = event.eventId
+                val systembruker = event.systembruker
+                log.warn("Feil eventtype funnet på done-topic. Fant et event av typen $funnetType. Eventet blir forkastet. EventId: $eventId, systembruker: $systembruker", cce)
             } catch (e: Exception) {
                 eventMetricsSession.countFailedEksternvarslingForSystemUser(event.systembruker ?: "NoProducerSpecified")
                 log.warn("Fikk en uventet feil ved prosessering av Done-event, fullfører batch-en.", e)
