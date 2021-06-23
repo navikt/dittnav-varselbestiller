@@ -1,15 +1,15 @@
 package no.nav.personbruker.dittnav.varselbestiller.metrics
 
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.conflictingKeysEvents
-import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.giveMeANumberOfVarselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.successfulEvents
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother.giveMeANumberOfVarselbestilling
 import org.amshove.kluent.`should be`
 import org.junit.jupiter.api.Test
 
 internal class EventMetricsSessionTest {
 
-    private val systembruker = "x-dittnav"
+    private val systembruker = "dummySystembruker"
 
     @Test
     fun `Skal returnere antall sendte duplikat`() {

@@ -13,7 +13,7 @@ import java.net.URL
 
 internal class ProducerNameResolverTest {
 
-    private val systembruker = "x-dittnav"
+    private val systembruker = "dummySystembruker"
     private val produsent = "dittnav"
     private val eventHandlerBaseURL = URL("http://event-handler")
 

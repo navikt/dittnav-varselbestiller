@@ -5,8 +5,8 @@ import java.sql.*
 import java.sql.Array
 
 fun Connection.createVarselbestillinger(varselbestillinger: List<Varselbestilling>): ListPersistActionResult<Varselbestilling> =
-        executeBatchPersistQuery("""INSERT INTO varselbestilling (bestillingsid, eventid, fodselsnummer, systembruker, eventtidspunkt, avbestilt) 
-                                    |VALUES (?, ?, ?, ?, ?, ?)""".trimMargin()) {
+        executeBatchPersistQuery("""INSERT INTO varselbestilling (bestillingsid, eventid, fodselsnummer, systembruker, eventtidspunkt, avbestilt, prefererteKanaler) 
+                                    |VALUES (?, ?, ?, ?, ?, ?, ?)""".trimMargin()) {
                 varselbestillinger.forEach { varselbestilling ->
                         buildStatementForSingleRow(varselbestilling)
                         addBatch()
@@ -45,6 +45,7 @@ fun ResultSet.toVarselbestilling(): Varselbestilling {
             fodselsnummer = getString("fodselsnummer"),
             systembruker = getString("systembruker"),
             bestillingstidspunkt = getUtcDateTime("eventtidspunkt"),
+            prefererteKanaler = getListFromSeparatedString("prefererteKanaler", ","),
             avbestilt = getBoolean("avbestilt")
     )
 }
@@ -56,10 +57,13 @@ private fun PreparedStatement.buildStatementForSingleRow(varselbestilling: Varse
         setString(4, varselbestilling.systembruker)
         setObject(5, varselbestilling.bestillingstidspunkt, Types.TIMESTAMP)
         setObject(6, varselbestilling.avbestilt)
+        setObject(7, varselbestilling.prefererteKanaler.joinToString(","))
 }
 
 private fun Connection.toVarcharArray(stringList: List<String>): Array {
     return createArrayOf("VARCHAR", stringList.toTypedArray())
 }
+
+
 
 

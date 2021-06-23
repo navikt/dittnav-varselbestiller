@@ -9,7 +9,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
 internal class ProducerNameScrubberTest {
-    private val systemUser = "x-dittnav"
+    private val systemUser = "dummySystembruker"
     private val producerNameAlias = "dittnav"
     private val producerNameResolver = mockk<ProducerNameResolver>()
     private val nameScrubber = ProducerNameScrubber(producerNameResolver)

@@ -8,5 +8,6 @@ data class Varselbestilling(
         val fodselsnummer: String,
         val systembruker: String,
         val bestillingstidspunkt: LocalDateTime,
+        val prefererteKanaler: List<String>,
         val avbestilt: Boolean = false
 )

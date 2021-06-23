@@ -8,7 +8,6 @@ import no.nav.brukernotifikasjon.schemas.builders.exception.FieldValidationExcep
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.personbruker.dittnav.varselbestiller.common.database.ListPersistActionResult
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.ConsumerRecordsObjectMother
-import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.giveMeANumberOfVarselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.successfulEvents
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.AvroDoknotifikasjonObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator
@@ -17,6 +16,7 @@ import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.oppgave.AvroOppgaveObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother.giveMeANumberOfVarselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import org.amshove.kluent.`should be`
 import org.apache.kafka.clients.consumer.ConsumerRecord
@@ -125,7 +125,7 @@ class BeskjedEventServiceTest {
         val capturedListOfEntities = slot<Map<String, Doknotifikasjon>>()
 
         val persistResult = successfulEvents(giveMeANumberOfVarselbestilling(numberOfEvents = 5))
-        coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns listOf(VarselbestillingObjectMother.createVarselbestilling(bestillingsId = "B-dummySystembruker-1", eventId = "1", fodselsnummer = "123"))
+        coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns listOf(VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-dummySystembruker-1", eventId = "1"))
 
         val slot = slot<suspend EventMetricsSession.() -> Unit>()
         coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
@@ -163,7 +163,7 @@ class BeskjedEventServiceTest {
         }
 
         coVerify(exactly = 0) { doknotifikasjonProducer.sendAndPersistEvents(allAny(), any()) }
-        coVerify (exactly = 1) { metricsSession.countFailedEksternvarslingForSystemUser(any()) }
+        coVerify(exactly = 1) { metricsSession.countFailedEksternvarslingForSystemUser(any()) }
         confirmVerified(doknotifikasjonProducer)
     }
 
@@ -249,4 +249,3 @@ class BeskjedEventServiceTest {
         coVerify(exactly = numberOfRecords) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
     }
 }
-
