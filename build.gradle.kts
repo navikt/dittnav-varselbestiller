@@ -59,10 +59,6 @@ dependencies {
     implementation(Prometheus.common)
     implementation(Prometheus.hotspot)
     implementation(Prometheus.logback)
-
-
-
-
     testImplementation(H2Database.h2)
     testImplementation(Junit.api)
     testImplementation(Junit.engine)

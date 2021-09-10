@@ -38,9 +38,9 @@ class DoneIT {
     private val database = H2Database()
 
     private val doneEvents = (1..10).map { AvroNokkelObjectMother.createNokkelWithEventId(it) to AvroDoneObjectMother.createDone(it) }.toMap()
-    private val varselbestillinger = listOf(VarselbestillingObjectMother.createVarselbestilling(bestillingsId = "B-test-001", eventId = "1", fodselsnummer = "12345"),
-                                                                VarselbestillingObjectMother.createVarselbestilling(bestillingsId = "B-test-002", eventId = "2", fodselsnummer = "12345"),
-                                                                VarselbestillingObjectMother.createVarselbestilling(bestillingsId = "B-test-003", eventId = "3", fodselsnummer = "12345"))
+    private val varselbestillinger = listOf(VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-test-1", eventId = "1"),
+                                                                VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-test-2", eventId = "2"),
+                                                                VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-test-3", eventId = "3"))
 
     private val capturedDoknotifikasjonStopRecords = ArrayList<RecordKeyValueWrapper<String, DoknotifikasjonStopp>>()
 

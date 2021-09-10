@@ -14,7 +14,7 @@ internal class MetricsCollectorTest {
 
     private val metricsReporter = mockk<MetricsReporter>()
     private val producerNameResolver = mockk<ProducerNameResolver>()
-    val producerName = "x-dittnav"
+    val producerName = "dummySystembruker"
     val producerAlias = "dittnav"
 
     @BeforeEach

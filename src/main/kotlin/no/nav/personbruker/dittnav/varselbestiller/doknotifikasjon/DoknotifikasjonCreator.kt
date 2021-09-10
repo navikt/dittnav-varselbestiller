@@ -3,6 +3,7 @@ package no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon
 import no.nav.brukernotifikasjon.schemas.Beskjed
 import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.brukernotifikasjon.schemas.Oppgave
+import no.nav.brukernotifikasjon.schemas.builders.exception.FieldValidationException
 import no.nav.brukernotifikasjon.schemas.builders.exception.UnknownEventtypeException
 import no.nav.brukernotifikasjon.schemas.builders.util.ValidationUtil
 import no.nav.doknotifikasjon.schemas.PrefererteKanal
@@ -23,6 +24,7 @@ object DoknotifikasjonCreator {
                 .setEpostTekst(getDoknotifikasjonEmailText(Eventtype.BESKJED))
                 .setSmsTekst(getDoknotifikasjonSMSText(Eventtype.BESKJED))
                 .setAntallRenotifikasjoner(0)
+                .setPrefererteKanaler(getPrefererteKanaler(beskjed.getEksternVarsling(), beskjed.getPrefererteKanaler()))
         return doknotifikasjonBuilder.build()
     }
 
@@ -49,6 +51,7 @@ object DoknotifikasjonCreator {
                 .setSmsTekst(getDoknotifikasjonSMSText(Eventtype.OPPGAVE))
                 .setAntallRenotifikasjoner(1)
                 .setRenotifikasjonIntervall(7)
+                .setPrefererteKanaler(getPrefererteKanaler(oppgave.getEksternVarsling(), oppgave.getPrefererteKanaler()))
         return doknotifikasjonBuilder.build()
     }
 
@@ -66,5 +69,22 @@ object DoknotifikasjonCreator {
             Eventtype.OPPGAVE -> this::class.java.getResource("/texts/sms_oppgave.txt").readText(Charsets.UTF_8)
             else -> throw UnknownEventtypeException("Finnes ikke SMS-tekst for $eventtype.")
         }
+    }
+
+    private fun getPrefererteKanaler(eksternVarsling: Boolean, prefererteKanaler: List<String>?): List<PrefererteKanal> {
+        val valgteKanaler = mutableListOf<PrefererteKanal>()
+        if(!eksternVarsling && !prefererteKanaler.isNullOrEmpty()) {
+            throw FieldValidationException("Prefererte kanaler kan ikke settes så lenge ekstern varsling ikke er bestilt.")
+        } else {
+            val doknotifikasjonPrefererteKanalerAsString = PrefererteKanal.values().map { it.name }
+            prefererteKanaler?.forEach { preferertKanal ->
+                if(doknotifikasjonPrefererteKanalerAsString.contains(preferertKanal)) {
+                    valgteKanaler.add(PrefererteKanal.valueOf(preferertKanal))
+                } else {
+                    throw FieldValidationException("Ukjent kanal, kanalen $preferertKanal er ikke definert som mulig preferert kanal i Doknotifikasjon.")
+                }
+            }
+        }
+        return valgteKanaler
     }
 }

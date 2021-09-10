@@ -6,9 +6,9 @@ import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.brukernotifikasjon.schemas.Oppgave
 import no.nav.brukernotifikasjon.schemas.builders.exception.FieldValidationException
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
+import no.nav.personbruker.dittnav.varselbestiller.beskjed.AvroBeskjedObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.common.database.ListPersistActionResult
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.ConsumerRecordsObjectMother
-import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.giveMeANumberOfVarselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.successfulEvents
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.AvroDoknotifikasjonObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator
@@ -16,9 +16,11 @@ import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.Doknotifikasj
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother.giveMeANumberOfVarselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import org.amshove.kluent.`should be`
 import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -124,7 +126,7 @@ class OppgaveEventServiceTest {
         val capturedListOfEntities = slot<Map<String, Doknotifikasjon>>()
 
         val persistResult = successfulEvents(giveMeANumberOfVarselbestilling(numberOfEvents = 5))
-        coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns listOf(VarselbestillingObjectMother.createVarselbestilling(bestillingsId = "O-dummySystembruker-1", eventId = "1", fodselsnummer = "123"))
+        coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns listOf(VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "O-dummySystembruker-1", eventId = "1"))
 
         val slot = slot<suspend EventMetricsSession.() -> Unit>()
         coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
@@ -204,6 +206,27 @@ class OppgaveEventServiceTest {
     }
 
     @Test
+    fun `Skal haandtere at et event med feil type har havnet paa topic`() {
+        val malplacedBeskjed = AvroBeskjedObjectMother.createBeskjed()
+        val cr = ConsumerRecordsObjectMother.createConsumerRecord("oppgave", malplacedBeskjed)
+        val malplacedRecords = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(cr)
+        val records = malplacedRecords as ConsumerRecords<Nokkel, Oppgave>
+
+        val slot = slot<suspend EventMetricsSession.() -> Unit>()
+        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
+            slot.captured.invoke(metricsSession)
+        }
+
+        runBlocking {
+            eventService.processEvents(records)
+        }
+
+        coVerify(exactly = 0) { doknotifikasjonProducer.sendAndPersistEvents(allAny(), any()) }
+        coVerify (exactly = 1) { metricsSession.countFailedEksternvarslingForSystemUser(any()) }
+        confirmVerified(doknotifikasjonProducer)
+    }
+
+    @Test
     fun `Skal rapportere hvert velykket event`() {
         val numberOfRecords = 5
 
@@ -225,4 +248,5 @@ class OppgaveEventServiceTest {
         coVerify (exactly = numberOfRecords) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
         coVerify (exactly = numberOfRecords) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
     }
+
 }
