@@ -33,7 +33,7 @@ class KafkaProducerWrapper<K, V>(
     fun abortCurrentTransaction() {
         try {
             kafkaProducer.abortTransaction()
-        } catch (e: IllegalStateException) {
+        } catch (e: Exception) {
             /*
                 KafkaProducer lar oss ikke sjekke state på transaction før vi faktisk kaller abortTransaction her.
                 Fordi det kan skje at vi kaller denne etter vi allerede har kalt abortTransaction() eller close(),

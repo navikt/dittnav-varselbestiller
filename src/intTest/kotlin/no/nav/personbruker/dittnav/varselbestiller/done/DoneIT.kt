@@ -32,7 +32,7 @@ import org.junit.jupiter.api.Test
 
 class DoneIT {
 
-    private val embeddedEnv = KafkaTestUtil.createDefaultKafkaEmbeddedInstance(listOf(Kafka.doneTopicName, Kafka.doknotifikasjonStopTopicName))
+    private val embeddedEnv = KafkaTestUtil.createDefaultKafkaEmbeddedInstance(listOf(KafkaTestTopics.doneTopicName, KafkaTestTopics.doknotifikasjonStopTopicName))
     private val testEnvironment = KafkaTestUtil.createEnvironmentForEmbeddedKafka(embeddedEnv)
 
     private val database = H2Database()
@@ -72,7 +72,7 @@ class DoneIT {
         `Create varselbestillinger in DB`()
 
         runBlocking {
-            KafkaTestUtil.produceEvents(testEnvironment, Kafka.doneTopicName, doneEvents)
+            KafkaTestUtil.produceEvents(testEnvironment, KafkaTestTopics.doneTopicName, doneEvents)
         } shouldBeEqualTo true
 
         `Read all Done-events from our topic and verify that they have been sent to DoknotifikasjonStopp-topic`()
@@ -88,12 +88,12 @@ class DoneIT {
 
         val producerProps = Kafka.producerProps(testEnvironment, Eventtype.DOKNOTIFIKASJON_STOPP, true)
         val kafkaProducer = KafkaProducer<String, DoknotifikasjonStopp>(producerProps)
-        val kafkaProducerWrapper = KafkaProducerWrapper(Kafka.doknotifikasjonStopTopicName, kafkaProducer)
+        val kafkaProducerWrapper = KafkaProducerWrapper(KafkaTestTopics.doknotifikasjonStopTopicName, kafkaProducer)
         val doknotifikasjonRepository = VarselbestillingRepository(database)
         val doknotifikasjonStoppProducer = DoknotifikasjonStoppProducer(kafkaProducerWrapper, doknotifikasjonRepository)
 
         val eventService = DoneEventService(doknotifikasjonStoppProducer, doknotifikasjonRepository, metricsCollector)
-        val consumer = Consumer(Kafka.doneTopicName, kafkaConsumer, eventService)
+        val consumer = Consumer(KafkaTestTopics.doneTopicName, kafkaConsumer, eventService)
 
         kafkaProducer.initTransactions()
         runBlocking {
@@ -124,7 +124,7 @@ class DoneIT {
         val targetKafkaConsumer = KafkaConsumer<String, DoknotifikasjonStopp>(targetConsumerProps)
         val capturingProcessor = CapturingEventProcessor<String, DoknotifikasjonStopp>()
 
-        val targetConsumer = Consumer(Kafka.doknotifikasjonStopTopicName, targetKafkaConsumer, capturingProcessor)
+        val targetConsumer = Consumer(KafkaTestTopics.doknotifikasjonStopTopicName, targetKafkaConsumer, capturingProcessor)
 
         var currentNumberOfRecords = 0
 

@@ -32,7 +32,7 @@ import org.junit.jupiter.api.Test
 
 class OppgaveIT {
 
-    private val embeddedEnv = KafkaTestUtil.createDefaultKafkaEmbeddedInstance(listOf(Kafka.oppgaveTopicName, Kafka.doknotifikasjonTopicName))
+    private val embeddedEnv = KafkaTestUtil.createDefaultKafkaEmbeddedInstance(listOf(KafkaTestTopics.oppgaveTopicName, KafkaTestTopics.doknotifikasjonTopicName))
     private val testEnvironment = KafkaTestUtil.createEnvironmentForEmbeddedKafka(embeddedEnv)
 
     private val database = H2Database()
@@ -66,7 +66,7 @@ class OppgaveIT {
     @Test
     fun `Should read Oppgave-events and send to varselbestiller-topic`() {
         runBlocking {
-            KafkaTestUtil.produceEvents(testEnvironment, Kafka.oppgaveTopicName, oppgaveEvents)
+            KafkaTestUtil.produceEvents(testEnvironment, KafkaTestTopics.oppgaveTopicName, oppgaveEvents)
         } shouldBeEqualTo true
 
         `Read all Oppgave-events from our topic and verify that they have been sent to varselbestiller-topic`()
@@ -82,12 +82,12 @@ class OppgaveIT {
 
         val producerProps = Kafka.producerProps(testEnvironment, Eventtype.DOKNOTIFIKASJON, true)
         val kafkaProducer = KafkaProducer<String, Doknotifikasjon>(producerProps)
-        val kafkaProducerWrapper = KafkaProducerWrapper(Kafka.doknotifikasjonTopicName, kafkaProducer)
+        val kafkaProducerWrapper = KafkaProducerWrapper(KafkaTestTopics.doknotifikasjonTopicName, kafkaProducer)
         val doknotifikasjonRepository = VarselbestillingRepository(database)
         val doknotifikasjonProducer = DoknotifikasjonProducer(kafkaProducerWrapper, doknotifikasjonRepository)
 
         val eventService = OppgaveEventService(doknotifikasjonProducer, doknotifikasjonRepository, metricsCollector)
-        val consumer = Consumer(Kafka.oppgaveTopicName, kafkaConsumer, eventService)
+        val consumer = Consumer(KafkaTestTopics.oppgaveTopicName, kafkaConsumer, eventService)
 
         kafkaProducer.initTransactions()
         runBlocking {
@@ -104,7 +104,7 @@ class OppgaveIT {
         val targetKafkaConsumer = KafkaConsumer<String, Doknotifikasjon>(targetConsumerProps)
         val capturingProcessor = CapturingEventProcessor<String, Doknotifikasjon>()
 
-        val targetConsumer = Consumer(Kafka.doknotifikasjonTopicName, targetKafkaConsumer, capturingProcessor)
+        val targetConsumer = Consumer(KafkaTestTopics.doknotifikasjonTopicName, targetKafkaConsumer, capturingProcessor)
 
         var currentNumberOfRecords = 0
 

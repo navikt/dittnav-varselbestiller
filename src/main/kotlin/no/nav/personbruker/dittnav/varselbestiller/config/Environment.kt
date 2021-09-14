@@ -1,6 +1,5 @@
 package no.nav.personbruker.dittnav.varselbestiller.config
 
-import no.nav.personbruker.dittnav.common.util.config.IntEnvVar
 import no.nav.personbruker.dittnav.common.util.config.IntEnvVar.getEnvVarAsInt
 import no.nav.personbruker.dittnav.common.util.config.StringEnvVar.getEnvVar
 import no.nav.personbruker.dittnav.common.util.config.StringEnvVar.getOptionalEnvVar
@@ -25,7 +24,12 @@ data class Environment(val bootstrapServers: String = getEnvVar("KAFKA_BOOTSTRAP
                        val applicationName: String = "dittnav-varselbestiller",
                        val sensuBatchingEnabled: Boolean = getEnvVar("SENSU_BATCHING_ENABLED", "true").toBoolean(),
                        val sensuBatchesPerSecond: Int = getEnvVar("SENSU_BATCHING_ENABLED", "3").toInt(),
-                       val eventHandlerURL: URL = URL(getEnvVar("EVENT_HANDLER_URL").trimEnd('/'))
+                       val eventHandlerURL: URL = URL(getEnvVar("EVENT_HANDLER_URL").trimEnd('/')),
+                       val beskjedTopicName: String = getEnvVar("INTERN_BESKJED_TOPIC"),
+                       val oppgaveTopicName: String = getEnvVar("INTERN_OPPGAVE_TOPIC"),
+                       val doneTopicName: String = getEnvVar("INTERN_DONE_TOPIC"),
+                       val doknotifikasjonTopicName: String = getEnvVar("DOKNOTIFIKASJON_TOPIC"),
+                       val doknotifikasjonStopTopicName: String = getEnvVar("DOKNOTIFIKASJON_STOP_TOPIC")
 )
 
 fun isOtherEnvironmentThanProd() = System.getenv("NAIS_CLUSTER_NAME") != "prod-sbs"

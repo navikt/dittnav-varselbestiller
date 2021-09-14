@@ -24,13 +24,6 @@ object Kafka {
 
     private const val transactionIdName = "dittnav-varselbestiller-transaction"
 
-    const val doneTopicName = "aapen-brukernotifikasjon-done-v1"
-    const val beskjedTopicName = "aapen-brukernotifikasjon-nyBeskjed-v1"
-    const val oppgaveTopicName = "aapen-brukernotifikasjon-nyOppgave-v1"
-
-    const val doknotifikasjonTopicName = "privat-dok-notifikasjon"
-    const val doknotifikasjonStopTopicName = "privat-dok-notifikasjon-stopp"
-
     private fun credentialProps(env: Environment): Properties {
         return Properties().apply {
             put(SaslConfigs.SASL_MECHANISM, "PLAIN")
