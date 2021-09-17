@@ -1,7 +1,0 @@
-{
-  "vault_namespace": "dev",
-  "vault_secrets_root": "preprod",
-  "ingresses": [
-    "https://dittnav-varselbestiller.dev.nav.no"
-  ]
-}

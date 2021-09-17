@@ -6,6 +6,8 @@ metadata:
   labels:
     team: personbruker
 spec:
+  encFrom:
+    - secret: dittnav-varselbestiller-secrets
   image: {{version}}
   port: 8080
   liveness:
@@ -21,14 +23,25 @@ spec:
     max: 1
     cpuThresholdPercentage: 50
   ingresses:
-    - "https://dittnav-varselbestiller.nais.oera.no"
-  vault:
-    enabled: true
-    paths:
-      - kvPath: /kv/prod/sbs/dittnav-varselbestiller/personbruker
-        mountPath: /var/run/secrets/nais.io/vault
-      - kvPath: /serviceuser/data/prod/srvdittnav-varsel-b
-        mountPath: /secret/serviceuser
+    - "https://dittnav-varselbestiller-gcp.nais.oera.no"
+  kafka:
+    pool: nav-dev
+  gcp:
+    sqlInstances:
+      - name: varselbestiller
+        type: POSTGRES_11
+        tier: db-f1-micro
+        diskType: SSD
+        diskSize: 10
+        diskAutoresize: false
+        autoBackupTime: "03:00"
+        databases:
+          - name: varselbestiller
+            envVarPrefix: DB
+        maintenanceWindow:
+          day: 1
+          hour: 4
+        cascadingDelete: false
   resources:
     limits:
       cpu: "3"
