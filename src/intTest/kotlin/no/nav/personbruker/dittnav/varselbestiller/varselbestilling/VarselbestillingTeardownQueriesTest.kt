@@ -1,7 +1,7 @@
 package no.nav.personbruker.dittnav.varselbestiller.varselbestilling
 
 import kotlinx.coroutines.runBlocking
-import no.nav.personbruker.dittnav.varselbestiller.common.database.H2Database
+import no.nav.personbruker.dittnav.varselbestiller.common.database.LocalPostgresDatabase
 import org.amshove.kluent.`should be equal to`
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 
 class VarselbestillingTeardownQueriesTest {
 
-    private val database = H2Database()
+    private val database = LocalPostgresDatabase()
 
     private val varselbestilling1 = VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-test-001", eventId = "001")
     private val varselbestilling2 = VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-test-002", eventId = "002")
