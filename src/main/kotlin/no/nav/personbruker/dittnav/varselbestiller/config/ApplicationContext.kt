@@ -8,8 +8,8 @@ import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
 import no.nav.personbruker.dittnav.common.metrics.MetricsReporter
 import no.nav.personbruker.dittnav.common.metrics.StubMetricsReporter
-import no.nav.personbruker.dittnav.common.metrics.influx.InfluxMetricsReporter
-import no.nav.personbruker.dittnav.common.metrics.influx.SensuConfig
+import no.nav.personbruker.dittnav.common.metrics.influxdb.InfluxConfig
+import no.nav.personbruker.dittnav.common.metrics.influxdb.InfluxMetricsReporter
 import no.nav.personbruker.dittnav.varselbestiller.beskjed.BeskjedEventService
 import no.nav.personbruker.dittnav.varselbestiller.common.database.Database
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Consumer
@@ -123,21 +123,21 @@ class ApplicationContext {
     }
 
     private fun resolveMetricsReporter(environment: Environment): MetricsReporter {
-        return if (environment.sensuHost == "" || environment.sensuHost == "stub") {
+        return if (environment.influxdbHost == "" || environment.influxdbHost == "stub") {
             StubMetricsReporter()
         } else {
-            val sensuConfig = SensuConfig(
+            val influxConfig = InfluxConfig(
                     applicationName = environment.applicationName,
-                    hostName = environment.sensuHost,
-                    hostPort = environment.sensuPort,
+                    hostName = environment.influxdbHost,
+                    hostPort = environment.influxdbPort,
+                    databaseName = environment.influxdbName,
+                    retentionPolicyName = environment.influxdbRetentionPolicy,
                     clusterName = environment.clusterName,
                     namespace = environment.namespace,
-                    eventsTopLevelName = "dittnav-varselbestiller",
-                    enableEventBatching = environment.sensuBatchingEnabled,
-                    eventBatchesPerSecond = environment.sensuBatchesPerSecond
+                    userName = environment.influxdbUser,
+                    password = environment.influxdbPassword
             )
-
-            InfluxMetricsReporter(sensuConfig)
+            InfluxMetricsReporter(influxConfig)
         }
     }
 }
