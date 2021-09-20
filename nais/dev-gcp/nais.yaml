@@ -6,7 +6,7 @@ metadata:
   labels:
     team: personbruker
 spec:
-  encFrom:
+  envFrom:
     - secret: dittnav-varselbestiller-secrets
   image: {{version}}
   port: 8080
