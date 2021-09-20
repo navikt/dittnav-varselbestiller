@@ -34,7 +34,7 @@ object KafkaTestUtil {
                 password = password,
                 groupId = "groupId-for-tests",
                 dbHost = "dbHostIkkeIBrukHer",
-                dbPort = "#dbPortIkkeIBrukHer",
+                dbPort = "dbPortIkkeIBrukHer",
                 dbName = "dbNameIkkeIBrukHer",
                 dbUrl = "dbUrlIkkeIBrukHer",
                 dbUser = "dbUserIkkeIBrukHer",
