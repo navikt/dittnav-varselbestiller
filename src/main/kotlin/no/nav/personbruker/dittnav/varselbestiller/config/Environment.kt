@@ -11,12 +11,11 @@ data class Environment(val bootstrapServers: String = getEnvVar("KAFKA_BOOTSTRAP
                        val password: String = getEnvVar("SERVICEUSER_PASSWORD"),
                        val groupId: String = getEnvVar("GROUP_ID"),
                        val dbHost: String = getEnvVar("DB_HOST"),
-                       val dbName: String = getEnvVar("DB_NAME"),
-                       val dbReadOnlyUser: String = getEnvVar("DB_NAME") + "-readonly",
-                       val dbUser: String = getEnvVar("DB_NAME") + "-user",
-                       val dbAdmin: String = getEnvVar("DB_NAME") + "-admin",
-                       val dbUrl: String = "jdbc:postgresql://$dbHost/$dbName",
-                       val dbMountPath: String = getEnvVar("DB_MOUNT_PATH"),
+                       val dbPort: String = getEnvVar("DB_PORT"),
+                       val dbName: String = getEnvVar("DB_DATABASE"),
+                       val dbUser: String = getEnvVar("DB_USERNAME"),
+                       val dbPassword: String = getEnvVar("DB_PASSWORD"),
+                       val dbUrl: String = getDbUrl(dbHost, dbPort, dbName),
                        val clusterName: String = getEnvVar("NAIS_CLUSTER_NAME"),
                        val namespace: String = getEnvVar("NAIS_NAMESPACE"),
                        val influxdbHost: String = getEnvVar("INFLUXDB_HOST"),
@@ -41,3 +40,11 @@ fun shouldPollBeskjedToDoknotifikasjon() = getOptionalEnvVar("POLL_BESKJED_TO_DO
 fun shouldPollOppgaveToDoknotifikasjon() = getOptionalEnvVar("POLL_OPPGAVE_TO_DOKNOTIFIKASJON", "false").toBoolean()
 
 fun shouldPollDoneToDoknotifikasjonStopp() = getOptionalEnvVar("POLL_DONE_TO_DOKNOTIFIKASJON_STOPP", "false").toBoolean()
+
+fun getDbUrl(host: String, port: String, name: String): String {
+    return if (host.endsWith(":$port")) {
+        "jdbc:postgresql://${host}/$name"
+    } else {
+        "jdbc:postgresql://${host}:${port}/${name}"
+    }
+}
