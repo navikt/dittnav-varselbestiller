@@ -8,7 +8,7 @@ import no.nav.common.KafkaEnvironment
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.personbruker.dittnav.common.metrics.StubMetricsReporter
 import no.nav.personbruker.dittnav.varselbestiller.CapturingEventProcessor
-import no.nav.personbruker.dittnav.varselbestiller.common.database.H2Database
+import no.nav.personbruker.dittnav.varselbestiller.common.database.LocalPostgresDatabase
 import no.nav.personbruker.dittnav.varselbestiller.common.getClient
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.*
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Consumer
@@ -35,7 +35,7 @@ class BeskjedIT {
     private val embeddedEnv = KafkaTestUtil.createDefaultKafkaEmbeddedInstance(listOf(KafkaTestTopics.beskjedTopicName, KafkaTestTopics.doknotifikasjonTopicName))
     private val testEnvironment = KafkaTestUtil.createEnvironmentForEmbeddedKafka(embeddedEnv)
 
-    private val database = H2Database()
+    private val database = LocalPostgresDatabase()
 
     private val beskjedEvents = (1..10).map { AvroNokkelObjectMother.createNokkelWithEventId(it) to AvroBeskjedObjectMother.createBeskjedWithEksternVarsling(eksternVarsling = true) }.toMap()
 

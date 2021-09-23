@@ -11,19 +11,20 @@ data class Environment(val bootstrapServers: String = getEnvVar("KAFKA_BOOTSTRAP
                        val password: String = getEnvVar("SERVICEUSER_PASSWORD"),
                        val groupId: String = getEnvVar("GROUP_ID"),
                        val dbHost: String = getEnvVar("DB_HOST"),
-                       val dbName: String = getEnvVar("DB_NAME"),
-                       val dbReadOnlyUser: String = getEnvVar("DB_NAME") + "-readonly",
-                       val dbUser: String = getEnvVar("DB_NAME") + "-user",
-                       val dbAdmin: String = getEnvVar("DB_NAME") + "-admin",
-                       val dbUrl: String = "jdbc:postgresql://$dbHost/$dbName",
-                       val dbMountPath: String = getEnvVar("DB_MOUNT_PATH"),
+                       val dbPort: String = getEnvVar("DB_PORT"),
+                       val dbName: String = getEnvVar("DB_DATABASE"),
+                       val dbUser: String = getEnvVar("DB_USERNAME"),
+                       val dbPassword: String = getEnvVar("DB_PASSWORD"),
+                       val dbUrl: String = getDbUrl(dbHost, dbPort, dbName),
                        val clusterName: String = getEnvVar("NAIS_CLUSTER_NAME"),
                        val namespace: String = getEnvVar("NAIS_NAMESPACE"),
-                       val sensuHost: String = getEnvVar("SENSU_HOST"),
-                       val sensuPort: Int = getEnvVarAsInt("SENSU_PORT"),
+                       val influxdbHost: String = getEnvVar("INFLUXDB_HOST"),
+                       val influxdbPort: Int = getEnvVarAsInt("INFLUXDB_PORT"),
+                       val influxdbName: String = getEnvVar("INFLUXDB_DATABASE_NAME"),
+                       val influxdbUser: String = getEnvVar("INFLUXDB_USER"),
+                       val influxdbPassword: String = getEnvVar("INFLUXDB_PASSWORD"),
+                       val influxdbRetentionPolicy: String = getEnvVar("INFLUXDB_RETENTION_POLICY"),
                        val applicationName: String = "dittnav-varselbestiller",
-                       val sensuBatchingEnabled: Boolean = getEnvVar("SENSU_BATCHING_ENABLED", "true").toBoolean(),
-                       val sensuBatchesPerSecond: Int = getEnvVar("SENSU_BATCHING_ENABLED", "3").toInt(),
                        val eventHandlerURL: URL = URL(getEnvVar("EVENT_HANDLER_URL").trimEnd('/')),
                        val beskjedTopicName: String = getEnvVar("INTERN_BESKJED_TOPIC"),
                        val oppgaveTopicName: String = getEnvVar("INTERN_OPPGAVE_TOPIC"),
@@ -39,3 +40,11 @@ fun shouldPollBeskjedToDoknotifikasjon() = getOptionalEnvVar("POLL_BESKJED_TO_DO
 fun shouldPollOppgaveToDoknotifikasjon() = getOptionalEnvVar("POLL_OPPGAVE_TO_DOKNOTIFIKASJON", "false").toBoolean()
 
 fun shouldPollDoneToDoknotifikasjonStopp() = getOptionalEnvVar("POLL_DONE_TO_DOKNOTIFIKASJON_STOPP", "false").toBoolean()
+
+fun getDbUrl(host: String, port: String, name: String): String {
+    return if (host.endsWith(":$port")) {
+        "jdbc:postgresql://${host}/$name"
+    } else {
+        "jdbc:postgresql://${host}:${port}/${name}"
+    }
+}

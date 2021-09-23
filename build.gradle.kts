@@ -39,7 +39,7 @@ configurations["intTestRuntimeOnly"].extendsFrom(configurations.testRuntimeOnly.
 
 dependencies {
     implementation(Brukernotifikasjon.schemas)
-    implementation(DittNAV.Common.influx)
+    implementation(DittNAV.Common.influxdb)
     implementation(DittNAV.Common.utils)
     implementation(Doknotifikasjon.schemas)
     implementation(Flyway.core)
@@ -59,17 +59,18 @@ dependencies {
     implementation(Prometheus.common)
     implementation(Prometheus.hotspot)
     implementation(Prometheus.logback)
-    testImplementation(H2Database.h2)
+
     testImplementation(Junit.api)
     testImplementation(Junit.engine)
     testImplementation(Kafka.Apache.kafka_2_12)
     testImplementation(Kafka.Apache.streams)
     testImplementation(Kafka.Confluent.schemaRegistry)
     testImplementation(Kluent.kluent)
-    testImplementation(Mockk.mockk)
-    testImplementation(NAV.kafkaEmbedded)
     testImplementation(Kotlinx.atomicfu)
     testImplementation(Ktor.clientMock)
+    testImplementation(Mockk.mockk)
+    testImplementation(NAV.kafkaEmbedded)
+    testImplementation(TestContainers.postgresql)
 
     intTestImplementation(Junit.engine)
 }
