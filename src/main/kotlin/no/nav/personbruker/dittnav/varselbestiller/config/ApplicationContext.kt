@@ -1,9 +1,6 @@
 package no.nav.personbruker.dittnav.varselbestiller.config
 
-import no.nav.brukernotifikasjon.schemas.Beskjed
-import no.nav.brukernotifikasjon.schemas.Done
-import no.nav.brukernotifikasjon.schemas.Nokkel
-import no.nav.brukernotifikasjon.schemas.Oppgave
+import no.nav.brukernotifikasjon.schemas.*
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
 import no.nav.personbruker.dittnav.common.metrics.MetricsReporter
@@ -19,6 +16,7 @@ import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.Doknotifikasj
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.done.DoneEventService
 import no.nav.personbruker.dittnav.varselbestiller.health.HealthService
+import no.nav.personbruker.dittnav.varselbestiller.innboks.InnboksEventService
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameResolver
 import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameScrubber
@@ -47,6 +45,7 @@ class ApplicationContext {
 
     var beskjedConsumer = initializeBeskjedConsumer()
     var oppgaveConsumer = initializeOppgaveConsumer()
+    var innboksConsumer = initializeInnboksConsumer()
     var doneConsumer = initializeDoneConsumer()
 
     val healthService = HealthService(this)
@@ -64,6 +63,12 @@ class ApplicationContext {
         val oppgaveKafkaProps = Kafka.consumerProps(environment, Eventtype.OPPGAVE)
         val oppgaveEventService = OppgaveEventService(doknotifikasjonOppgaveProducer, doknotifikasjonRepository, metricsCollector)
         return KafkaConsumerSetup.setupKafkaConsumer(environment.oppgaveTopicName, oppgaveKafkaProps, oppgaveEventService)
+    }
+
+    private fun initializeInnboksConsumer(): Consumer<Nokkel, Innboks> {
+        val oppgaveKafkaProps = Kafka.consumerProps(environment, Eventtype.INNBOKS)
+        val oppgaveEventService = InnboksEventService(doknotifikasjonOppgaveProducer, doknotifikasjonRepository, metricsCollector)
+        return KafkaConsumerSetup.setupKafkaConsumer(environment.innboksTopicName, oppgaveKafkaProps, oppgaveEventService)
     }
 
     private fun initializeDoneConsumer(): Consumer<Nokkel, Done> {
@@ -103,6 +108,13 @@ class ApplicationContext {
             log.info("oppgaveConsumer har blitt reinstansiert.")
         } else {
             log.warn("oppgaveConsumer kunne ikke bli reinstansiert fordi den fortsatt er aktiv.")
+        }
+
+        if (innboksConsumer.isCompleted()) {
+            innboksConsumer = initializeInnboksConsumer()
+            log.info("innboksConsumer har blitt reinstansiert.")
+        } else {
+            log.warn("innboksConsumer kunne ikke bli reinstansiert fordi den fortsatt er aktiv.")
         }
 
         if (doneConsumer.isCompleted()) {

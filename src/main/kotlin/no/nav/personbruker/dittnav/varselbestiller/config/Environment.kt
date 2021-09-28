@@ -27,6 +27,7 @@ data class Environment(val bootstrapServers: String = getEnvVar("KAFKA_BOOTSTRAP
                        val eventHandlerURL: URL = URL(getEnvVar("EVENT_HANDLER_URL").trimEnd('/')),
                        val beskjedTopicName: String = getEnvVar("INTERN_BESKJED_TOPIC"),
                        val oppgaveTopicName: String = getEnvVar("INTERN_OPPGAVE_TOPIC"),
+                       val innboksTopicName: String = getEnvVar("INTERN_INNBOKS_TOPIC"),
                        val doneTopicName: String = getEnvVar("INTERN_DONE_TOPIC"),
                        val doknotifikasjonTopicName: String = getEnvVar("DOKNOTIFIKASJON_TOPIC"),
                        val doknotifikasjonStopTopicName: String = getEnvVar("DOKNOTIFIKASJON_STOP_TOPIC")
@@ -37,5 +38,7 @@ fun isOtherEnvironmentThanProd() = System.getenv("NAIS_CLUSTER_NAME") != "prod-s
 fun shouldPollBeskjedToDoknotifikasjon() = getOptionalEnvVar("POLL_BESKJED_TO_DOKNOTIFIKASJON", "false").toBoolean()
 
 fun shouldPollOppgaveToDoknotifikasjon() = getOptionalEnvVar("POLL_OPPGAVE_TO_DOKNOTIFIKASJON", "false").toBoolean()
+
+fun shouldPollInnboksToDoknotifikasjon() = getOptionalEnvVar("POLL_INNBOKS_TO_DOKNOTIFIKASJON", "false").toBoolean()
 
 fun shouldPollDoneToDoknotifikasjonStopp() = getOptionalEnvVar("POLL_DONE_TO_DOKNOTIFIKASJON_STOPP", "false").toBoolean()

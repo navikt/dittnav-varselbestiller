@@ -1,6 +1,7 @@
 package no.nav.personbruker.dittnav.varselbestiller.varselbestilling
 
 import no.nav.brukernotifikasjon.schemas.Beskjed
+import no.nav.brukernotifikasjon.schemas.Innboks
 import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.brukernotifikasjon.schemas.Oppgave
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
@@ -28,6 +29,17 @@ object VarselbestillingTransformer {
                 systembruker = key.getSystembruker(),
                 bestillingstidspunkt = LocalDateTime.now(ZoneId.of("UTC")),
                 prefererteKanaler = oppgave.getPrefererteKanaler()
+        )
+    }
+
+    fun fromInnboks(key: Nokkel, innboks: Innboks, doknotifikasjon: Doknotifikasjon): Varselbestilling {
+        return Varselbestilling(
+            bestillingsId = doknotifikasjon.getBestillingsId(),
+            eventId = key.getEventId(),
+            fodselsnummer = innboks.getFodselsnummer(),
+            systembruker = key.getSystembruker(),
+            bestillingstidspunkt = LocalDateTime.now(ZoneId.of("UTC")),
+            prefererteKanaler = innboks.getPrefererteKanaler()
         )
     }
 }

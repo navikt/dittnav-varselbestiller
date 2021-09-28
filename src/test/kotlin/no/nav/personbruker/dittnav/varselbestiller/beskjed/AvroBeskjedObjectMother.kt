@@ -50,7 +50,7 @@ object AvroBeskjedObjectMother {
         return createBeskjed(fodselsnummer, defaultTekst, defaultSikkerhetsnivaa, eksternVarsling, defaultLink, defaultGrupperingsid, defaultPrefererteKanaler)
     }
 
-    fun createBeskjed(fodselsnummer: String, text: String, sikkerhetsnivaa: Int, eksternVarsling: Boolean, link: String, grupperingsid: String, prefererteKanaler: List<String>): Beskjed {
+    private fun createBeskjed(fodselsnummer: String, text: String, sikkerhetsnivaa: Int, eksternVarsling: Boolean, link: String, grupperingsid: String, prefererteKanaler: List<String>): Beskjed {
         return Beskjed(
                 Instant.now().toEpochMilli(),
                 Instant.now().toEpochMilli(),

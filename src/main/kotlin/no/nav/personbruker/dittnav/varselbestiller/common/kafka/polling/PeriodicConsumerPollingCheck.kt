@@ -49,6 +49,9 @@ class PeriodicConsumerPollingCheck(
         if (shouldPollOppgaveToDoknotifikasjon() and appContext.oppgaveConsumer.isStopped()) {
             consumersThatShouldBeRestarted.add(Eventtype.OPPGAVE)
         }
+        if (shouldPollInnboksToDoknotifikasjon() and appContext.innboksConsumer.isStopped()) {
+            consumersThatShouldBeRestarted.add(Eventtype.INNBOKS)
+        }
         return consumersThatShouldBeRestarted
     }
 

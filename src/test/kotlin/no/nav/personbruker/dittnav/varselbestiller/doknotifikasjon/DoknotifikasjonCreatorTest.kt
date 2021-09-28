@@ -4,6 +4,7 @@ import `with message containing`
 import no.nav.brukernotifikasjon.schemas.builders.domain.PreferertKanal
 import no.nav.brukernotifikasjon.schemas.builders.exception.FieldValidationException
 import no.nav.personbruker.dittnav.varselbestiller.beskjed.AvroBeskjedObjectMother
+import no.nav.personbruker.dittnav.varselbestiller.innboks.AvroInnboksObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.oppgave.AvroOppgaveObjectMother.createOppgaveWithFodselsnummer
 import no.nav.personbruker.dittnav.varselbestiller.oppgave.AvroOppgaveObjectMother
@@ -48,6 +49,25 @@ class DoknotifikasjonCreatorTest {
         doknotifikasjon.getAntallRenotifikasjoner() `should be equal to` 1
         doknotifikasjon.getRenotifikasjonIntervall() `should be equal to` 7
         doknotifikasjon.getPrefererteKanaler().size `should be equal to` oppgave.getPrefererteKanaler().size
+    }
+
+    @Test
+    fun `Skal opprette Doknotifikasjon fra Innboks`() {
+        val eventId = 1
+        val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(eventId)
+        val innboks = AvroInnboksObjectMother.createInnboks()
+        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(nokkel, innboks)
+
+        doknotifikasjon.getBestillingsId() `should be equal to` "I-${nokkel.getSystembruker()}-${nokkel.getEventId()}"
+        doknotifikasjon.getBestillerId() `should be equal to` nokkel.getSystembruker()
+        doknotifikasjon.getSikkerhetsnivaa() `should be equal to` 4
+        doknotifikasjon.getFodselsnummer() `should be equal to` innboks.getFodselsnummer()
+        doknotifikasjon.getTittel().`should not be null or empty`()
+        doknotifikasjon.getEpostTekst().`should not be null or empty`()
+        doknotifikasjon.getSmsTekst().`should not be null or empty`()
+        doknotifikasjon.getAntallRenotifikasjoner() `should be equal to` 1
+        doknotifikasjon.getRenotifikasjonIntervall() `should be equal to` 7
+        doknotifikasjon.getPrefererteKanaler().size `should be equal to` innboks.getPrefererteKanaler().size
     }
 
     @Test
@@ -165,6 +185,65 @@ class DoknotifikasjonCreatorTest {
         val oppgave = AvroOppgaveObjectMother.createOppgaveWithEksternVarslingOgPrefererteKanaler(false, listOf(PreferertKanal.SMS.toString()))
         invoking {
             DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(nokkel, oppgave)
+        } `should throw` FieldValidationException::class `with message containing` "Prefererte kanaler"
+    }
+
+    @Test
+    fun `Skal kaste FieldValidationException hvis eventId for Innboks er for lang`() {
+        val tooLongEventId = "1".repeat(51)
+        val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(tooLongEventId)
+        val innboks = AvroInnboksObjectMother.createInnboks()
+        invoking {
+            DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(nokkel, innboks)
+        } `should throw` FieldValidationException::class `with message containing` "eventId"
+    }
+
+    @Test
+    fun `Skal kaste FieldValidationException hvis systembruker for Innboks er for lang`() {
+        val tooLongSystembruker = "A".repeat(101)
+        val nokkel = AvroNokkelObjectMother.createNokkelWithSystembruker(tooLongSystembruker)
+        val innboks = AvroInnboksObjectMother.createInnboks()
+        invoking {
+            DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(nokkel, innboks)
+        } `should throw` FieldValidationException::class `with message containing` "systembruker"
+    }
+
+    @Test
+    fun `Skal kaste FieldValidationException hvis fodselsnummer for Innboks er tomt`() {
+        val fodselsnummerEmpty = ""
+        val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(3)
+        val innboks = AvroInnboksObjectMother.createInnboksWithFodselsnummer(fodselsnummerEmpty)
+        invoking {
+            DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(nokkel, innboks)
+        } `should throw` FieldValidationException::class `with message containing` "fodselsnummer"
+    }
+
+    @Test
+    fun `Skal kaste FieldValidationException hvis sikkerhetsnivaa for Innboks er for lavt`() {
+        val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(3)
+        val innboks = AvroInnboksObjectMother.createInnboksWithSikkerhetsnivaa(2)
+        invoking {
+            DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(nokkel, innboks)
+        } `should throw` FieldValidationException::class `with message containing` "Sikkerhetsnivaa"
+    }
+
+    @Test
+    fun `Skal kaste FieldValidationException hvis preferert kanal for Innboks ikke støttes av Doknotifikasjon`() {
+        val eventId = 1
+        val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(eventId)
+        val innboks = AvroInnboksObjectMother.createInnboksWithEksternVarslingOgPrefererteKanaler(true, listOf("UgyldigKanal"))
+        invoking {
+            DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(nokkel, innboks)
+        } `should throw` FieldValidationException::class `with message containing` "preferert kanal"
+    }
+
+    @Test
+    fun `Skal kaste FieldValidationException hvis preferert kanal settes uten at ekstern varsling er satt for Innboks`() {
+        val eventId = 1
+        val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(eventId)
+        val innboks = AvroInnboksObjectMother.createInnboksWithEksternVarslingOgPrefererteKanaler(false, listOf(PreferertKanal.SMS.toString()))
+        invoking {
+            DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(nokkel, innboks)
         } `should throw` FieldValidationException::class `with message containing` "Prefererte kanaler"
     }
 }
