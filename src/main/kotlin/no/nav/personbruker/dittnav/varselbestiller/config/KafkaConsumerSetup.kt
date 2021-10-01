@@ -25,6 +25,12 @@ object KafkaConsumerSetup {
             log.info("Unnlater å starte polling av oppgave til doknotifikasjon.")
         }
 
+        if(shouldPollInnboksToDoknotifikasjon()) {
+            appContext.innboksConsumer.startPolling()
+        } else {
+            log.info("Unnlater å starte polling av innboks til doknotifikasjon.")
+        }
+
         if(shouldPollDoneToDoknotifikasjonStopp()) {
             appContext.doneConsumer.startPolling()
         } else {
@@ -40,6 +46,10 @@ object KafkaConsumerSetup {
 
         if(shouldPollOppgaveToDoknotifikasjon()) {
             appContext.oppgaveConsumer.stopPolling()
+        }
+
+        if(shouldPollInnboksToDoknotifikasjon()) {
+            appContext.innboksConsumer.stopPolling()
         }
 
         if(shouldPollDoneToDoknotifikasjonStopp()) {

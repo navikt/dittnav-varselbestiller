@@ -2,12 +2,14 @@ package no.nav.personbruker.dittnav.varselbestiller.common.validation
 
 import `with message containing`
 import no.nav.brukernotifikasjon.schemas.Beskjed
+import no.nav.brukernotifikasjon.schemas.Innboks
 import no.nav.brukernotifikasjon.schemas.Nokkel
 import no.nav.brukernotifikasjon.schemas.Oppgave
 import no.nav.brukernotifikasjon.schemas.builders.exception.FieldValidationException
 import no.nav.brukernotifikasjon.schemas.builders.util.ValidationUtil.*
 import no.nav.personbruker.dittnav.varselbestiller.beskjed.AvroBeskjedObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.ConsumerRecordsObjectMother
+import no.nav.personbruker.dittnav.varselbestiller.innboks.AvroInnboksObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.oppgave.AvroOppgaveObjectMother
 import org.amshove.kluent.`should throw`
@@ -28,7 +30,7 @@ internal class ValidationUtilKtTest {
 
         invoking {
             records.forEach { record ->
-                throwExceptionIfBeskjedOrNokkelIsNotValid(record.key(), record.value())
+                throwExceptionIfBeskjedOrNokkelIsInvalid(record.key(), record.value())
             }
         } `should throw` FieldValidationException::class `with message containing` "link"
     }
@@ -44,7 +46,23 @@ internal class ValidationUtilKtTest {
 
         invoking {
             records.forEach { record ->
-                throwExceptionIfOppgaveOrNokkelIsNotValid(record.key(), record.value())
+                throwExceptionIfOppgaveOrNokkelIsInvalid(record.key(), record.value())
+            }
+        } `should throw` FieldValidationException::class `with message containing` "link"
+    }
+
+    @Test
+    fun `Skal kaste exception hvis link er ugyldig i innboks-eventet`() {
+        val invalidLink = "invalidLink"
+        val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(eventId = 1)
+        val innboksWithInvalidLink = AvroInnboksObjectMother.createInnboksWithLink(invalidLink)
+
+        val cr: ConsumerRecord<Nokkel, Innboks> = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName = "innboks", actualKey = nokkel, actualEvent = innboksWithInvalidLink)
+        val records = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(cr)
+
+        invoking {
+            records.forEach { record ->
+                throwExceptionIfInnboksOrNokkelIsInvalid(record.key(), record.value())
             }
         } `should throw` FieldValidationException::class `with message containing` "link"
     }
@@ -60,7 +78,7 @@ internal class ValidationUtilKtTest {
 
         invoking {
             records.forEach { record ->
-                throwExceptionIfBeskjedOrNokkelIsNotValid(record.key(), record.value())
+                throwExceptionIfBeskjedOrNokkelIsInvalid(record.key(), record.value())
             }
         }
     }
@@ -76,9 +94,25 @@ internal class ValidationUtilKtTest {
 
         invoking {
             records.forEach { record ->
-                throwExceptionIfOppgaveOrNokkelIsNotValid(record.key(), record.value())
+                throwExceptionIfOppgaveOrNokkelIsInvalid(record.key(), record.value())
             }
         } `should throw` FieldValidationException::class `with message containing` "link"
+    }
+
+    @Test
+    fun `Skal haandtere at link er en tom string i innboks-eventet`() {
+        val emptyLink = ""
+        val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(eventId = 1)
+        val innboksWithEmptyLink = AvroInnboksObjectMother.createInnboksWithLink(emptyLink)
+
+        val cr: ConsumerRecord<Nokkel, Innboks> = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName = "innboks", actualKey = nokkel, actualEvent = innboksWithEmptyLink)
+        val records = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(cr)
+
+        invoking {
+            records.forEach { record ->
+                throwExceptionIfInnboksOrNokkelIsInvalid(record.key(), record.value())
+            }
+        }
     }
 
     @Test
@@ -92,7 +126,7 @@ internal class ValidationUtilKtTest {
 
         invoking {
             records.forEach { record ->
-                throwExceptionIfBeskjedOrNokkelIsNotValid(record.key(), record.value())
+                throwExceptionIfBeskjedOrNokkelIsInvalid(record.key(), record.value())
             }
         } `should throw` FieldValidationException::class `with message containing` "tekst"
     }
@@ -108,7 +142,23 @@ internal class ValidationUtilKtTest {
 
         invoking {
             records.forEach { record ->
-                throwExceptionIfOppgaveOrNokkelIsNotValid(record.key(), record.value())
+                throwExceptionIfOppgaveOrNokkelIsInvalid(record.key(), record.value())
+            }
+        } `should throw` FieldValidationException::class `with message containing` "tekst"
+    }
+
+    @Test
+    fun `Skal kaste exception hvis tekst er for lang i innboks-eventet`() {
+        val tooLongText = "t".repeat(MAX_LENGTH_TEXT_INNBOKS + 1)
+        val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(eventId = 1)
+        val innboks = AvroInnboksObjectMother.createInnboksWithText(tooLongText)
+
+        val cr: ConsumerRecord<Nokkel, Innboks> = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName = "innboks", actualKey = nokkel, actualEvent = innboks)
+        val records = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(cr)
+
+        invoking {
+            records.forEach { record ->
+                throwExceptionIfInnboksOrNokkelIsInvalid(record.key(), record.value())
             }
         } `should throw` FieldValidationException::class `with message containing` "tekst"
     }
@@ -124,7 +174,7 @@ internal class ValidationUtilKtTest {
 
         invoking {
             records.forEach { record ->
-                throwExceptionIfBeskjedOrNokkelIsNotValid(record.key(), record.value())
+                throwExceptionIfBeskjedOrNokkelIsInvalid(record.key(), record.value())
             }
         } `should throw` FieldValidationException::class `with message containing` "grupperingsId"
     }
@@ -140,7 +190,23 @@ internal class ValidationUtilKtTest {
 
         invoking {
             records.forEach { record ->
-                throwExceptionIfOppgaveOrNokkelIsNotValid(record.key(), record.value())
+                throwExceptionIfOppgaveOrNokkelIsInvalid(record.key(), record.value())
+            }
+        } `should throw` FieldValidationException::class `with message containing` "grupperingsId"
+    }
+
+    @Test
+    fun `Skal kaste exception hvis grupperingsid er for lang i innboks-eventet`() {
+        val tooLongGrupperingsid = "g".repeat(MAX_LENGTH_GRUPPERINGSID + 1)
+        val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(eventId = 1)
+        val innboks = AvroInnboksObjectMother.createInnboksWithGrupperingsid(tooLongGrupperingsid)
+
+        val cr: ConsumerRecord<Nokkel, Innboks> = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName = "innboks", actualKey = nokkel, actualEvent = innboks)
+        val records = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(cr)
+
+        invoking {
+            records.forEach { record ->
+                throwExceptionIfInnboksOrNokkelIsInvalid(record.key(), record.value())
             }
         } `should throw` FieldValidationException::class `with message containing` "grupperingsId"
     }
@@ -156,7 +222,7 @@ internal class ValidationUtilKtTest {
 
         invoking {
             records.forEach { record ->
-                throwExceptionIfBeskjedOrNokkelIsNotValid(record.key(), record.value())
+                throwExceptionIfBeskjedOrNokkelIsInvalid(record.key(), record.value())
             }
         } `should throw` FieldValidationException::class `with message containing` "fodselsnummer"
     }
@@ -172,7 +238,23 @@ internal class ValidationUtilKtTest {
 
         invoking {
             records.forEach { record ->
-                throwExceptionIfOppgaveOrNokkelIsNotValid(record.key(), record.value())
+                throwExceptionIfOppgaveOrNokkelIsInvalid(record.key(), record.value())
+            }
+        } `should throw` FieldValidationException::class `with message containing` "fodselsnummer"
+    }
+
+    @Test
+    fun `Skal kaste exception hvis fodselsnummer er for lang i innboks-eventet`() {
+        val tooLongFnr = "f".repeat(MAX_LENGTH_FODSELSNUMMER + 1)
+        val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(eventId = 1)
+        val innboks = AvroInnboksObjectMother.createInnboksWithFodselsnummer(fodselsnummer =  tooLongFnr)
+
+        val cr: ConsumerRecord<Nokkel, Innboks> = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName = "innboks", actualKey = nokkel, actualEvent = innboks)
+        val records = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(cr)
+
+        invoking {
+            records.forEach { record ->
+                throwExceptionIfInnboksOrNokkelIsInvalid(record.key(), record.value())
             }
         } `should throw` FieldValidationException::class `with message containing` "fodselsnummer"
     }
@@ -188,7 +270,7 @@ internal class ValidationUtilKtTest {
 
         invoking {
             records.forEach { record ->
-                throwExceptionIfBeskjedOrNokkelIsNotValid(record.key(), record.value())
+                throwExceptionIfBeskjedOrNokkelIsInvalid(record.key(), record.value())
             }
         } `should throw` FieldValidationException::class `with message containing` "Sikkerhetsnivaa"
     }
@@ -204,7 +286,23 @@ internal class ValidationUtilKtTest {
 
         invoking {
             records.forEach { record ->
-                throwExceptionIfOppgaveOrNokkelIsNotValid(record.key(), record.value())
+                throwExceptionIfOppgaveOrNokkelIsInvalid(record.key(), record.value())
+            }
+        } `should throw` FieldValidationException::class `with message containing` "Sikkerhetsnivaa"
+    }
+
+    @Test
+    fun `Skal kaste exception hvis sikkerhetsnivaa er for lavt i innboks-eventet`() {
+        val invalidSikkerhetsnivaa = 2
+        val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(eventId = 1)
+        val innboks = AvroInnboksObjectMother.createInnboksWithSikkerhetsnivaa(invalidSikkerhetsnivaa)
+
+        val cr: ConsumerRecord<Nokkel, Innboks> = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName = "innboks", actualKey = nokkel, actualEvent = innboks)
+        val records = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(cr)
+
+        invoking {
+            records.forEach { record ->
+                throwExceptionIfInnboksOrNokkelIsInvalid(record.key(), record.value())
             }
         } `should throw` FieldValidationException::class `with message containing` "Sikkerhetsnivaa"
     }
@@ -220,7 +318,7 @@ internal class ValidationUtilKtTest {
 
         invoking {
             records.forEach { record ->
-                throwExceptionIfBeskjedOrNokkelIsNotValid(record.key(), record.value())
+                throwExceptionIfBeskjedOrNokkelIsInvalid(record.key(), record.value())
             }
         } `should throw` FieldValidationException::class `with message containing` "systembruker"
     }
@@ -236,7 +334,7 @@ internal class ValidationUtilKtTest {
 
         invoking {
             records.forEach { record ->
-                throwExceptionIfBeskjedOrNokkelIsNotValid(record.key(), record.value())
+                throwExceptionIfBeskjedOrNokkelIsInvalid(record.key(), record.value())
             }
         } `should throw` FieldValidationException::class `with message containing` "eventId"
     }

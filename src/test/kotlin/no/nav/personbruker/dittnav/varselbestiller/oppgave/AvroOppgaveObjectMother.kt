@@ -50,7 +50,7 @@ object AvroOppgaveObjectMother {
         return createOppgave(fodselsnummer, defaultTekst, defaultSikkerhetsnivaa, eksternVarsling, defaultLink, defaultGrupperingsid, defaultPrefererteKanaler)
     }
 
-    fun createOppgave(fodselsnummer: String, tekst: String, sikkerhetsnivaa: Int, eksternVarsling: Boolean, link: String, grupperingsid: String, prefererteKanaler: List<String>): Oppgave {
+    private fun createOppgave(fodselsnummer: String, tekst: String, sikkerhetsnivaa: Int, eksternVarsling: Boolean, link: String, grupperingsid: String, prefererteKanaler: List<String>): Oppgave {
         return Oppgave(
                 Instant.now().toEpochMilli(),
                 fodselsnummer,

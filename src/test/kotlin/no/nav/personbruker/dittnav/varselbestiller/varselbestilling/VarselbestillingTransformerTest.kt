@@ -2,6 +2,7 @@ package no.nav.personbruker.dittnav.varselbestiller.varselbestilling
 
 import no.nav.personbruker.dittnav.varselbestiller.beskjed.AvroBeskjedObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.AvroDoknotifikasjonObjectMother
+import no.nav.personbruker.dittnav.varselbestiller.innboks.AvroInnboksObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.oppgave.AvroOppgaveObjectMother
 import org.amshove.kluent.`should be equal to`
@@ -34,6 +35,20 @@ class VarselbestillingTransformerTest {
         varselbestilling.bestillingsId `should be equal to` avroDoknotifikasjon.getBestillingsId()
         varselbestilling.eventId `should be equal to` avroNokkel.getEventId()
         varselbestilling.fodselsnummer `should be equal to` avroOppgave.getFodselsnummer()
+        varselbestilling.systembruker `should be equal to` avroNokkel.getSystembruker()
+        varselbestilling.bestillingstidspunkt.`should not be null`()
+    }
+
+    @Test
+    fun `Skal transformere fra Innboks`() {
+        val avroNokkel = AvroNokkelObjectMother.createNokkelWithEventId(1)
+        val avroInnboks =  AvroInnboksObjectMother.createInnboks()
+        val avroDoknotifikasjon = AvroDoknotifikasjonObjectMother.createDoknotifikasjon("I-test-001")
+        val varselbestilling = VarselbestillingTransformer.fromInnboks(avroNokkel, avroInnboks, avroDoknotifikasjon)
+
+        varselbestilling.bestillingsId `should be equal to` avroDoknotifikasjon.getBestillingsId()
+        varselbestilling.eventId `should be equal to` avroNokkel.getEventId()
+        varselbestilling.fodselsnummer `should be equal to` avroInnboks.getFodselsnummer()
         varselbestilling.systembruker `should be equal to` avroNokkel.getSystembruker()
         varselbestilling.bestillingstidspunkt.`should not be null`()
     }
