@@ -41,6 +41,7 @@ class ApplicationContext {
     val doknotifikasjonRepository = VarselbestillingRepository(database)
     val doknotifikasjonBeskjedProducer = initializeDoknotifikasjonProducer(Eventtype.BESKJED)
     val doknotifikasjonOppgaveProducer = initializeDoknotifikasjonProducer(Eventtype.OPPGAVE)
+    val doknotifikasjonInnboksProducer = initializeDoknotifikasjonProducer(Eventtype.INNBOKS)
     val doknotifikasjonStopProducer = initializeDoknotifikasjonStoppProducer()
 
     var beskjedConsumer = initializeBeskjedConsumer()
@@ -66,9 +67,9 @@ class ApplicationContext {
     }
 
     private fun initializeInnboksConsumer(): Consumer<Nokkel, Innboks> {
-        val oppgaveKafkaProps = Kafka.consumerProps(environment, Eventtype.INNBOKS)
-        val oppgaveEventService = InnboksEventService(doknotifikasjonOppgaveProducer, doknotifikasjonRepository, metricsCollector)
-        return KafkaConsumerSetup.setupKafkaConsumer(environment.innboksTopicName, oppgaveKafkaProps, oppgaveEventService)
+        val innboksKafkaProps = Kafka.consumerProps(environment, Eventtype.INNBOKS)
+        val innboksEventService = InnboksEventService(doknotifikasjonInnboksProducer, doknotifikasjonRepository, metricsCollector)
+        return KafkaConsumerSetup.setupKafkaConsumer(environment.innboksTopicName, innboksKafkaProps, innboksEventService)
     }
 
     private fun initializeDoneConsumer(): Consumer<Nokkel, Done> {
