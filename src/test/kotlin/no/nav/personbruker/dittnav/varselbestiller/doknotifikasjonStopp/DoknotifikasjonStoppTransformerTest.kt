@@ -11,6 +11,6 @@ class DoknotifikasjonStoppTransformerTest {
         val varselbestilling = VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-test-001", eventId = "001")
         val doknotifikasjonStopp = DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(varselbestilling)
         doknotifikasjonStopp.getBestillingsId() `should be equal to` varselbestilling.bestillingsId
-        doknotifikasjonStopp.getBestillerId() `should be equal to` varselbestilling.systembruker
+        doknotifikasjonStopp.getBestillerId() `should be equal to` varselbestilling.appnavn
     }
 }

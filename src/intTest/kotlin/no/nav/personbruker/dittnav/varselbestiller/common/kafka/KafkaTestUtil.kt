@@ -1,6 +1,6 @@
 package no.nav.personbruker.dittnav.varselbestiller.common.kafka
 
-import no.nav.brukernotifikasjon.schemas.Nokkel
+import no.nav.brukernotifikasjon.schemas.internal.NokkelIntern
 import no.nav.common.JAASCredential
 import no.nav.common.KafkaEnvironment
 import no.nav.personbruker.dittnav.varselbestiller.config.Environment
@@ -56,7 +56,7 @@ object KafkaTestUtil {
         )
     }
 
-    suspend fun produceEvents(env: Environment, topicName: String, events: Map<Nokkel, GenericRecord>): Boolean {
+    suspend fun produceEvents(env: Environment, topicName: String, events: Map<NokkelIntern, GenericRecord>): Boolean {
         return KafkaProducerUtil.kafkaAvroProduce(
                 env.bootstrapServers,
                 env.schemaRegistryUrl,

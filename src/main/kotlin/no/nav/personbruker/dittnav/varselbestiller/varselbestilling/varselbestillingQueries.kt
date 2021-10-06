@@ -43,7 +43,7 @@ fun ResultSet.toVarselbestilling(): Varselbestilling {
             bestillingsId = getString("bestillingsid"),
             eventId = getString("eventid"),
             fodselsnummer = getString("fodselsnummer"),
-            systembruker = getString("systembruker"),
+            appnavn = getString("systembruker"),
             bestillingstidspunkt = getUtcDateTime("eventtidspunkt"),
             prefererteKanaler = getListFromSeparatedString("prefererteKanaler", ","),
             avbestilt = getBoolean("avbestilt")
@@ -54,7 +54,7 @@ private fun PreparedStatement.buildStatementForSingleRow(varselbestilling: Varse
         setString(1, varselbestilling.bestillingsId)
         setString(2, varselbestilling.eventId)
         setString(3, varselbestilling.fodselsnummer)
-        setString(4, varselbestilling.systembruker)
+        setString(4, varselbestilling.appnavn)
         setObject(5, varselbestilling.bestillingstidspunkt, Types.TIMESTAMP)
         setObject(6, varselbestilling.avbestilt)
         setObject(7, varselbestilling.prefererteKanaler.joinToString(","))

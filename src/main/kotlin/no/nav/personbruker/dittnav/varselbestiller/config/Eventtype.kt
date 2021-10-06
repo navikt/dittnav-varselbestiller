@@ -1,9 +1,9 @@
 package no.nav.personbruker.dittnav.varselbestiller.config
 
 enum class Eventtype(val eventtype: String) {
-    OPPGAVE("oppgave"),
-    BESKJED("beskjed"),
-    DONE("done"),
+    OPPGAVE_INTERN("oppgave"),
+    BESKJED_INTERN("beskjed"),
+    DONE_INTERN("done"),
     DOKNOTIFIKASJON("doknotifikasjon"),
     DOKNOTIFIKASJON_STOPP("doknotifikasjon-stopp")
 }

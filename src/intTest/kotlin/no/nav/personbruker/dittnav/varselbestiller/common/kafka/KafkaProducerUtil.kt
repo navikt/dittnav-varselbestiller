@@ -2,7 +2,7 @@ package no.nav.personbruker.dittnav.varselbestiller.common.kafka
 
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig
 import kotlinx.coroutines.withTimeoutOrNull
-import no.nav.brukernotifikasjon.schemas.Nokkel
+import no.nav.brukernotifikasjon.schemas.internal.NokkelIntern
 import no.nav.common.JAAS_PLAIN_LOGIN
 import no.nav.common.JAAS_REQUIRED
 import org.apache.avro.generic.GenericRecord
@@ -21,10 +21,10 @@ object KafkaProducerUtil {
             topic: String,
             user: String,
             pwd: String,
-            data: Map<Nokkel, GenericRecord>
+            data: Map<NokkelIntern, GenericRecord>
     ): Boolean =
             try {
-                KafkaProducer<Nokkel, GenericRecord>(
+                KafkaProducer<NokkelIntern, GenericRecord>(
                         Properties().apply {
                             set(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokersURL)
                             set(ProducerConfig.CLIENT_ID_CONFIG, "funKafkaAvroProduce")

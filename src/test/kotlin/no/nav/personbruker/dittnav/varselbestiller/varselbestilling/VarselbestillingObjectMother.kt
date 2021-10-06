@@ -1,6 +1,6 @@
 package no.nav.personbruker.dittnav.varselbestiller.varselbestilling
 
-import no.nav.brukernotifikasjon.schemas.builders.domain.PreferertKanal
+import no.nav.brukernotifikasjon.schemas.internal.domain.PreferertKanal
 import java.time.LocalDateTime
 import java.time.ZoneId
 
@@ -8,16 +8,16 @@ object VarselbestillingObjectMother {
 
     private val defaultEventId = "123"
     private val defaultFodselsnr = "12345678901"
-    private val defaultSystembruker = "dummySystembruker"
+    private val defaultAppnavn = "dummyAppnavn"
     private val defaultBestillingstidspunkt = LocalDateTime.now(ZoneId.of("UTC"))
-    private val defaultBestillingsId = "B-$defaultSystembruker-$defaultEventId"
+    private val defaultBestillingsId = "B-$defaultAppnavn-$defaultEventId"
     private val defaultPrefererteKanaler = listOf(PreferertKanal.SMS.toString(), PreferertKanal.EPOST.toString())
 
     fun giveMeANumberOfVarselbestilling(numberOfEvents: Int): List<Varselbestilling> {
         val varselbestillinger = mutableListOf<Varselbestilling>()
 
         for (i in 0 until numberOfEvents) {
-            varselbestillinger.add(createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-${defaultSystembruker}-$i", eventId = i.toString()))
+            varselbestillinger.add(createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-${defaultAppnavn}-$i", eventId = i.toString()))
         }
         return varselbestillinger
     }
@@ -35,7 +35,7 @@ object VarselbestillingObjectMother {
                 bestillingsId = bestillingsId,
                 eventId = eventId,
                 fodselsnummer = fodselsnummer,
-                systembruker = defaultSystembruker,
+                appnavn = defaultAppnavn,
                 bestillingstidspunkt = defaultBestillingstidspunkt,
                 prefererteKanaler = prefererteKanaler
         )

@@ -9,33 +9,33 @@ import org.junit.jupiter.api.Test
 
 internal class EventMetricsSessionTest {
 
-    private val systembruker = "dummySystembruker"
+    private val appnavn = "dummyAppnavn"
 
     @Test
     fun `Skal returnere antall sendte duplikat`() {
         val numberOfDuplicates = 2
-        val session = EventMetricsSession(Eventtype.BESKJED)
+        val session = EventMetricsSession(Eventtype.BESKJED_INTERN)
         val conflictingKeysResult = conflictingKeysEvents(giveMeANumberOfVarselbestilling(numberOfDuplicates))
 
         session.countDuplicateKeyEksternvarslingBySystemUser(conflictingKeysResult)
 
-        session.getEksternvarslingDuplicateKeys(systembruker) `should be` numberOfDuplicates
+        session.getEksternvarslingDuplicateKeys(appnavn) `should be` numberOfDuplicates
     }
 
     @Test
     fun `Skal returnere 0 hvis ingen duplikat er sendt`() {
         val numberOfEvents = 2
-        val session = EventMetricsSession(Eventtype.BESKJED)
+        val session = EventMetricsSession(Eventtype.BESKJED_INTERN)
         val result = successfulEvents(giveMeANumberOfVarselbestilling(numberOfEvents))
 
         session.countDuplicateKeyEksternvarslingBySystemUser(result)
 
-        session.getEksternvarslingDuplicateKeys(systembruker) `should be` 0
+        session.getEksternvarslingDuplicateKeys(appnavn) `should be` 0
     }
 
     @Test
     fun `Skal fortsatt telle event hvis nokkel er null`() {
-        val session = EventMetricsSession(Eventtype.BESKJED)
+        val session = EventMetricsSession(Eventtype.BESKJED_INTERN)
 
         session.countNokkelWasNull()
 
@@ -45,11 +45,11 @@ internal class EventMetricsSessionTest {
 
     @Test
     fun `Skal telle rett antall totale events fra Kafka`() {
-        val session = EventMetricsSession(Eventtype.BESKJED)
+        val session = EventMetricsSession(Eventtype.BESKJED_INTERN)
         val systemUser = "dummySystemUser"
 
         session.countNokkelWasNull()
-        session.countAllEventsFromKafkaForSystemUser(systemUser)
+        session.countAllEventsFromKafkaForProducer(systemUser)
 
         session.getAllEventsFromKafka() `should be` 2
         session.getAllEventsFromKafka(systemUser) `should be` 1

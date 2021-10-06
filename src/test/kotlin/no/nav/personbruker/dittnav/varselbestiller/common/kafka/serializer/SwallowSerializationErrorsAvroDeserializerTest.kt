@@ -4,7 +4,7 @@ import io.confluent.kafka.schemaregistry.client.MockSchemaRegistryClient
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient
 import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig
 import io.confluent.kafka.serializers.KafkaAvroSerializer
-import no.nav.personbruker.dittnav.varselbestiller.beskjed.AvroBeskjedObjectMother
+import no.nav.personbruker.dittnav.varselbestiller.beskjed.AvroBeskjedInternObjectMother
 import org.amshove.kluent.`should be null`
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.Test
@@ -28,7 +28,7 @@ class SwallowSerializationErrorsAvroDeserializerTest {
 
     @Test
     fun `should serialize valid records successfully`() {
-        val original = AvroBeskjedObjectMother.createBeskjed()
+        val original = AvroBeskjedInternObjectMother.createBeskjedIntern()
         val serialized = serializer.serialize(topic, original)
         val deserialized = deserializer.deserialize(topic, serialized)
 

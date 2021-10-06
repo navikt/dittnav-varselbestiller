@@ -12,11 +12,11 @@ class EventMetricsSession(val eventtype: Eventtype) {
     private var countNokkelWasNull: Int = 0
     private val startTime = System.nanoTime()
 
-    fun countAllEventsFromKafkaForSystemUser(systemUser: String) {
+    fun countAllEventsFromKafkaForProducer(systemUser: String) {
         countAllEventsFromKafkaBySysUser[systemUser] = countAllEventsFromKafkaBySysUser.getOrDefault(systemUser, 0).inc()
     }
 
-    fun countSuccessfulEksternvarslingForSystemUser(systemUser: String) {
+    fun countSuccessfulEksternVarslingForProducer(systemUser: String) {
         countProcessedEksternvarslingBySysUser[systemUser] = countProcessedEksternvarslingBySysUser.getOrDefault(systemUser, 0).inc()
     }
 
@@ -24,7 +24,7 @@ class EventMetricsSession(val eventtype: Eventtype) {
         countNokkelWasNull++
     }
 
-    fun countFailedEksternvarslingForSystemUser(systemUser: String) {
+    fun countFailedEksternvarslingForProducer(systemUser: String) {
         countFailedEksternvarslingBySysUser[systemUser] = countFailedEksternvarslingBySysUser.getOrDefault(systemUser, 0).inc()
     }
 
@@ -34,7 +34,7 @@ class EventMetricsSession(val eventtype: Eventtype) {
 
     fun countDuplicateKeyEksternvarslingBySystemUser(result: ListPersistActionResult<Varselbestilling>) {
         result.getConflictingEntities()
-                .groupingBy { varselbestilling -> varselbestilling.systembruker }
+                .groupingBy { varselbestilling -> varselbestilling.appnavn }
                 .eachCount()
                 .forEach { (systembruker, duplicates) ->
                     countDuplicateKeyEksternvarslingBySysUser[systembruker] = countDuplicateKeyEksternvarslingBySysUser.getOrDefault(systembruker, 0) + duplicates

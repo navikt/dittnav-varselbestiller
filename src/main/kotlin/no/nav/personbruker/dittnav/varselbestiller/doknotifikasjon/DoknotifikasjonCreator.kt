@@ -1,72 +1,67 @@
 package no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon
 
-import no.nav.brukernotifikasjon.schemas.Beskjed
-import no.nav.brukernotifikasjon.schemas.Nokkel
-import no.nav.brukernotifikasjon.schemas.Oppgave
-import no.nav.brukernotifikasjon.schemas.builders.exception.FieldValidationException
-import no.nav.brukernotifikasjon.schemas.builders.exception.UnknownEventtypeException
-import no.nav.brukernotifikasjon.schemas.builders.util.ValidationUtil
+import no.nav.brukernotifikasjon.schemas.internal.BeskjedIntern
+import no.nav.brukernotifikasjon.schemas.internal.NokkelIntern
+import no.nav.brukernotifikasjon.schemas.internal.OppgaveIntern
 import no.nav.doknotifikasjon.schemas.PrefererteKanal
-import no.nav.personbruker.dittnav.varselbestiller.common.validation.throwExceptionIfBeskjedOrNokkelIsNotValid
-import no.nav.personbruker.dittnav.varselbestiller.common.validation.throwExceptionIfOppgaveOrNokkelIsNotValid
+import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.FieldValidationException
+import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UnknownEventtypeException
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 
 object DoknotifikasjonCreator {
 
-    fun createDoknotifikasjonFromBeskjed(nokkel: Nokkel, beskjed: Beskjed): no.nav.doknotifikasjon.schemas.Doknotifikasjon {
-        throwExceptionIfBeskjedOrNokkelIsNotValid(nokkel, beskjed)
+    fun createDoknotifikasjonFromBeskjed(nokkel: NokkelIntern, beskjed: BeskjedIntern): no.nav.doknotifikasjon.schemas.Doknotifikasjon {
         val doknotifikasjonBuilder = no.nav.doknotifikasjon.schemas.Doknotifikasjon.newBuilder()
-                .setBestillingsId(createDoknotifikasjonKey(nokkel, Eventtype.BESKJED))
-                .setBestillerId(nokkel.getSystembruker())
+                .setBestillingsId(createDoknotifikasjonKey(nokkel, Eventtype.BESKJED_INTERN))
+                .setBestillerId(nokkel.getAppnavn())
                 .setSikkerhetsnivaa(beskjed.getSikkerhetsnivaa())
-                .setFodselsnummer(beskjed.getFodselsnummer())
+                .setFodselsnummer(nokkel.getFodselsnummer())
                 .setTittel("Beskjed fra NAV")
-                .setEpostTekst(getDoknotifikasjonEmailText(Eventtype.BESKJED))
-                .setSmsTekst(getDoknotifikasjonSMSText(Eventtype.BESKJED))
+                .setEpostTekst(getDoknotifikasjonEmailText(Eventtype.BESKJED_INTERN))
+                .setSmsTekst(getDoknotifikasjonSMSText(Eventtype.BESKJED_INTERN))
                 .setAntallRenotifikasjoner(0)
                 .setPrefererteKanaler(getPrefererteKanaler(beskjed.getEksternVarsling(), beskjed.getPrefererteKanaler()))
         return doknotifikasjonBuilder.build()
     }
 
-    fun createDoknotifikasjonKey(nokkel: Nokkel, eventtype: Eventtype): String {
-        val eventId = ValidationUtil.validateNonNullFieldMaxLength(nokkel.getEventId(), "eventId", ValidationUtil.MAX_LENGTH_EVENTID)
-        val systembruker = ValidationUtil.validateNonNullFieldMaxLength(nokkel.getSystembruker(), "systembruker", ValidationUtil.MAX_LENGTH_SYSTEMBRUKER)
-        return when (eventtype) {
-            Eventtype.BESKJED -> "B-$systembruker-$eventId"
-            Eventtype.OPPGAVE -> "O-$systembruker-$eventId"
-            Eventtype.DONE -> "D-$systembruker-$eventId"
-            else -> throw UnknownEventtypeException("$eventtype er ugyldig type for å generere Doknotifikasjon-key")
-        }
-    }
-
-    fun createDoknotifikasjonFromOppgave(nokkel: Nokkel, oppgave: Oppgave): no.nav.doknotifikasjon.schemas.Doknotifikasjon {
-        throwExceptionIfOppgaveOrNokkelIsNotValid(nokkel, oppgave)
+    fun createDoknotifikasjonFromOppgave(nokkel: NokkelIntern, oppgave: OppgaveIntern): no.nav.doknotifikasjon.schemas.Doknotifikasjon {
         val doknotifikasjonBuilder = no.nav.doknotifikasjon.schemas.Doknotifikasjon.newBuilder()
-                .setBestillingsId(createDoknotifikasjonKey(nokkel, Eventtype.OPPGAVE))
-                .setBestillerId(nokkel.getSystembruker())
+                .setBestillingsId(createDoknotifikasjonKey(nokkel, Eventtype.OPPGAVE_INTERN))
+                .setBestillerId(nokkel.getAppnavn())
                 .setSikkerhetsnivaa(oppgave.getSikkerhetsnivaa())
-                .setFodselsnummer(oppgave.getFodselsnummer())
+                .setFodselsnummer(nokkel.getFodselsnummer())
                 .setTittel("Du har fått en oppgave fra NAV")
-                .setEpostTekst(getDoknotifikasjonEmailText(Eventtype.OPPGAVE))
-                .setSmsTekst(getDoknotifikasjonSMSText(Eventtype.OPPGAVE))
+                .setEpostTekst(getDoknotifikasjonEmailText(Eventtype.OPPGAVE_INTERN))
+                .setSmsTekst(getDoknotifikasjonSMSText(Eventtype.OPPGAVE_INTERN))
                 .setAntallRenotifikasjoner(1)
                 .setRenotifikasjonIntervall(7)
                 .setPrefererteKanaler(getPrefererteKanaler(oppgave.getEksternVarsling(), oppgave.getPrefererteKanaler()))
         return doknotifikasjonBuilder.build()
     }
 
+    fun createDoknotifikasjonKey(nokkel: NokkelIntern, eventtype: Eventtype): String {
+        val eventId = nokkel.getEventId()
+        val appnavn = nokkel.getAppnavn()
+        return when (eventtype) {
+            Eventtype.BESKJED_INTERN -> "B-$appnavn-$eventId"
+            Eventtype.OPPGAVE_INTERN -> "O-$appnavn-$eventId"
+            Eventtype.DONE_INTERN -> "D-$appnavn-$eventId"
+            else -> throw UnknownEventtypeException("$eventtype er ugyldig type for å generere Doknotifikasjon-key")
+        }
+    }
+
     private fun getDoknotifikasjonEmailText(eventtype: Eventtype): String {
         return when (eventtype) {
-            Eventtype.BESKJED -> this::class.java.getResource("/texts/epost_beskjed.txt").readText(Charsets.UTF_8)
-            Eventtype.OPPGAVE -> this::class.java.getResource("/texts/epost_oppgave.txt").readText(Charsets.UTF_8)
+            Eventtype.BESKJED_INTERN -> this::class.java.getResource("/texts/epost_beskjed.txt").readText(Charsets.UTF_8)
+            Eventtype.OPPGAVE_INTERN -> this::class.java.getResource("/texts/epost_oppgave.txt").readText(Charsets.UTF_8)
             else -> throw UnknownEventtypeException("Finnes ikke e-posttekst for $eventtype.")
         }
     }
 
     private fun getDoknotifikasjonSMSText(eventtype: Eventtype): String {
         return when (eventtype) {
-            Eventtype.BESKJED -> this::class.java.getResource("/texts/sms_beskjed.txt").readText(Charsets.UTF_8)
-            Eventtype.OPPGAVE -> this::class.java.getResource("/texts/sms_oppgave.txt").readText(Charsets.UTF_8)
+            Eventtype.BESKJED_INTERN -> this::class.java.getResource("/texts/sms_beskjed.txt").readText(Charsets.UTF_8)
+            Eventtype.OPPGAVE_INTERN -> this::class.java.getResource("/texts/sms_oppgave.txt").readText(Charsets.UTF_8)
             else -> throw UnknownEventtypeException("Finnes ikke SMS-tekst for $eventtype.")
         }
     }

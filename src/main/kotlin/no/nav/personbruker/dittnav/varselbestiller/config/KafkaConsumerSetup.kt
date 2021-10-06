@@ -1,6 +1,6 @@
 package no.nav.personbruker.dittnav.varselbestiller.config
 
-import no.nav.brukernotifikasjon.schemas.*
+import no.nav.brukernotifikasjon.schemas.internal.NokkelIntern
 import no.nav.personbruker.dittnav.varselbestiller.common.EventBatchProcessorService
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Consumer
 import org.apache.kafka.clients.consumer.KafkaConsumer
@@ -48,8 +48,8 @@ object KafkaConsumerSetup {
         log.info("...ferdig med å stoppe kafka-pollerne.")
     }
 
-    fun <T> setupKafkaConsumer(topicName:String, kafkaProps: Properties, eventProcessor: EventBatchProcessorService<Nokkel, T>): Consumer<Nokkel, T> {
-        val kafkaConsumer = KafkaConsumer<Nokkel, T>(kafkaProps)
+    fun <T> setupKafkaConsumer(topicName:String, kafkaProps: Properties, eventProcessor: EventBatchProcessorService<NokkelIntern, T>): Consumer<NokkelIntern, T> {
+        val kafkaConsumer = KafkaConsumer<NokkelIntern, T>(kafkaProps)
         return Consumer(topicName, kafkaConsumer, eventProcessor)
     }
 

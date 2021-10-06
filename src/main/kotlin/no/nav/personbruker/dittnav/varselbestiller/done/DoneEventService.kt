@@ -1,14 +1,10 @@
 package no.nav.personbruker.dittnav.varselbestiller.done
 
-import no.nav.brukernotifikasjon.schemas.Done
-import no.nav.brukernotifikasjon.schemas.Nokkel
-import no.nav.brukernotifikasjon.schemas.builders.exception.FieldValidationException
-import no.nav.brukernotifikasjon.schemas.builders.exception.UnknownEventtypeException
+import no.nav.brukernotifikasjon.schemas.internal.DoneIntern
+import no.nav.brukernotifikasjon.schemas.internal.NokkelIntern
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
 import no.nav.personbruker.dittnav.varselbestiller.common.EventBatchProcessorService
-import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.NokkelNullException
-import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UnvalidatableRecordException
-import no.nav.personbruker.dittnav.varselbestiller.common.kafka.serializer.getNonNullKey
+import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UntransformableRecordException
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppTransformer
@@ -23,38 +19,32 @@ class DoneEventService(
         private val doknotifikasjonStoppProducer: DoknotifikasjonStoppProducer,
         private val varselbestillingRepository: VarselbestillingRepository,
         private val metricsCollector: MetricsCollector
-) : EventBatchProcessorService<Nokkel, Done> {
+) : EventBatchProcessorService<NokkelIntern, DoneIntern> {
 
     private val log: Logger = LoggerFactory.getLogger(DoneEventService::class.java)
 
-    override suspend fun processEvents(events: ConsumerRecords<Nokkel, Done>) {
+    override suspend fun processEvents(events: ConsumerRecords<NokkelIntern, DoneIntern>) {
         val doknotifikasjonStopp = mutableMapOf<String, DoknotifikasjonStopp>()
-        val problematicEvents = mutableMapOf<Nokkel, Done>()
-        metricsCollector.recordMetrics(eventType = Eventtype.DONE) {
+        val problematicEvents = mutableMapOf<NokkelIntern, DoneIntern>()
+        metricsCollector.recordMetrics(eventType = Eventtype.DONE_INTERN) {
             val doneEvents = getDoneEventsMap(this, events)
             if(doneEvents.isNotEmpty()) {
                 val varselbestillingerForEventIds = varselbestillingRepository.fetchVarselbestillingerForEventIds(doneEvents.keys.map { it.getEventId() })
                 if (varselbestillingerForEventIds.isNotEmpty()) {
                     doneEvents.forEach { (nokkel, event) ->
                         try {
-                            val varselbestilling = varselbestillingerForEventIds.firstOrNull{ it.eventId == nokkel.getEventId() && it.systembruker == nokkel.getSystembruker() && it.fodselsnummer == event.getFodselsnummer() }
+                            val varselbestilling = varselbestillingerForEventIds.firstOrNull{ it.eventId == nokkel.getEventId() && it.appnavn == nokkel.getAppnavn() && it.fodselsnummer == nokkel.getFodselsnummer() }
                             if(varselbestilling != null) {
                                 if(varselbestilling.avbestilt) {
                                     log.info("Varsel med bestillingsid ${varselbestilling.bestillingsId} allerede avbestilt, avbestiller ikke på nytt.")
-                                    countDuplicateVarselbestillingForSystemUser(varselbestilling.systembruker)
+                                    countDuplicateVarselbestillingForSystemUser(varselbestilling.appnavn)
                                 } else {
                                     doknotifikasjonStopp[varselbestilling.bestillingsId] = DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(varselbestilling)
-                                    countSuccessfulEksternvarslingForSystemUser(varselbestilling.systembruker)
+                                    countSuccessfulEksternVarslingForProducer(varselbestilling.appnavn)
                                 }
                             }
-                        } catch (e: FieldValidationException) {
-                            countFailedEksternvarslingForSystemUser(nokkel.getSystembruker() ?: "NoProducerSpecified")
-                            log.warn("Eventet kan ikke brukes fordi det inneholder valideringsfeil, done-eventet vil bli forkastet. EventId: ${nokkel.getEventId()}", e)
-                        } catch (e: UnknownEventtypeException) {
-                            countFailedEksternvarslingForSystemUser(nokkel.getSystembruker() ?: "NoProducerSpecified")
-                            log.warn("Eventet kan ikke brukes fordi det inneholder ukjent eventtype, done-eventet vil bli forkastet. EventId: ${nokkel.getEventId()}", e)
                         } catch (e: Exception) {
-                            countFailedEksternvarslingForSystemUser(nokkel.getSystembruker() ?: "NoProducerSpecified")
+                            countFailedEksternvarslingForProducer(nokkel.getAppnavn() ?: "NoProducerSpecified")
                             problematicEvents[nokkel] = event
                             log.warn("Eventet kan ikke brukes pga en ukjent feil, done-eventet vil bli forkastet. EventId: ${nokkel.getEventId()}", e)
                         }
@@ -70,25 +60,16 @@ class DoneEventService(
         }
     }
 
-    private fun getDoneEventsMap(eventMetricsSession: EventMetricsSession, events: ConsumerRecords<Nokkel, Done>): Map<Nokkel, Done> {
-        val doneEvents = mutableMapOf<Nokkel, Done>()
+    private fun getDoneEventsMap(eventMetricsSession: EventMetricsSession, events: ConsumerRecords<NokkelIntern, DoneIntern>): Map<NokkelIntern, DoneIntern> {
+        val doneEvents = mutableMapOf<NokkelIntern, DoneIntern>()
         events.forEach { event ->
             try {
-                val doneKey = event.getNonNullKey()
+                val doneKey = event.key()
                 val doneEvent = event.value()
-                eventMetricsSession.countAllEventsFromKafkaForSystemUser(doneKey.getSystembruker())
+                eventMetricsSession.countAllEventsFromKafkaForProducer(doneKey.getSystembruker())
                 doneEvents[doneKey] = doneEvent
-            } catch (e: NokkelNullException) {
-                eventMetricsSession.countNokkelWasNull()
-                log.warn("Done-eventet manglet nøkkel, blir forkastet. Topic: ${event.topic()}, Partition: ${event.partition()}, Offset: ${event.offset()}", e)
-            } catch (cce: ClassCastException) {
-                eventMetricsSession.countFailedEksternvarslingForSystemUser(event.systembruker ?: "NoProducerSpecified")
-                val funnetType = event.javaClass.name
-                val eventId = event.eventId
-                val systembruker = event.systembruker
-                log.warn("Feil eventtype funnet på done-topic. Fant et event av typen $funnetType. Eventet blir forkastet. EventId: $eventId, systembruker: $systembruker", cce)
-            } catch (e: Exception) {
-                eventMetricsSession.countFailedEksternvarslingForSystemUser(event.systembruker ?: "NoProducerSpecified")
+            }  catch (e: Exception) {
+                eventMetricsSession.countFailedEksternvarslingForProducer(event.appnavn)
                 log.warn("Fikk en uventet feil ved prosessering av Done-event, fullfører batch-en.", e)
             }
         }
@@ -99,10 +80,10 @@ class DoneEventService(
         doknotifikasjonStoppProducer.sendEventsAndPersistCancellation(successfullyValidatedEvents)
     }
 
-    private fun throwExceptionIfFailedValidation(problematicEvents: MutableMap<Nokkel, Done>) {
+    private fun throwExceptionIfFailedValidation(problematicEvents: MutableMap<NokkelIntern, DoneIntern>) {
         val message = "En eller flere done-eventer kunne ikke sendes til varselbestiller."
-        val exception = UnvalidatableRecordException(message)
-        exception.addContext("antallMislykkedValidering", problematicEvents.size)
+        val exception = UntransformableRecordException(message)
+        exception.addContext("antallMislykkedeTransformasjoner", problematicEvents.size)
         throw exception
     }
 }

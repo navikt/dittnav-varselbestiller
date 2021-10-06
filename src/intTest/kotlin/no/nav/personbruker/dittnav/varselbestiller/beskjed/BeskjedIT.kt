@@ -2,8 +2,8 @@ package no.nav.personbruker.dittnav.varselbestiller.beskjed
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import no.nav.brukernotifikasjon.schemas.Beskjed
-import no.nav.brukernotifikasjon.schemas.Nokkel
+import no.nav.brukernotifikasjon.schemas.internal.BeskjedIntern
+import no.nav.brukernotifikasjon.schemas.internal.NokkelIntern
 import no.nav.common.KafkaEnvironment
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.personbruker.dittnav.common.metrics.StubMetricsReporter
@@ -11,16 +11,13 @@ import no.nav.personbruker.dittnav.varselbestiller.CapturingEventProcessor
 import no.nav.personbruker.dittnav.varselbestiller.common.database.LocalPostgresDatabase
 import no.nav.personbruker.dittnav.varselbestiller.common.getClient
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.*
-import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Consumer
-import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaEmbed
-import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaTestUtil
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.config.Kafka
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameResolver
 import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameScrubber
-import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelObjectMother
+import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelInternObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import org.amshove.kluent.`should be equal to`
 import org.amshove.kluent.shouldBeEqualTo
@@ -37,7 +34,7 @@ class BeskjedIT {
 
     private val database = LocalPostgresDatabase()
 
-    private val beskjedEvents = (1..10).map { AvroNokkelObjectMother.createNokkelWithEventId(it) to AvroBeskjedObjectMother.createBeskjedWithEksternVarsling(eksternVarsling = true) }.toMap()
+    private val beskjedEvents = (1..10).map { AvroNokkelInternObjectMother.createNokkelInternWithEventId(it) to AvroBeskjedInternObjectMother.createBeskjedWithEksternVarsling(eksternVarsling = true) }.toMap()
 
     private val capturedDoknotifikasjonRecords = ArrayList<RecordKeyValueWrapper<String, Doknotifikasjon>>()
 
@@ -77,8 +74,8 @@ class BeskjedIT {
     }
 
     fun `Read all Beskjed-events from our topic and verify that they have been sent to varselbestiller-topic`() {
-        val consumerProps = KafkaEmbed.consumerProps(testEnvironment, Eventtype.BESKJED, true)
-        val kafkaConsumer = KafkaConsumer<Nokkel, Beskjed>(consumerProps)
+        val consumerProps = KafkaEmbed.consumerProps(testEnvironment, Eventtype.BESKJED_INTERN, true)
+        val kafkaConsumer = KafkaConsumer<NokkelIntern, BeskjedIntern>(consumerProps)
 
         val producerProps = Kafka.producerProps(testEnvironment, Eventtype.DOKNOTIFIKASJON, true)
         val kafkaProducer = KafkaProducer<String, Doknotifikasjon>(producerProps)

@@ -1,15 +1,11 @@
 package no.nav.personbruker.dittnav.varselbestiller.oppgave
 
-import no.nav.brukernotifikasjon.schemas.Nokkel
-import no.nav.brukernotifikasjon.schemas.Oppgave
-import no.nav.brukernotifikasjon.schemas.builders.exception.FieldValidationException
-import no.nav.brukernotifikasjon.schemas.builders.exception.UnknownEventtypeException
+import no.nav.brukernotifikasjon.schemas.internal.NokkelIntern
+import no.nav.brukernotifikasjon.schemas.internal.OppgaveIntern
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.personbruker.dittnav.varselbestiller.common.EventBatchProcessorService
 import no.nav.personbruker.dittnav.varselbestiller.common.database.ListPersistActionResult
-import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.NokkelNullException
-import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UnvalidatableRecordException
-import no.nav.personbruker.dittnav.varselbestiller.common.kafka.serializer.getNonNullKey
+import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UntransformableRecordException
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
@@ -26,54 +22,39 @@ class OppgaveEventService(
         private val doknotifikasjonProducer: DoknotifikasjonProducer,
         private val varselbestillingRepository: VarselbestillingRepository,
         private val metricsCollector: MetricsCollector
-) : EventBatchProcessorService<Nokkel, Oppgave> {
+) : EventBatchProcessorService<NokkelIntern, OppgaveIntern> {
 
     private val log = LoggerFactory.getLogger(OppgaveEventService::class.java)
 
-    override suspend fun processEvents(events: ConsumerRecords<Nokkel, Oppgave>) {
-        val successfullyValidatedEvents = mutableMapOf<String, Doknotifikasjon>()
-        val problematicEvents = mutableListOf<ConsumerRecord<Nokkel, Oppgave>>()
+    override suspend fun processEvents(events: ConsumerRecords<NokkelIntern, OppgaveIntern>) {
+        val successfullyTransformedEvents = mutableMapOf<String, Doknotifikasjon>()
+        val problematicEvents = mutableListOf<ConsumerRecord<NokkelIntern, OppgaveIntern>>()
         val varselbestillinger = mutableListOf<Varselbestilling>()
 
-        metricsCollector.recordMetrics(eventType = Eventtype.OPPGAVE) {
+        metricsCollector.recordMetrics(eventType = Eventtype.OPPGAVE_INTERN) {
             events.forEach { event ->
                 try {
-                    val oppgaveKey = event.getNonNullKey()
+                    val oppgaveKey = event.key()
                     val oppgaveEvent = event.value()
-                    countAllEventsFromKafkaForSystemUser(oppgaveKey.getSystembruker())
+                    countAllEventsFromKafkaForProducer(event.appnavn)
                     if (oppgaveEvent.getEksternVarsling()) {
-                        val doknotifikasjonKey = DoknotifikasjonCreator.createDoknotifikasjonKey(oppgaveKey, Eventtype.OPPGAVE)
+                        val doknotifikasjonKey = DoknotifikasjonCreator.createDoknotifikasjonKey(oppgaveKey, Eventtype.OPPGAVE_INTERN)
                         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(oppgaveKey, oppgaveEvent)
-                        successfullyValidatedEvents[doknotifikasjonKey] = doknotifikasjon
+                        successfullyTransformedEvents[doknotifikasjonKey] = doknotifikasjon
                         varselbestillinger.add(VarselbestillingTransformer.fromOppgave(oppgaveKey, oppgaveEvent, doknotifikasjon))
-                        countSuccessfulEksternvarslingForSystemUser(oppgaveKey.getSystembruker())
+                        countSuccessfulEksternVarslingForProducer(oppgaveKey.getAppnavn())
                     }
-                } catch (e: NokkelNullException) {
-                    countNokkelWasNull()
-                    log.warn("Oppgave-eventet manglet nøkkel. Topic: ${event.topic()}, Partition: ${event.partition()}, Offset: ${event.offset()}", e)
-                } catch (e: FieldValidationException) {
-                    countFailedEksternvarslingForSystemUser(event.systembruker ?: "NoProducerSpecified")
-                    log.warn("Eventet kan ikke brukes fordi det inneholder valideringsfeil, oppgave-eventet vil bli forkastet. EventId: ${event.eventId}", e)
-                } catch (e: UnknownEventtypeException) {
-                    countFailedEksternvarslingForSystemUser(event.systembruker ?: "NoProducerSpecified")
-                    log.warn("Eventet kan ikke brukes fordi det inneholder ukjent eventtype, oppgave-eventet vil bli forkastet. EventId: ${event.eventId}", e)
-                } catch (cce: ClassCastException) {
-                    countFailedEksternvarslingForSystemUser(event.systembruker ?: "NoProducerSpecified")
-                    val funnetType = event.javaClass.name
-                    val eventId = event.eventId
-                    val systembruker = event.systembruker
-                    log.warn("Feil eventtype funnet på oppgave-topic. Fant et event av typen $funnetType. Eventet blir forkastet. EventId: $eventId, systembruker: $systembruker", cce)
-                }  catch (e: Exception) {
-                    countFailedEksternvarslingForSystemUser(event.systembruker ?: "NoProducerSpecified")
+                } catch (e: Exception) {
+                    countFailedEksternvarslingForProducer(event.appnavn)
                     problematicEvents.add(event)
                     log.warn("Validering av oppgave-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
                 }
             }
-            if (successfullyValidatedEvents.isNotEmpty()) {
-                produceDoknotifikasjonerAndPersistToDB(this, successfullyValidatedEvents, varselbestillinger)
+            if (successfullyTransformedEvents.isNotEmpty()) {
+                produceDoknotifikasjonerAndPersistToDB(this, successfullyTransformedEvents, varselbestillinger)
             }
             if (problematicEvents.isNotEmpty()) {
-                throwExceptionIfValidationFailed(problematicEvents)
+                throwExceptionForProblematicEvents(problematicEvents)
             }
         }
     }
@@ -100,14 +81,14 @@ class OppgaveEventService(
     private fun logDuplicateVarselbestillinger(eventMetricsSession: EventMetricsSession, duplicateVarselbestillinger: List<Varselbestilling>) {
         duplicateVarselbestillinger.forEach{
             log.info("Varsel med bestillingsid ${it.bestillingsId} er allerede bestilt, bestiller ikke på nytt.")
-            eventMetricsSession.countDuplicateVarselbestillingForSystemUser(it.systembruker)
+            eventMetricsSession.countDuplicateVarselbestillingForSystemUser(it.appnavn)
         }
     }
 
-    private fun throwExceptionIfValidationFailed(problematicEvents: MutableList<ConsumerRecord<Nokkel, Oppgave>>) {
-        val message = "En eller flere oppgave-eventer kunne ikke sendes til varselbestiller fordi validering feilet."
-        val exception = UnvalidatableRecordException(message)
-        exception.addContext("antallMislykkedValidering", problematicEvents.size)
+    private fun throwExceptionForProblematicEvents(problematicEvents: MutableList<ConsumerRecord<NokkelIntern, OppgaveIntern>>) {
+        val message = "En eller flere oppgave-eventer kunne ikke sendes til varselbestiller fordi transformering feilet."
+        val exception = UntransformableRecordException(message)
+        exception.addContext("antallMislykkedeTransformasjoner", problematicEvents.size)
         throw exception
     }
 }
