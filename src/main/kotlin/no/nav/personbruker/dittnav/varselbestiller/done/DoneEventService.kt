@@ -37,7 +37,7 @@ class DoneEventService(
                             if(varselbestilling != null) {
                                 if(varselbestilling.avbestilt) {
                                     log.info("Varsel med bestillingsid ${varselbestilling.bestillingsId} allerede avbestilt, avbestiller ikke på nytt.")
-                                    countDuplicateVarselbestillingForSystemUser(varselbestilling.appnavn)
+                                    countDuplicateVarselbestillingForProducer(varselbestilling.appnavn)
                                 } else {
                                     doknotifikasjonStopp[varselbestilling.bestillingsId] = DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(varselbestilling)
                                     countSuccessfulEksternVarslingForProducer(varselbestilling.appnavn)

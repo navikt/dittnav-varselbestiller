@@ -17,7 +17,7 @@ internal class EventMetricsSessionTest {
         val session = EventMetricsSession(Eventtype.BESKJED_INTERN)
         val conflictingKeysResult = conflictingKeysEvents(giveMeANumberOfVarselbestilling(numberOfDuplicates))
 
-        session.countDuplicateKeyEksternvarslingBySystemUser(conflictingKeysResult)
+        session.countDuplicateKeyEksternvarslingByProducer(conflictingKeysResult)
 
         session.getEksternvarslingDuplicateKeys(appnavn) `should be` numberOfDuplicates
     }
@@ -28,7 +28,7 @@ internal class EventMetricsSessionTest {
         val session = EventMetricsSession(Eventtype.BESKJED_INTERN)
         val result = successfulEvents(giveMeANumberOfVarselbestilling(numberOfEvents))
 
-        session.countDuplicateKeyEksternvarslingBySystemUser(result)
+        session.countDuplicateKeyEksternvarslingByProducer(result)
 
         session.getEksternvarslingDuplicateKeys(appnavn) `should be` 0
     }

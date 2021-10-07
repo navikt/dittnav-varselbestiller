@@ -25,7 +25,6 @@ data class Environment(val bootstrapServers: String = getEnvVar("KAFKA_BOOTSTRAP
                        val influxdbPassword: String = getEnvVar("INFLUXDB_PASSWORD"),
                        val influxdbRetentionPolicy: String = getEnvVar("INFLUXDB_RETENTION_POLICY"),
                        val applicationName: String = "dittnav-varselbestiller",
-                       val eventHandlerURL: URL = URL(getEnvVar("EVENT_HANDLER_URL").trimEnd('/')),
                        val beskjedTopicName: String = getEnvVar("INTERN_BESKJED_TOPIC"),
                        val oppgaveTopicName: String = getEnvVar("INTERN_OPPGAVE_TOPIC"),
                        val doneTopicName: String = getEnvVar("INTERN_DONE_TOPIC"),

@@ -98,7 +98,7 @@ class OppgaveEventServiceTest {
 
         verify(exactly = oppgaveRecords.count()) { DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(ofType(NokkelIntern::class), ofType(OppgaveIntern::class)) }
         coVerify (exactly = oppgaveRecords.count()) { metricsSession.countSuccessfulEksternVarslingForProducer(any()) }
-        coVerify(exactly = 1) { metricsSession.countDuplicateVarselbestillingForSystemUser(any()) }
+        coVerify(exactly = 1) { metricsSession.countDuplicateVarselbestillingForProducer(any()) }
         coVerify(exactly = oppgaveRecords.count()) { metricsSession.countAllEventsFromKafkaForProducer(any()) }
         coVerify(exactly = 1) { doknotifikasjonProducer.sendAndPersistEvents(any(), any()) }
         capturedListOfEntities.captured.size `should be` 4

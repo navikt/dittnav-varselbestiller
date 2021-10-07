@@ -98,7 +98,7 @@ class BeskjedEventServiceTest {
 
         verify(exactly = beskjedRecords.count()) { DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(ofType(NokkelIntern::class), ofType(BeskjedIntern::class)) }
         coVerify(exactly = beskjedRecords.count()) { metricsSession.countSuccessfulEksternVarslingForProducer(any()) }
-        coVerify(exactly = 1 ) { metricsSession.countDuplicateVarselbestillingForSystemUser(any()) }
+        coVerify(exactly = 1 ) { metricsSession.countDuplicateVarselbestillingForProducer(any()) }
         coVerify(exactly = beskjedRecords.count()) { metricsSession.countAllEventsFromKafkaForProducer(any()) }
         coVerify(exactly = 1) { doknotifikasjonProducer.sendAndPersistEvents(any(), any()) }
         capturedListOfEntities.captured.size `should be` 4

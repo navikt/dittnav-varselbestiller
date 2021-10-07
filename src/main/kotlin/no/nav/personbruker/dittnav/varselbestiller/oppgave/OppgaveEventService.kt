@@ -81,7 +81,7 @@ class OppgaveEventService(
     private fun logDuplicateVarselbestillinger(eventMetricsSession: EventMetricsSession, duplicateVarselbestillinger: List<Varselbestilling>) {
         duplicateVarselbestillinger.forEach{
             log.info("Varsel med bestillingsid ${it.bestillingsId} er allerede bestilt, bestiller ikke på nytt.")
-            eventMetricsSession.countDuplicateVarselbestillingForSystemUser(it.appnavn)
+            eventMetricsSession.countDuplicateVarselbestillingForProducer(it.appnavn)
         }
     }
 

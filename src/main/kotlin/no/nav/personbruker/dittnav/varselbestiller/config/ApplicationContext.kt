@@ -20,8 +20,6 @@ import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.Doknotif
 import no.nav.personbruker.dittnav.varselbestiller.done.DoneEventService
 import no.nav.personbruker.dittnav.varselbestiller.health.HealthService
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
-import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameResolver
-import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameScrubber
 import no.nav.personbruker.dittnav.varselbestiller.oppgave.OppgaveEventService
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -29,16 +27,12 @@ import org.slf4j.LoggerFactory
 
 class ApplicationContext {
 
-    val httpClient = HttpClientBuilder.build()
-
     private val log = LoggerFactory.getLogger(ApplicationContext::class.java)
     val environment = Environment()
     val database: Database = PostgresDatabase(environment)
 
-    val nameResolver = ProducerNameResolver(httpClient, environment.eventHandlerURL)
-    val nameScrubber = ProducerNameScrubber(nameResolver)
     val metricsReporter = resolveMetricsReporter(environment)
-    val metricsCollector = MetricsCollector(metricsReporter, nameScrubber)
+    val metricsCollector = MetricsCollector(metricsReporter)
 
     val doknotifikasjonRepository = VarselbestillingRepository(database)
     val doknotifikasjonBeskjedProducer = initializeDoknotifikasjonProducer(Eventtype.BESKJED_INTERN)

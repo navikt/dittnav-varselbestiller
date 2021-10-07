@@ -13,9 +13,6 @@ import org.junit.jupiter.api.Test
 internal class MetricsCollectorTest {
 
     private val metricsReporter = mockk<MetricsReporter>()
-    private val producerNameResolver = mockk<ProducerNameResolver>()
-    val producerName = "dummySystembruker"
-    val producerAlias = "dittnav"
 
     @BeforeEach
     fun cleanup() {
@@ -24,11 +21,10 @@ internal class MetricsCollectorTest {
     }
 
     @Test
-    fun `should replace system name with alias for event processed`() {
+    fun `should use producer name for events processed`() {
+        val producerName = "appnavn"
 
-        coEvery { producerNameResolver.getProducerNameAlias(producerName) } returns producerAlias
-        val nameScrubber = ProducerNameScrubber(producerNameResolver)
-        val metricsCollector = MetricsCollector(metricsReporter, nameScrubber)
+        val metricsCollector = MetricsCollector(metricsReporter)
 
         val producerNameForPrometheus = slot<String>()
         val capturedTags = slot<Map<String, String>>()
@@ -47,16 +43,15 @@ internal class MetricsCollectorTest {
         verify(exactly = 1) { PrometheusMetricsCollector.registerSeenEksternvarslingEvents(any(), any(), any()) }
         verify(exactly = 1) { PrometheusMetricsCollector.registerProcessedEksternvarslingEvents(any(), any(), any()) }
 
-        producerNameForPrometheus.captured `should be equal to` producerAlias
-        capturedTags.captured["producer"] `should be equal to` producerAlias
+        producerNameForPrometheus.captured `should be equal to` producerName
+        capturedTags.captured["producer"] `should be equal to` producerName
     }
 
     @Test
-    fun `should replace system name with alias for event failed`() {
+    fun `should use producer name for events failed`() {
+        val producerName = "appnavn"
 
-        coEvery { producerNameResolver.getProducerNameAlias(producerName) } returns producerAlias
-        val nameScrubber = ProducerNameScrubber(producerNameResolver)
-        val metricsCollector = MetricsCollector(metricsReporter, nameScrubber)
+        val metricsCollector = MetricsCollector(metricsReporter)
 
         val capturedTags = slot<Map<String, String>>()
         val producerNameForPrometheus = slot<String>()
@@ -75,42 +70,13 @@ internal class MetricsCollectorTest {
         verify(exactly = 1) { PrometheusMetricsCollector.registerSeenEksternvarslingEvents(any(), any(), any()) }
         verify(exactly = 1) { PrometheusMetricsCollector.registerFailedEksternvarslingEvents(any(), any(), any()) }
 
-        producerNameForPrometheus.captured `should be equal to` producerAlias
-        capturedTags.captured["producer"] `should be equal to` producerAlias
-    }
-
-    @Test
-    fun `should replace system name with alias for all events from kafka`() {
-
-        coEvery { producerNameResolver.getProducerNameAlias(producerName) } returns producerAlias
-        val nameScrubber = ProducerNameScrubber(producerNameResolver)
-        val metricsCollector = MetricsCollector(metricsReporter, nameScrubber)
-
-        val producerNameForPrometheus = slot<String>()
-        val capturedTags = slot<Map<String, String>>()
-
-        coEvery { metricsReporter.registerDataPoint(KAFKA_ALL_EVENTS, any(), capture(capturedTags)) } returns Unit
-        every { PrometheusMetricsCollector.registerAllEventsFromKafka(any(), any(), capture(producerNameForPrometheus)) } returns Unit
-
-        runBlocking {
-            metricsCollector.recordMetrics(Eventtype.BESKJED_INTERN) {
-                countAllEventsFromKafkaForProducer(producerName)
-            }
-        }
-
-        coVerify(exactly = 1) { metricsReporter.registerDataPoint(any(), any(), any()) }
-        verify(exactly = 1) { PrometheusMetricsCollector.registerAllEventsFromKafka(any(), any(), any()) }
-
-        producerNameForPrometheus.captured `should be equal to` producerAlias
-        capturedTags.captured["producer"] `should be equal to` producerAlias
+        producerNameForPrometheus.captured `should be equal to` producerName
+        capturedTags.captured["producer"] `should be equal to` producerName
     }
 
     @Test
     fun `should report correct number of events`() {
-        coEvery { producerNameResolver.getProducerNameAlias(any()) } returns "test-user"
-
-        val nameScrubber = ProducerNameScrubber(producerNameResolver)
-        val metricsCollector = MetricsCollector(metricsReporter, nameScrubber)
+        val metricsCollector = MetricsCollector(metricsReporter)
 
         val capturedFieldsForSeen = slot<Map<String, Any>>()
         val capturedFieldsForProcessed = slot<Map<String, Any>>()

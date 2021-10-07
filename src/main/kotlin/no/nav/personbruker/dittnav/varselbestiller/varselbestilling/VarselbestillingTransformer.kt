@@ -14,6 +14,7 @@ object VarselbestillingTransformer {
                 bestillingsId = doknotifikasjon.getBestillingsId(),
                 eventId = key.getEventId(),
                 fodselsnummer = key.getFodselsnummer(),
+                namespace = key.getNamespace(),
                 appnavn = key.getAppnavn(),
                 bestillingstidspunkt = LocalDateTime.now(ZoneId.of("UTC")),
                 prefererteKanaler = beskjed.getPrefererteKanaler()
@@ -25,6 +26,7 @@ object VarselbestillingTransformer {
                 bestillingsId = doknotifikasjon.getBestillingsId(),
                 eventId = key.getEventId(),
                 fodselsnummer = key.getFodselsnummer(),
+                namespace = key.getNamespace(),
                 appnavn = key.getAppnavn(),
                 bestillingstidspunkt = LocalDateTime.now(ZoneId.of("UTC")),
                 prefererteKanaler = oppgave.getPrefererteKanaler()

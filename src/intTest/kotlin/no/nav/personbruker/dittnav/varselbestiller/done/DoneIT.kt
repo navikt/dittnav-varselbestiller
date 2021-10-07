@@ -9,14 +9,11 @@ import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
 import no.nav.personbruker.dittnav.common.metrics.StubMetricsReporter
 import no.nav.personbruker.dittnav.varselbestiller.CapturingEventProcessor
 import no.nav.personbruker.dittnav.varselbestiller.common.database.LocalPostgresDatabase
-import no.nav.personbruker.dittnav.varselbestiller.common.getClient
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.*
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.config.Kafka
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
-import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameResolver
-import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameScrubber
 import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelInternObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
@@ -44,12 +41,8 @@ class DoneIT {
 
     private val capturedDoknotifikasjonStopRecords = ArrayList<RecordKeyValueWrapper<String, DoknotifikasjonStopp>>()
 
-    private val producerNameAlias = "dittnav"
-    private val client = getClient(producerNameAlias)
     private val metricsReporter = StubMetricsReporter()
-    private val nameResolver = ProducerNameResolver(client, testEnvironment.eventHandlerURL)
-    private val nameScrubber = ProducerNameScrubber(nameResolver)
-    private val metricsCollector = MetricsCollector(metricsReporter, nameScrubber)
+    private val metricsCollector = MetricsCollector(metricsReporter)
 
     @BeforeAll
     fun setup() {

@@ -47,7 +47,6 @@ object KafkaTestUtil {
                 influxdbUser = "",
                 influxdbPassword = "",
                 influxdbRetentionPolicy = "",
-                eventHandlerURL = URL("http://event-handler"),
                 beskjedTopicName = KafkaTestTopics.beskjedTopicName,
                 oppgaveTopicName = KafkaTestTopics.oppgaveTopicName,
                 doneTopicName = KafkaTestTopics.doneTopicName,
