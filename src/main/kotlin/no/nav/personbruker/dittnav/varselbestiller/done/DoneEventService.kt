@@ -37,14 +37,14 @@ class DoneEventService(
                             if(varselbestilling != null) {
                                 if(varselbestilling.avbestilt) {
                                     log.info("Varsel med bestillingsid ${varselbestilling.bestillingsId} allerede avbestilt, avbestiller ikke på nytt.")
-                                    countDuplicateVarselbestillingForProducer(varselbestilling.appnavn)
+                                    countDuplicateVarselbestillingForProducer(varselbestilling.namespace, varselbestilling.appnavn)
                                 } else {
                                     doknotifikasjonStopp[varselbestilling.bestillingsId] = DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(varselbestilling)
-                                    countSuccessfulEksternVarslingForProducer(varselbestilling.appnavn)
+                                    countSuccessfulEksternVarslingForProducer(varselbestilling.namespace, varselbestilling.appnavn)
                                 }
                             }
                         } catch (e: Exception) {
-                            countFailedEksternvarslingForProducer(nokkel.getAppnavn() ?: "NoProducerSpecified")
+                            countFailedEksternvarslingForProducer(nokkel.getNamespace(), nokkel.getAppnavn())
                             problematicEvents[nokkel] = event
                             log.warn("Eventet kan ikke brukes pga en ukjent feil, done-eventet vil bli forkastet. EventId: ${nokkel.getEventId()}", e)
                         }
@@ -66,10 +66,10 @@ class DoneEventService(
             try {
                 val doneKey = event.key()
                 val doneEvent = event.value()
-                eventMetricsSession.countAllEventsFromKafkaForProducer(doneKey.getSystembruker())
+                eventMetricsSession.countAllEventsFromKafkaForProducer(event.namespace, event.appnavn)
                 doneEvents[doneKey] = doneEvent
             }  catch (e: Exception) {
-                eventMetricsSession.countFailedEksternvarslingForProducer(event.appnavn)
+                eventMetricsSession.countFailedEksternvarslingForProducer(event.namespace, event.appnavn)
                 log.warn("Fikk en uventet feil ved prosessering av Done-event, fullfører batch-en.", e)
             }
         }

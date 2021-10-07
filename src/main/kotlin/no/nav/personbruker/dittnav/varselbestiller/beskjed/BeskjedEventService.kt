@@ -37,16 +37,16 @@ class BeskjedEventService(
                 try {
                     val beskjedKey = event.key()
                     val beskjedEvent = event.value()
-                    countAllEventsFromKafkaForProducer(event.appnavn)
+                    countAllEventsFromKafkaForProducer(event.namespace, event.appnavn)
                     if(beskjedEvent.getEksternVarsling()) {
                         val doknotifikasjonKey = DoknotifikasjonCreator.createDoknotifikasjonKey(beskjedKey, Eventtype.BESKJED_INTERN)
                         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(beskjedKey, beskjedEvent)
                         successfullyTransformedEvents[doknotifikasjonKey] = doknotifikasjon
                         varselbestillinger.add(VarselbestillingTransformer.fromBeskjed(beskjedKey, beskjedEvent, doknotifikasjon))
-                        countSuccessfulEksternVarslingForProducer(beskjedKey.getAppnavn())
+                        countSuccessfulEksternVarslingForProducer(event.namespace, event.appnavn)
                     }
                 } catch (e: Exception) {
-                    countFailedEksternvarslingForProducer(event.appnavn)
+                    countFailedEksternvarslingForProducer(event.namespace, event.appnavn)
                     problematicEvents.add(event)
                     log.warn("Transformasjon av beskjed-event fra Kafka feilet, fullfører batch-en før polling stoppes.", e)
                 }
@@ -82,7 +82,7 @@ class BeskjedEventService(
     private fun logDuplicateVarselbestillinger(eventMetricsSession: EventMetricsSession, duplicateVarselbestillinger: List<Varselbestilling>) {
         duplicateVarselbestillinger.forEach{
             log.info("Varsel med bestillingsid ${it.bestillingsId} er allerede bestilt, bestiller ikke på nytt.")
-            eventMetricsSession.countDuplicateVarselbestillingForProducer(it.appnavn)
+            eventMetricsSession.countDuplicateVarselbestillingForProducer(it.namespace, it.appnavn)
         }
     }
 

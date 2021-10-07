@@ -23,59 +23,59 @@ class MetricsCollector(private val metricsReporter: MetricsReporter) {
     }
 
     private suspend fun handleSeenEksternvarslingEvents(session: EventMetricsSession) {
-        session.getUniqueProducers().forEach { producerName ->
-            val numberEksternvarslingSeen = session.getEksternvarslingEventsSeen(producerName)
+        session.getUniqueProducers().forEach { producer ->
+            val numberEksternvarslingSeen = session.getEksternvarslingEventsSeen(producer.namespace, producer.appnavn)
             val eventTypeName = session.eventtype.toString()
 
-            reportMetrics(KAFKA_EKSTERNVARSLING_EVENTS_SEEN, numberEksternvarslingSeen, eventTypeName, producerName)
-            PrometheusMetricsCollector.registerSeenEksternvarslingEvents(numberEksternvarslingSeen, eventTypeName, producerName)
+            reportMetrics(KAFKA_EKSTERNVARSLING_EVENTS_SEEN, numberEksternvarslingSeen, eventTypeName, producer)
+            PrometheusMetricsCollector.registerSeenEksternvarslingEvents(numberEksternvarslingSeen, eventTypeName, producer)
         }
     }
 
     private suspend fun handleAllEventsFromKafka(session: EventMetricsSession) {
-        session.getUniqueProducers().forEach { producerName ->
-            val numberOfAllEvents = session.getAllEventsFromKafka(producerName)
+        session.getUniqueProducers().forEach { producer ->
+            val numberOfAllEvents = session.getAllEventsFromKafka(producer.namespace, producer.appnavn)
             val eventTypeName = session.eventtype.toString()
 
             if (numberOfAllEvents > 0) {
-                reportMetrics(KAFKA_ALL_EVENTS, numberOfAllEvents, eventTypeName, producerName)
-                PrometheusMetricsCollector.registerAllEventsFromKafka(numberOfAllEvents, eventTypeName, producerName)
+                reportMetrics(KAFKA_ALL_EVENTS, numberOfAllEvents, eventTypeName, producer)
+                PrometheusMetricsCollector.registerAllEventsFromKafka(numberOfAllEvents, eventTypeName, producer)
             }
         }
     }
 
     private suspend fun handleProcessedEksternvarslingEvents(session: EventMetricsSession) {
-        session.getUniqueProducers().forEach { producerName ->
-            val numberEksternvarslingProcessed = session.getEksternvarslingEventsProcessed(producerName)
+        session.getUniqueProducers().forEach { producer ->
+            val numberEksternvarslingProcessed = session.getEksternvarslingEventsProcessed(producer.namespace, producer.appnavn)
             val eventTypeName = session.eventtype.toString()
 
             if (numberEksternvarslingProcessed > 0) {
-                reportMetrics(KAFKA_EKSTERNVARSLING_EVENTS_PROCESSED, numberEksternvarslingProcessed, eventTypeName, producerName)
-                PrometheusMetricsCollector.registerProcessedEksternvarslingEvents(numberEksternvarslingProcessed, eventTypeName, producerName)
+                reportMetrics(KAFKA_EKSTERNVARSLING_EVENTS_PROCESSED, numberEksternvarslingProcessed, eventTypeName, producer)
+                PrometheusMetricsCollector.registerProcessedEksternvarslingEvents(numberEksternvarslingProcessed, eventTypeName, producer)
             }
         }
     }
 
     private suspend fun handleFailedEksternvarslingEvents(session: EventMetricsSession) {
-        session.getUniqueProducers().forEach { producerName ->
-            val numberEksternvarslingFailed = session.getEksternvarslingEventsFailed(producerName)
+        session.getUniqueProducers().forEach { producer ->
+            val numberEksternvarslingFailed = session.getEksternvarslingEventsFailed(producer.namespace, producer.appnavn)
             val eventTypeName = session.eventtype.toString()
 
             if (numberEksternvarslingFailed > 0) {
-                reportMetrics(KAFKA_EKSTERNVARSLING_EVENTS_FAILED, numberEksternvarslingFailed, eventTypeName, producerName)
-                PrometheusMetricsCollector.registerFailedEksternvarslingEvents(numberEksternvarslingFailed, eventTypeName, producerName)
+                reportMetrics(KAFKA_EKSTERNVARSLING_EVENTS_FAILED, numberEksternvarslingFailed, eventTypeName, producer)
+                PrometheusMetricsCollector.registerFailedEksternvarslingEvents(numberEksternvarslingFailed, eventTypeName, producer)
             }
         }
     }
 
     private suspend fun handleDuplicateEksternvarslingEventKeys(session: EventMetricsSession) {
-        session.getUniqueProducers().forEach { producerName ->
-            val numberEksternvarslingDuplicateKeys = session.getEksternvarslingDuplicateKeys(producerName)
+        session.getUniqueProducers().forEach { producer ->
+            val numberEksternvarslingDuplicateKeys = session.getEksternvarslingDuplicateKeys(producer.namespace, producer.appnavn)
             val eventTypeName = session.eventtype.toString()
 
             if (numberEksternvarslingDuplicateKeys > 0) {
-                reportMetrics(KAFKA_EKSTERNVARSLING_EVENTS_DUPLICATE_KEY, numberEksternvarslingDuplicateKeys, eventTypeName, producerName)
-                PrometheusMetricsCollector.registerDuplicateKeyEksternvarslingEvents(numberEksternvarslingDuplicateKeys, eventTypeName, producerName)
+                reportMetrics(KAFKA_EKSTERNVARSLING_EVENTS_DUPLICATE_KEY, numberEksternvarslingDuplicateKeys, eventTypeName, producer)
+                PrometheusMetricsCollector.registerDuplicateKeyEksternvarslingEvents(numberEksternvarslingDuplicateKeys, eventTypeName, producer)
             }
         }
     }
@@ -95,8 +95,8 @@ class MetricsCollector(private val metricsReporter: MetricsReporter) {
         metricsReporter.registerDataPoint(KAFKA_EVENTS_PROCESSING_TIME, fieldMap, tagMap)
     }
 
-    private suspend fun reportMetrics(metricName: String, count: Int, eventType: String, producerName: String) {
-        metricsReporter.registerDataPoint(metricName, createCounterField(count), createTagMap(eventType, producerName))
+    private suspend fun reportMetrics(metricName: String, count: Int, eventType: String, producer: Producer) {
+        metricsReporter.registerDataPoint(metricName, createCounterField(count), createTagMap(eventType, producer.getProducerKey()))
     }
 
     private fun createCounterField(events: Int): Map<String, Int> = listOf("counter" to events).toMap()

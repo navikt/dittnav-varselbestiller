@@ -36,16 +36,16 @@ class OppgaveEventService(
                 try {
                     val oppgaveKey = event.key()
                     val oppgaveEvent = event.value()
-                    countAllEventsFromKafkaForProducer(event.appnavn)
+                    countAllEventsFromKafkaForProducer(event.namespace, event.appnavn)
                     if (oppgaveEvent.getEksternVarsling()) {
                         val doknotifikasjonKey = DoknotifikasjonCreator.createDoknotifikasjonKey(oppgaveKey, Eventtype.OPPGAVE_INTERN)
                         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(oppgaveKey, oppgaveEvent)
                         successfullyTransformedEvents[doknotifikasjonKey] = doknotifikasjon
                         varselbestillinger.add(VarselbestillingTransformer.fromOppgave(oppgaveKey, oppgaveEvent, doknotifikasjon))
-                        countSuccessfulEksternVarslingForProducer(oppgaveKey.getAppnavn())
+                        countSuccessfulEksternVarslingForProducer(event.namespace, event.appnavn)
                     }
                 } catch (e: Exception) {
-                    countFailedEksternvarslingForProducer(event.appnavn)
+                    countFailedEksternvarslingForProducer(event.namespace, event.appnavn)
                     problematicEvents.add(event)
                     log.warn("Validering av oppgave-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
                 }
@@ -81,7 +81,7 @@ class OppgaveEventService(
     private fun logDuplicateVarselbestillinger(eventMetricsSession: EventMetricsSession, duplicateVarselbestillinger: List<Varselbestilling>) {
         duplicateVarselbestillinger.forEach{
             log.info("Varsel med bestillingsid ${it.bestillingsId} er allerede bestilt, bestiller ikke på nytt.")
-            eventMetricsSession.countDuplicateVarselbestillingForProducer(it.appnavn)
+            eventMetricsSession.countDuplicateVarselbestillingForProducer(it.namespace, it.appnavn)
         }
     }
 
