@@ -20,6 +20,7 @@ class VarselbestillingTransformerTest {
         varselbestilling.bestillingsId `should be equal to` avroDoknotifikasjon.getBestillingsId()
         varselbestilling.eventId `should be equal to` avroNokkel.getEventId()
         varselbestilling.fodselsnummer `should be equal to` avroNokkel.getFodselsnummer()
+        varselbestilling.systembruker `should be equal to` avroNokkel.getSystembruker()
         varselbestilling.appnavn `should be equal to` avroNokkel.getAppnavn()
         varselbestilling.bestillingstidspunkt.`should not be null`()
     }
@@ -34,6 +35,7 @@ class VarselbestillingTransformerTest {
         varselbestilling.bestillingsId `should be equal to` avroDoknotifikasjon.getBestillingsId()
         varselbestilling.eventId `should be equal to` avroNokkel.getEventId()
         varselbestilling.fodselsnummer `should be equal to` avroNokkel.getFodselsnummer()
+        varselbestilling.systembruker `should be equal to` avroNokkel.getSystembruker()
         varselbestilling.appnavn `should be equal to` avroNokkel.getAppnavn()
         varselbestilling.bestillingstidspunkt.`should not be null`()
     }

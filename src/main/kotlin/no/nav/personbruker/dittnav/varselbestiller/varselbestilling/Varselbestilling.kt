@@ -6,6 +6,7 @@ data class Varselbestilling(
         val bestillingsId: String,
         val eventId: String,
         val fodselsnummer: String,
+        val systembruker: String,
         val namespace: String,
         val appnavn: String,
         val bestillingstidspunkt: LocalDateTime,

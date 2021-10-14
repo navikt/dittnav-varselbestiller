@@ -8,6 +8,7 @@ object VarselbestillingObjectMother {
 
     private val defaultEventId = "123"
     private val defaultFodselsnr = "12345678901"
+    private val defaultSystembruker = "dummySystembruker"
     private val defaultNamespace = "dummyNamespace"
     private val defaultAppnavn = "dummyAppnavn"
     private val defaultBestillingstidspunkt = LocalDateTime.now(ZoneId.of("UTC"))
@@ -36,6 +37,7 @@ object VarselbestillingObjectMother {
                 bestillingsId = bestillingsId,
                 eventId = eventId,
                 fodselsnummer = fodselsnummer,
+                systembruker = defaultSystembruker,
                 namespace = defaultNamespace,
                 appnavn = defaultAppnavn,
                 bestillingstidspunkt = defaultBestillingstidspunkt,

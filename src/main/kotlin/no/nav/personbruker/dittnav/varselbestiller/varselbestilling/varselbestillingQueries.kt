@@ -5,8 +5,8 @@ import java.sql.*
 import java.sql.Array
 
 fun Connection.createVarselbestillinger(varselbestillinger: List<Varselbestilling>): ListPersistActionResult<Varselbestilling> =
-        executeBatchPersistQuery("""INSERT INTO varselbestilling (bestillingsid, eventid, fodselsnummer, eventtidspunkt, avbestilt, prefererteKanaler, namespace, appnavn) 
-                                    |VALUES (?, ?, ?, ?, ?, ?, ?, ?)""".trimMargin()) {
+        executeBatchPersistQuery("""INSERT INTO varselbestilling (bestillingsid, eventid, fodselsnummer, systembruker, eventtidspunkt, avbestilt, prefererteKanaler, namespace, appnavn) 
+                                    |VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""".trimMargin()) {
                 varselbestillinger.forEach { varselbestilling ->
                         buildStatementForSingleRow(varselbestilling)
                         addBatch()
@@ -43,6 +43,7 @@ fun ResultSet.toVarselbestilling(): Varselbestilling {
             bestillingsId = getString("bestillingsid"),
             eventId = getString("eventid"),
             fodselsnummer = getString("fodselsnummer"),
+            systembruker = getString("systembruker"),
             namespace = getString("namespace"),
             appnavn = getString("appnavn"),
             bestillingstidspunkt = getUtcDateTime("eventtidspunkt"),
@@ -55,11 +56,12 @@ private fun PreparedStatement.buildStatementForSingleRow(varselbestilling: Varse
         setString(1, varselbestilling.bestillingsId)
         setString(2, varselbestilling.eventId)
         setString(3, varselbestilling.fodselsnummer)
-        setObject(4, varselbestilling.bestillingstidspunkt, Types.TIMESTAMP)
-        setObject(5, varselbestilling.avbestilt)
-        setObject(6, varselbestilling.prefererteKanaler.joinToString(","))
-        setString(7, varselbestilling.namespace)
-        setString(8, varselbestilling.appnavn)
+        setString(4, varselbestilling.systembruker)
+        setObject(5, varselbestilling.bestillingstidspunkt, Types.TIMESTAMP)
+        setObject(6, varselbestilling.avbestilt)
+        setObject(7, varselbestilling.prefererteKanaler.joinToString(","))
+        setString(8, varselbestilling.namespace)
+        setString(9, varselbestilling.appnavn)
 }
 
 private fun Connection.toVarcharArray(stringList: List<String>): Array {
