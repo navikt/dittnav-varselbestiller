@@ -22,12 +22,11 @@ internal class MetricsCollectorTest {
 
     @Test
     fun `should use producer name for events processed`() {
-        val namespace = "dummyNamespace"
-        val appnavn = "dummyAppnavn"
+        val producer = Producer("dummyNamespace", "dummyAppnavn")
 
         val metricsCollector = MetricsCollector(metricsReporter)
 
-        val producerNameForPrometheus = slot<Producer>()
+        val producerNameForPrometheus = slot<String>()
         val capturedTags = slot<Map<String, String>>()
 
         coEvery { metricsReporter.registerDataPoint(not(KAFKA_EVENTS_PROCESSING_TIME), any(), capture(capturedTags)) } returns Unit
@@ -36,7 +35,7 @@ internal class MetricsCollectorTest {
 
         runBlocking {
             metricsCollector.recordMetrics(Eventtype.BESKJED_INTERN) {
-                countSuccessfulEksternVarslingForProducer(namespace, appnavn)
+                countSuccessfulEksternVarslingForProducer(producer)
             }
         }
 
@@ -44,20 +43,19 @@ internal class MetricsCollectorTest {
         verify(exactly = 1) { PrometheusMetricsCollector.registerSeenEksternvarslingEvents(any(), any(), any()) }
         verify(exactly = 1) { PrometheusMetricsCollector.registerProcessedEksternvarslingEvents(any(), any(), any()) }
 
-        producerNameForPrometheus.captured.namespace `should be equal to` namespace
-        producerNameForPrometheus.captured.appnavn `should be equal to` appnavn
-        capturedTags.captured["producer"] `should be equal to` "$namespace:$appnavn"
+        producerNameForPrometheus.captured `should be equal to` producer.appnavn
+        capturedTags.captured["producer"] `should be equal to` producer.appnavn
+        capturedTags.captured["producerNamespace"] `should be equal to` producer.namespace
     }
 
     @Test
     fun `should use producer name for events failed`() {
-        val namespace = "dummyNamespace"
-        val appnavn = "dummyAppnavn"
+        val producer = Producer("dummyNamespace", "dummyAppnavn")
 
         val metricsCollector = MetricsCollector(metricsReporter)
 
         val capturedTags = slot<Map<String, String>>()
-        val producerNameForPrometheus = slot<Producer>()
+        val producerNameForPrometheus = slot<String>()
 
         coEvery { metricsReporter.registerDataPoint(not(KAFKA_EVENTS_PROCESSING_TIME), any(), capture(capturedTags)) } returns Unit
         coEvery { metricsReporter.registerDataPoint(KAFKA_EVENTS_PROCESSING_TIME, any(), any()) } returns Unit
@@ -65,7 +63,7 @@ internal class MetricsCollectorTest {
 
         runBlocking {
             metricsCollector.recordMetrics(Eventtype.BESKJED_INTERN) {
-                countFailedEksternvarslingForProducer(namespace, appnavn)
+                countFailedEksternvarslingForProducer(producer)
             }
         }
 
@@ -73,16 +71,14 @@ internal class MetricsCollectorTest {
         verify(exactly = 1) { PrometheusMetricsCollector.registerSeenEksternvarslingEvents(any(), any(), any()) }
         verify(exactly = 1) { PrometheusMetricsCollector.registerFailedEksternvarslingEvents(any(), any(), any()) }
 
-        producerNameForPrometheus.captured.namespace `should be equal to` namespace
-        producerNameForPrometheus.captured.appnavn `should be equal to` appnavn
-        capturedTags.captured["producer"] `should be equal to` "$namespace:$appnavn"
+        producerNameForPrometheus.captured `should be equal to` producer.appnavn
+        capturedTags.captured["producer"] `should be equal to` producer.appnavn
+        capturedTags.captured["producerNamespace"] `should be equal to` producer.namespace
     }
 
     @Test
     fun `should report correct number of events`() {
-        val namespace = "dummyNamespace"
-        val appnavn = "dummyAppnavn"
-
+        val producer = Producer("dummyNamespace", "dummyAppnavn")
         val metricsCollector = MetricsCollector(metricsReporter)
 
         val capturedFieldsForSeen = slot<Map<String, Any>>()
@@ -98,10 +94,10 @@ internal class MetricsCollectorTest {
 
         runBlocking {
             metricsCollector.recordMetrics(Eventtype.BESKJED_INTERN) {
-                countSuccessfulEksternVarslingForProducer(namespace, appnavn)
-                countSuccessfulEksternVarslingForProducer(namespace, appnavn)
-                countFailedEksternvarslingForProducer(namespace, appnavn)
-                countAllEventsFromKafkaForProducer(namespace, appnavn)
+                countSuccessfulEksternVarslingForProducer(producer)
+                countSuccessfulEksternVarslingForProducer(producer)
+                countFailedEksternvarslingForProducer(producer)
+                countAllEventsFromKafkaForProducer(producer)
             }
         }
 

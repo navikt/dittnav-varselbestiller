@@ -10,6 +10,7 @@ import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.Doknotif
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppTransformer
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
+import no.nav.personbruker.dittnav.varselbestiller.metrics.Producer
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.slf4j.Logger
@@ -37,14 +38,14 @@ class DoneEventService(
                             if(varselbestilling != null) {
                                 if(varselbestilling.avbestilt) {
                                     log.info("Varsel med bestillingsid ${varselbestilling.bestillingsId} allerede avbestilt, avbestiller ikke på nytt.")
-                                    countDuplicateVarselbestillingForProducer(varselbestilling.namespace, varselbestilling.appnavn)
+                                    countDuplicateVarselbestillingForProducer(Producer(varselbestilling.namespace, varselbestilling.appnavn))
                                 } else {
                                     doknotifikasjonStopp[varselbestilling.bestillingsId] = DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(varselbestilling)
-                                    countSuccessfulEksternVarslingForProducer(varselbestilling.namespace, varselbestilling.appnavn)
+                                    countSuccessfulEksternVarslingForProducer(Producer(varselbestilling.namespace, varselbestilling.appnavn))
                                 }
                             }
                         } catch (e: Exception) {
-                            countFailedEksternvarslingForProducer(nokkel.getNamespace(), nokkel.getAppnavn())
+                            countFailedEksternvarslingForProducer(Producer(nokkel.getNamespace(), nokkel.getAppnavn()))
                             problematicEvents[nokkel] = event
                             log.warn("Eventet kan ikke brukes pga en ukjent feil, done-eventet vil bli forkastet. EventId: ${nokkel.getEventId()}", e)
                         }
@@ -66,10 +67,10 @@ class DoneEventService(
             try {
                 val doneKey = event.key()
                 val doneEvent = event.value()
-                eventMetricsSession.countAllEventsFromKafkaForProducer(event.namespace, event.appnavn)
+                eventMetricsSession.countAllEventsFromKafkaForProducer(Producer(event.namespace, event.appnavn))
                 doneEvents[doneKey] = doneEvent
             }  catch (e: Exception) {
-                eventMetricsSession.countFailedEksternvarslingForProducer(event.namespace, event.appnavn)
+                eventMetricsSession.countFailedEksternvarslingForProducer(Producer(event.namespace, event.appnavn))
                 log.warn("Fikk en uventet feil ved prosessering av Done-event, fullfører batch-en.", e)
             }
         }

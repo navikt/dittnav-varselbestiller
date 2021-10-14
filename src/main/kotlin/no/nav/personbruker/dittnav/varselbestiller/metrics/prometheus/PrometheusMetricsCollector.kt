@@ -59,25 +59,25 @@ object PrometheusMetricsCollector {
             .register()
 
 
-    fun registerProcessedEksternvarslingEvents(count: Int, topic: String, producer: Producer) {
-        MESSAGES_PROCESSED_EKSTERNVARSLING.labels(topic, producer.getProducerKey()).inc(count.toDouble())
+    fun registerProcessedEksternvarslingEvents(count: Int, topic: String, producer: String) {
+        MESSAGES_PROCESSED_EKSTERNVARSLING.labels(topic, producer).inc(count.toDouble())
     }
 
-    fun registerSeenEksternvarslingEvents(count: Int, eventType: String, producer: Producer) {
-        MESSAGES_SEEN_EKSTERNVARSLING.labels(eventType, producer.getProducerKey()).inc(count.toDouble())
-        MESSAGE_LAST_SEEN_EKSTERNVARSLING.labels(eventType, producer.getProducerKey()).setToCurrentTime()
+    fun registerSeenEksternvarslingEvents(count: Int, eventType: String, producer: String) {
+        MESSAGES_SEEN_EKSTERNVARSLING.labels(eventType, producer).inc(count.toDouble())
+        MESSAGE_LAST_SEEN_EKSTERNVARSLING.labels(eventType, producer).setToCurrentTime()
     }
 
-    fun registerAllEventsFromKafka(count: Int, eventType: String, producer: Producer) {
-        MESSAGES_ALL_EVENTS.labels(eventType, producer.getProducerKey()).inc(count.toDouble())
+    fun registerAllEventsFromKafka(count: Int, eventType: String, producer: String) {
+        MESSAGES_ALL_EVENTS.labels(eventType, producer).inc(count.toDouble())
     }
 
-    fun registerFailedEksternvarslingEvents(count: Int, topic: String, producer: Producer) {
-        MESSAGES_FAILED_EKSTERNVARSLING.labels(topic, producer.getProducerKey()).inc(count.toDouble())
+    fun registerFailedEksternvarslingEvents(count: Int, topic: String, producer: String) {
+        MESSAGES_FAILED_EKSTERNVARSLING.labels(topic, producer).inc(count.toDouble())
     }
 
-    fun registerDuplicateKeyEksternvarslingEvents(count: Int, topic: String, producer: Producer) {
-        MESSAGES_DUPLICATE_KEY_EKSTERNVARSLING.labels(topic, producer.getProducerKey()).inc(count.toDouble())
+    fun registerDuplicateKeyEksternvarslingEvents(count: Int, topic: String, producer: String) {
+        MESSAGES_DUPLICATE_KEY_EKSTERNVARSLING.labels(topic, producer).inc(count.toDouble())
     }
 
 }

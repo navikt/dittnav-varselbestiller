@@ -11,6 +11,7 @@ import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.Doknotifikasj
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
+import no.nav.personbruker.dittnav.varselbestiller.metrics.Producer
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingTransformer
@@ -37,16 +38,17 @@ class BeskjedEventService(
                 try {
                     val beskjedKey = event.key()
                     val beskjedEvent = event.value()
-                    countAllEventsFromKafkaForProducer(event.namespace, event.appnavn)
+                    val producer = Producer(event.namespace, event.appnavn)
+                    countAllEventsFromKafkaForProducer(producer)
                     if(beskjedEvent.getEksternVarsling()) {
                         val doknotifikasjonKey = DoknotifikasjonCreator.createDoknotifikasjonKey(beskjedKey, Eventtype.BESKJED_INTERN)
                         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(beskjedKey, beskjedEvent)
                         successfullyTransformedEvents[doknotifikasjonKey] = doknotifikasjon
                         varselbestillinger.add(VarselbestillingTransformer.fromBeskjed(beskjedKey, beskjedEvent, doknotifikasjon))
-                        countSuccessfulEksternVarslingForProducer(event.namespace, event.appnavn)
+                        countSuccessfulEksternVarslingForProducer(producer)
                     }
                 } catch (e: Exception) {
-                    countFailedEksternvarslingForProducer(event.namespace, event.appnavn)
+                    countFailedEksternvarslingForProducer(Producer(event.namespace, event.appnavn))
                     problematicEvents.add(event)
                     log.warn("Transformasjon av beskjed-event fra Kafka feilet, fullfører batch-en før polling stoppes.", e)
                 }
@@ -82,7 +84,7 @@ class BeskjedEventService(
     private fun logDuplicateVarselbestillinger(eventMetricsSession: EventMetricsSession, duplicateVarselbestillinger: List<Varselbestilling>) {
         duplicateVarselbestillinger.forEach{
             log.info("Varsel med bestillingsid ${it.bestillingsId} er allerede bestilt, bestiller ikke på nytt.")
-            eventMetricsSession.countDuplicateVarselbestillingForProducer(it.namespace, it.appnavn)
+            eventMetricsSession.countDuplicateVarselbestillingForProducer(Producer(it.namespace, it.appnavn))
         }
     }
 

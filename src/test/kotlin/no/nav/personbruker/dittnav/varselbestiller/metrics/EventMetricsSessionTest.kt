@@ -9,8 +9,7 @@ import org.junit.jupiter.api.Test
 
 internal class EventMetricsSessionTest {
 
-    private val namespace = "dummyNamespace"
-    private val appnavn = "dummyAppnavn"
+    val producer = Producer("dummyNamespace", "dummyAppnavn")
 
     @Test
     fun `Skal returnere antall sendte duplikat`() {
@@ -20,7 +19,7 @@ internal class EventMetricsSessionTest {
 
         session.countDuplicateKeyEksternvarslingByProducer(conflictingKeysResult)
 
-        session.getEksternvarslingDuplicateKeys(namespace, appnavn) `should be` numberOfDuplicates
+        session.getEksternvarslingDuplicateKeys(producer) `should be` numberOfDuplicates
     }
 
     @Test
@@ -31,7 +30,7 @@ internal class EventMetricsSessionTest {
 
         session.countDuplicateKeyEksternvarslingByProducer(result)
 
-        session.getEksternvarslingDuplicateKeys(namespace, appnavn) `should be` 0
+        session.getEksternvarslingDuplicateKeys(producer) `should be` 0
     }
 
     @Test
@@ -49,9 +48,9 @@ internal class EventMetricsSessionTest {
         val session = EventMetricsSession(Eventtype.BESKJED_INTERN)
 
         session.countNokkelWasNull()
-        session.countAllEventsFromKafkaForProducer(namespace, appnavn)
+        session.countAllEventsFromKafkaForProducer(producer)
 
         session.getAllEventsFromKafka() `should be` 2
-        session.getAllEventsFromKafka(namespace, appnavn) `should be` 1
+        session.getAllEventsFromKafka(producer) `should be` 1
     }
 }

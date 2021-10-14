@@ -11,6 +11,7 @@ import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.Doknotifikasj
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
+import no.nav.personbruker.dittnav.varselbestiller.metrics.Producer
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingTransformer
@@ -36,16 +37,17 @@ class OppgaveEventService(
                 try {
                     val oppgaveKey = event.key()
                     val oppgaveEvent = event.value()
-                    countAllEventsFromKafkaForProducer(event.namespace, event.appnavn)
+                    val producer = Producer(event.namespace, event.appnavn)
+                    countAllEventsFromKafkaForProducer(producer)
                     if (oppgaveEvent.getEksternVarsling()) {
                         val doknotifikasjonKey = DoknotifikasjonCreator.createDoknotifikasjonKey(oppgaveKey, Eventtype.OPPGAVE_INTERN)
                         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(oppgaveKey, oppgaveEvent)
                         successfullyTransformedEvents[doknotifikasjonKey] = doknotifikasjon
                         varselbestillinger.add(VarselbestillingTransformer.fromOppgave(oppgaveKey, oppgaveEvent, doknotifikasjon))
-                        countSuccessfulEksternVarslingForProducer(event.namespace, event.appnavn)
+                        countSuccessfulEksternVarslingForProducer(producer)
                     }
                 } catch (e: Exception) {
-                    countFailedEksternvarslingForProducer(event.namespace, event.appnavn)
+                    countFailedEksternvarslingForProducer(Producer(event.namespace, event.appnavn))
                     problematicEvents.add(event)
                     log.warn("Validering av oppgave-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
                 }
@@ -81,7 +83,7 @@ class OppgaveEventService(
     private fun logDuplicateVarselbestillinger(eventMetricsSession: EventMetricsSession, duplicateVarselbestillinger: List<Varselbestilling>) {
         duplicateVarselbestillinger.forEach{
             log.info("Varsel med bestillingsid ${it.bestillingsId} er allerede bestilt, bestiller ikke på nytt.")
-            eventMetricsSession.countDuplicateVarselbestillingForProducer(it.namespace, it.appnavn)
+            eventMetricsSession.countDuplicateVarselbestillingForProducer(Producer(it.namespace, it.appnavn))
         }
     }
 

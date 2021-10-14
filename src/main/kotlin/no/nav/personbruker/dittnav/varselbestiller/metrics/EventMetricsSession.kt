@@ -12,13 +12,11 @@ class EventMetricsSession(val eventtype: Eventtype) {
     private var countNokkelWasNull: Int = 0
     private val startTime = System.nanoTime()
 
-    fun countAllEventsFromKafkaForProducer(namespace: String, appnavn: String) {
-        val producer = Producer(namespace, appnavn)
+    fun countAllEventsFromKafkaForProducer(producer: Producer) {
         countAllEventsFromKafkaByProducer[producer] = countAllEventsFromKafkaByProducer.getOrDefault(producer, 0).inc()
     }
 
-    fun countSuccessfulEksternVarslingForProducer(namespace: String, appnavn: String) {
-        val producer = Producer(namespace, appnavn)
+    fun countSuccessfulEksternVarslingForProducer(producer: Producer) {
         countProcessedEksternvarslingByProducer[producer] = countProcessedEksternvarslingByProducer.getOrDefault(producer, 0).inc()
     }
 
@@ -26,13 +24,11 @@ class EventMetricsSession(val eventtype: Eventtype) {
         countNokkelWasNull++
     }
 
-    fun countFailedEksternvarslingForProducer(namespace: String, appnavn: String) {
-        val producer = Producer(namespace, appnavn)
+    fun countFailedEksternvarslingForProducer(producer: Producer) {
         countFailedEksternvarslingByProducer[producer] = countFailedEksternvarslingByProducer.getOrDefault(producer, 0).inc()
     }
 
-    fun countDuplicateVarselbestillingForProducer(namespace: String, appnavn: String) {
-        val producer = Producer(namespace, appnavn)
+    fun countDuplicateVarselbestillingForProducer(producer: Producer) {
         countDuplicateKeyEksternvarslingByProducer[producer] = countDuplicateKeyEksternvarslingByProducer.getOrDefault(producer, 0).inc()
     }
 
@@ -50,24 +46,24 @@ class EventMetricsSession(val eventtype: Eventtype) {
         return System.nanoTime() - startTime
     }
 
-    fun getAllEventsFromKafka(namespace: String, appnavn: String): Int {
-        return countAllEventsFromKafkaByProducer.getOrDefault(Producer(namespace, appnavn), 0)
+    fun getAllEventsFromKafka(producer: Producer): Int {
+        return countAllEventsFromKafkaByProducer.getOrDefault(producer, 0)
     }
 
-    fun getEksternvarslingEventsSeen(namespace: String, appnavn: String): Int {
-        return getEksternvarslingEventsProcessed(namespace, appnavn) + getEksternvarslingEventsFailed(namespace, appnavn)
+    fun getEksternvarslingEventsSeen(producer: Producer): Int {
+        return getEksternvarslingEventsProcessed(producer) + getEksternvarslingEventsFailed(producer)
     }
 
-    fun getEksternvarslingEventsProcessed(namespace: String, appnavn: String): Int {
-        return countProcessedEksternvarslingByProducer.getOrDefault(Producer(namespace, appnavn), 0)
+    fun getEksternvarslingEventsProcessed(producer: Producer): Int {
+        return countProcessedEksternvarslingByProducer.getOrDefault(producer, 0)
     }
 
-    fun getEksternvarslingEventsFailed(namespace: String, appnavn: String): Int {
-        return countFailedEksternvarslingByProducer.getOrDefault(Producer(namespace, appnavn), 0)
+    fun getEksternvarslingEventsFailed(producer: Producer): Int {
+        return countFailedEksternvarslingByProducer.getOrDefault(producer, 0)
     }
 
-    fun getEksternvarslingDuplicateKeys(namespace: String, appnavn: String): Int {
-        return countDuplicateKeyEksternvarslingByProducer.getOrDefault(Producer(namespace, appnavn), 0)
+    fun getEksternvarslingDuplicateKeys(producer: Producer): Int {
+        return countDuplicateKeyEksternvarslingByProducer.getOrDefault(producer, 0)
     }
 
     fun getAllEventsFromKafka(): Int {
