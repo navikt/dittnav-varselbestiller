@@ -86,20 +86,16 @@ tasks {
     }
 
     register("runServer", JavaExec::class) {
-        environment("KAFKA_BOOTSTRAP_SERVERS", "localhost:29092")
-        environment("KAFKA_SCHEMAREGISTRY_SERVERS", "http://localhost:8081")
-        environment("SERVICEUSER_USERNAME", "username")
-        environment("SERVICEUSER_PASSWORD", "password")
+        environment("KAFKA_BROKERS", "localhost:29092")
+        environment("KAFKA_SCHEMA_REGISTRY", "http://localhost:8081")
         environment("GROUP_ID", "dittnav_varselbestiller")
-        environment("DB_HOST", "localhost:5432")
-        environment("DB_NAME", "dittnav-event-cache-preprod")
+        environment("DB_HOST", "localhost")
+        environment("DB_PORT", "5432")
+        environment("DB_DATABASE", "dittnav-varselbestiller")
+        environment("DB_USERNAME", "testuser")
         environment("DB_PASSWORD", "testpassword")
-        environment("DB_MOUNT_PATH", "notUsedOnLocalhost")
-        environment("NAIS_CLUSTER_NAME", "dev-sbs")
-        environment("NAIS_NAMESPACE", "q1")
-        environment("SENSU_HOST", "stub")
-        environment("SENSU_PORT", "0")
-        environment("PRODUCER_ALIASES", "")
+        environment("NAIS_CLUSTER_NAME", "dev-gcp")
+        environment("NAIS_NAMESPACE", "dev")
 
         main = application.mainClass.get()
         classpath = sourceSets["main"].runtimeClasspath

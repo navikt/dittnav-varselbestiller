@@ -5,7 +5,6 @@ import no.nav.common.JAASCredential
 import no.nav.common.KafkaEnvironment
 import no.nav.personbruker.dittnav.varselbestiller.config.Environment
 import org.apache.avro.generic.GenericRecord
-import java.net.URL
 import java.util.*
 
 object KafkaTestUtil {
@@ -16,7 +15,7 @@ object KafkaTestUtil {
     fun createDefaultKafkaEmbeddedInstance(topics: List<String>): KafkaEnvironment {
         return KafkaEnvironment(
                 topicNames = topics,
-                withSecurity = true,
+                withSecurity = false,
                 withSchemaRegistry = true,
                 users = listOf(JAASCredential(username, password)),
                 brokerConfigOverrides = Properties().apply {
@@ -28,10 +27,8 @@ object KafkaTestUtil {
 
     fun createEnvironmentForEmbeddedKafka(embeddedEnv: KafkaEnvironment): Environment {
         return Environment(
-                bootstrapServers = embeddedEnv.brokersURL.substringAfterLast("/"),
-                schemaRegistryUrl = embeddedEnv.schemaRegistry!!.url,
-                username = username,
-                password = password,
+                aivenBrokers = embeddedEnv.brokersURL.substringAfterLast("/"),
+                aivenSchemaRegistry = embeddedEnv.schemaRegistry!!.url,
                 groupId = "groupId-for-tests",
                 dbHost = "dbHostIkkeIBrukHer",
                 dbPort = "dbPortIkkeIBrukHer",
@@ -57,11 +54,9 @@ object KafkaTestUtil {
 
     suspend fun produceEvents(env: Environment, topicName: String, events: Map<NokkelIntern, GenericRecord>): Boolean {
         return KafkaProducerUtil.kafkaAvroProduce(
-                env.bootstrapServers,
-                env.schemaRegistryUrl,
+                env.aivenBrokers,
+                env.aivenSchemaRegistry,
                 topicName,
-                env.username,
-                env.password,
                 events)
     }
 

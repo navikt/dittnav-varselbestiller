@@ -67,10 +67,10 @@ class BeskjedIT {
     }
 
     fun `Read all Beskjed-events from our topic and verify that they have been sent to varselbestiller-topic`() {
-        val consumerProps = KafkaEmbed.consumerProps(testEnvironment, Eventtype.BESKJED_INTERN, true)
+        val consumerProps = KafkaEmbed.consumerProps(testEnvironment, Eventtype.BESKJED_INTERN)
         val kafkaConsumer = KafkaConsumer<NokkelIntern, BeskjedIntern>(consumerProps)
 
-        val producerProps = Kafka.producerProps(testEnvironment, Eventtype.DOKNOTIFIKASJON, true)
+        val producerProps = Kafka.producerProps(testEnvironment, Eventtype.DOKNOTIFIKASJON)
         val kafkaProducer = KafkaProducer<String, Doknotifikasjon>(producerProps)
         val kafkaProducerWrapper = KafkaProducerWrapper(KafkaTestTopics.doknotifikasjonTopicName, kafkaProducer)
         val doknotifikasjonRepository = VarselbestillingRepository(database)
@@ -90,7 +90,7 @@ class BeskjedIT {
     }
 
     private fun `Wait until all beskjed events have been received by target topic`() {
-        val targetConsumerProps = KafkaEmbed.consumerProps(testEnvironment, Eventtype.DOKNOTIFIKASJON, true)
+        val targetConsumerProps = KafkaEmbed.consumerProps(testEnvironment, Eventtype.DOKNOTIFIKASJON)
         val targetKafkaConsumer = KafkaConsumer<String, Doknotifikasjon>(targetConsumerProps)
         val capturingProcessor = CapturingEventProcessor<String, Doknotifikasjon>()
 

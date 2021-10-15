@@ -76,10 +76,10 @@ class DoneIT {
     }
 
     fun `Read all Done-events from our topic and verify that they have been sent to DoknotifikasjonStopp-topic`() {
-        val consumerProps = KafkaEmbed.consumerProps(testEnvironment, Eventtype.DONE_INTERN, true)
+        val consumerProps = KafkaEmbed.consumerProps(testEnvironment, Eventtype.DONE_INTERN)
         val kafkaConsumer = KafkaConsumer<NokkelIntern, DoneIntern>(consumerProps)
 
-        val producerProps = Kafka.producerProps(testEnvironment, Eventtype.DOKNOTIFIKASJON_STOPP, true)
+        val producerProps = Kafka.producerProps(testEnvironment, Eventtype.DOKNOTIFIKASJON_STOPP)
         val kafkaProducer = KafkaProducer<String, DoknotifikasjonStopp>(producerProps)
         val kafkaProducerWrapper = KafkaProducerWrapper(KafkaTestTopics.doknotifikasjonStopTopicName, kafkaProducer)
         val doknotifikasjonRepository = VarselbestillingRepository(database)
@@ -113,7 +113,7 @@ class DoneIT {
     }
 
     private fun `Wait until all DoknotifikasjonStopp-events have been received by target topic`() {
-        val targetConsumerProps = KafkaEmbed.consumerProps(testEnvironment, Eventtype.DOKNOTIFIKASJON_STOPP, true)
+        val targetConsumerProps = KafkaEmbed.consumerProps(testEnvironment, Eventtype.DOKNOTIFIKASJON_STOPP)
         val targetKafkaConsumer = KafkaConsumer<String, DoknotifikasjonStopp>(targetConsumerProps)
         val capturingProcessor = CapturingEventProcessor<String, DoknotifikasjonStopp>()
 
