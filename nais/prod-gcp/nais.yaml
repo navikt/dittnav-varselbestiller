@@ -2,9 +2,9 @@ apiVersion: "nais.io/v1alpha1"
 kind: "Application"
 metadata:
   name: dittnav-varselbestiller
-  namespace: min-side
+  namespace: personbruker
   labels:
-    team: min-side
+    team: personbruker
 spec:
   encFrom:
     - secret: dittnav-varselbestiller-secrets
@@ -25,7 +25,7 @@ spec:
   ingresses:
     - "https://dittnav-varselbestiller-gcp.nais.oera.no"
   kafka:
-    pool: nav-dev
+    pool: nav-prod
   gcp:
     sqlInstances:
       - name: varselbestiller
