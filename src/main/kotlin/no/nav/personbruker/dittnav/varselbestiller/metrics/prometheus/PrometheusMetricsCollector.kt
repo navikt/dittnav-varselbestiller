@@ -2,6 +2,7 @@ package no.nav.personbruker.dittnav.varselbestiller.metrics.prometheus
 
 import io.prometheus.client.Counter
 import io.prometheus.client.Gauge
+import no.nav.personbruker.dittnav.varselbestiller.metrics.Producer
 
 object PrometheusMetricsCollector {
 

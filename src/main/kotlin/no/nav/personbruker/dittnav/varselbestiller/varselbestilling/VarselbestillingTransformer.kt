@@ -1,31 +1,35 @@
 package no.nav.personbruker.dittnav.varselbestiller.varselbestilling
 
-import no.nav.brukernotifikasjon.schemas.Beskjed
-import no.nav.brukernotifikasjon.schemas.Nokkel
-import no.nav.brukernotifikasjon.schemas.Oppgave
+import no.nav.brukernotifikasjon.schemas.internal.BeskjedIntern
+import no.nav.brukernotifikasjon.schemas.internal.NokkelIntern
+import no.nav.brukernotifikasjon.schemas.internal.OppgaveIntern
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import java.time.LocalDateTime
 import java.time.ZoneId
 
 object VarselbestillingTransformer {
 
-    fun fromBeskjed(key: Nokkel, beskjed: Beskjed, doknotifikasjon: Doknotifikasjon): Varselbestilling {
+    fun fromBeskjed(key: NokkelIntern, beskjed: BeskjedIntern, doknotifikasjon: Doknotifikasjon): Varselbestilling {
         return Varselbestilling(
                 bestillingsId = doknotifikasjon.getBestillingsId(),
                 eventId = key.getEventId(),
-                fodselsnummer = beskjed.getFodselsnummer(),
+                fodselsnummer = key.getFodselsnummer(),
                 systembruker = key.getSystembruker(),
+                namespace = key.getNamespace(),
+                appnavn = key.getAppnavn(),
                 bestillingstidspunkt = LocalDateTime.now(ZoneId.of("UTC")),
                 prefererteKanaler = beskjed.getPrefererteKanaler()
         )
     }
 
-    fun fromOppgave(key: Nokkel, oppgave: Oppgave, doknotifikasjon: Doknotifikasjon): Varselbestilling {
+    fun fromOppgave(key: NokkelIntern, oppgave: OppgaveIntern, doknotifikasjon: Doknotifikasjon): Varselbestilling {
         return Varselbestilling(
                 bestillingsId = doknotifikasjon.getBestillingsId(),
                 eventId = key.getEventId(),
-                fodselsnummer = oppgave.getFodselsnummer(),
+                fodselsnummer = key.getFodselsnummer(),
                 systembruker = key.getSystembruker(),
+                namespace = key.getNamespace(),
+                appnavn = key.getAppnavn(),
                 bestillingstidspunkt = LocalDateTime.now(ZoneId.of("UTC")),
                 prefererteKanaler = oppgave.getPrefererteKanaler()
         )

@@ -5,39 +5,39 @@ import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
 
 class EventMetricsSession(val eventtype: Eventtype) {
-    private val countAllEventsFromKafkaBySysUser = HashMap<String, Int>()
-    private val countProcessedEksternvarslingBySysUser = HashMap<String, Int>()
-    private val countFailedEksternvarslingBySysUser = HashMap<String, Int>()
-    private val countDuplicateKeyEksternvarslingBySysUser = HashMap<String, Int>()
+    private val countAllEventsFromKafkaByProducer = HashMap<Producer, Int>()
+    private val countProcessedEksternvarslingByProducer = HashMap<Producer, Int>()
+    private val countFailedEksternvarslingByProducer = HashMap<Producer, Int>()
+    private val countDuplicateKeyEksternvarslingByProducer = HashMap<Producer, Int>()
     private var countNokkelWasNull: Int = 0
     private val startTime = System.nanoTime()
 
-    fun countAllEventsFromKafkaForSystemUser(systemUser: String) {
-        countAllEventsFromKafkaBySysUser[systemUser] = countAllEventsFromKafkaBySysUser.getOrDefault(systemUser, 0).inc()
+    fun countAllEventsFromKafkaForProducer(producer: Producer) {
+        countAllEventsFromKafkaByProducer[producer] = countAllEventsFromKafkaByProducer.getOrDefault(producer, 0).inc()
     }
 
-    fun countSuccessfulEksternvarslingForSystemUser(systemUser: String) {
-        countProcessedEksternvarslingBySysUser[systemUser] = countProcessedEksternvarslingBySysUser.getOrDefault(systemUser, 0).inc()
+    fun countSuccessfulEksternVarslingForProducer(producer: Producer) {
+        countProcessedEksternvarslingByProducer[producer] = countProcessedEksternvarslingByProducer.getOrDefault(producer, 0).inc()
     }
 
     fun countNokkelWasNull() {
         countNokkelWasNull++
     }
 
-    fun countFailedEksternvarslingForSystemUser(systemUser: String) {
-        countFailedEksternvarslingBySysUser[systemUser] = countFailedEksternvarslingBySysUser.getOrDefault(systemUser, 0).inc()
+    fun countFailedEksternvarslingForProducer(producer: Producer) {
+        countFailedEksternvarslingByProducer[producer] = countFailedEksternvarslingByProducer.getOrDefault(producer, 0).inc()
     }
 
-    fun countDuplicateVarselbestillingForSystemUser(systemUser: String) {
-        countDuplicateKeyEksternvarslingBySysUser[systemUser] = countDuplicateKeyEksternvarslingBySysUser.getOrDefault(systemUser, 0).inc()
+    fun countDuplicateVarselbestillingForProducer(producer: Producer) {
+        countDuplicateKeyEksternvarslingByProducer[producer] = countDuplicateKeyEksternvarslingByProducer.getOrDefault(producer, 0).inc()
     }
 
-    fun countDuplicateKeyEksternvarslingBySystemUser(result: ListPersistActionResult<Varselbestilling>) {
+    fun countDuplicateKeyEksternvarslingByProducer(result: ListPersistActionResult<Varselbestilling>) {
         result.getConflictingEntities()
-                .groupingBy { varselbestilling -> varselbestilling.systembruker }
+                .groupingBy { varselbestilling -> Producer(varselbestilling.namespace, varselbestilling.appnavn) }
                 .eachCount()
-                .forEach { (systembruker, duplicates) ->
-                    countDuplicateKeyEksternvarslingBySysUser[systembruker] = countDuplicateKeyEksternvarslingBySysUser.getOrDefault(systembruker, 0) + duplicates
+                .forEach { (producer, duplicates) ->
+                    countDuplicateKeyEksternvarslingByProducer[producer] = countDuplicateKeyEksternvarslingByProducer.getOrDefault(producer, 0) + duplicates
                 }
 
     }
@@ -46,28 +46,28 @@ class EventMetricsSession(val eventtype: Eventtype) {
         return System.nanoTime() - startTime
     }
 
-    fun getAllEventsFromKafka(systemUser: String): Int {
-        return countAllEventsFromKafkaBySysUser.getOrDefault(systemUser, 0)
+    fun getAllEventsFromKafka(producer: Producer): Int {
+        return countAllEventsFromKafkaByProducer.getOrDefault(producer, 0)
     }
 
-    fun getEksternvarslingEventsSeen(systemUser: String): Int {
-        return getEksternvarslingEventsProcessed(systemUser) + getEksternvarslingEventsFailed(systemUser)
+    fun getEksternvarslingEventsSeen(producer: Producer): Int {
+        return getEksternvarslingEventsProcessed(producer) + getEksternvarslingEventsFailed(producer)
     }
 
-    fun getEksternvarslingEventsProcessed(systemUser: String): Int {
-        return countProcessedEksternvarslingBySysUser.getOrDefault(systemUser, 0)
+    fun getEksternvarslingEventsProcessed(producer: Producer): Int {
+        return countProcessedEksternvarslingByProducer.getOrDefault(producer, 0)
     }
 
-    fun getEksternvarslingEventsFailed(systemUser: String): Int {
-        return countFailedEksternvarslingBySysUser.getOrDefault(systemUser, 0)
+    fun getEksternvarslingEventsFailed(producer: Producer): Int {
+        return countFailedEksternvarslingByProducer.getOrDefault(producer, 0)
     }
 
-    fun getEksternvarslingDuplicateKeys(systemUser: String): Int {
-        return countDuplicateKeyEksternvarslingBySysUser.getOrDefault(systemUser, 0)
+    fun getEksternvarslingDuplicateKeys(producer: Producer): Int {
+        return countDuplicateKeyEksternvarslingByProducer.getOrDefault(producer, 0)
     }
 
     fun getAllEventsFromKafka(): Int {
-        return countAllEventsFromKafkaBySysUser.values.sum() + countNokkelWasNull
+        return countAllEventsFromKafkaByProducer.values.sum() + countNokkelWasNull
     }
 
     fun getEksternvarslingEventsSeen(): Int {
@@ -75,26 +75,26 @@ class EventMetricsSession(val eventtype: Eventtype) {
     }
 
     fun getEksternvarslingEventsProcessed(): Int {
-        return countProcessedEksternvarslingBySysUser.values.sum()
+        return countProcessedEksternvarslingByProducer.values.sum()
     }
 
     fun getEksternvarslingEventsFailed(): Int {
-        return countFailedEksternvarslingBySysUser.values.sum()
+        return countFailedEksternvarslingByProducer.values.sum()
     }
 
-    fun getEksternvarslingDuplicateKeys(): HashMap<String, Int> {
-        return countDuplicateKeyEksternvarslingBySysUser
+    fun getEksternvarslingDuplicateKeys(): HashMap<Producer, Int> {
+        return countDuplicateKeyEksternvarslingByProducer
     }
 
     fun getNokkelWasNull(): Int {
         return countNokkelWasNull
     }
 
-    fun getUniqueSystemUser(): List<String> {
-        val systemUsers = ArrayList<String>()
-        systemUsers.addAll(countAllEventsFromKafkaBySysUser.keys)
-        systemUsers.addAll(countProcessedEksternvarslingBySysUser.keys)
-        systemUsers.addAll(countFailedEksternvarslingBySysUser.keys)
-        return systemUsers.distinct()
+    fun getUniqueProducers(): List<Producer> {
+        val producers = ArrayList<Producer>()
+        producers.addAll(countAllEventsFromKafkaByProducer.keys)
+        producers.addAll(countProcessedEksternvarslingByProducer.keys)
+        producers.addAll(countFailedEksternvarslingByProducer.keys)
+        return producers.distinct()
     }
 }

@@ -1,20 +1,17 @@
 package no.nav.personbruker.dittnav.varselbestiller.beskjed
 
-import no.nav.brukernotifikasjon.schemas.Beskjed
-import no.nav.brukernotifikasjon.schemas.Nokkel
-import no.nav.brukernotifikasjon.schemas.builders.exception.FieldValidationException
-import no.nav.brukernotifikasjon.schemas.builders.exception.UnknownEventtypeException
+import no.nav.brukernotifikasjon.schemas.internal.BeskjedIntern
+import no.nav.brukernotifikasjon.schemas.internal.NokkelIntern
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.personbruker.dittnav.varselbestiller.common.EventBatchProcessorService
-import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.NokkelNullException
-import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UnvalidatableRecordException
-import no.nav.personbruker.dittnav.varselbestiller.common.kafka.serializer.getNonNullKey
-import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.common.database.ListPersistActionResult
+import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UntransformableRecordException
+import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
+import no.nav.personbruker.dittnav.varselbestiller.metrics.Producer
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingTransformer
@@ -27,54 +24,40 @@ class BeskjedEventService(
         private val doknotifikasjonProducer: DoknotifikasjonProducer,
         private val varselbestillingRepository: VarselbestillingRepository,
         private val metricsCollector: MetricsCollector
-) : EventBatchProcessorService<Nokkel, Beskjed> {
+) : EventBatchProcessorService<NokkelIntern, BeskjedIntern> {
 
     private val log: Logger = LoggerFactory.getLogger(BeskjedEventService::class.java)
 
-    override suspend fun processEvents(events: ConsumerRecords<Nokkel, Beskjed>) {
-        val successfullyValidatedEvents = mutableMapOf<String, Doknotifikasjon>()
-        val problematicEvents = mutableListOf<ConsumerRecord<Nokkel, Beskjed>>()
+    override suspend fun processEvents(events: ConsumerRecords<NokkelIntern, BeskjedIntern>) {
+        val successfullyTransformedEvents = mutableMapOf<String, Doknotifikasjon>()
+        val problematicEvents = mutableListOf<ConsumerRecord<NokkelIntern, BeskjedIntern>>()
         val varselbestillinger = mutableListOf<Varselbestilling>()
 
-        metricsCollector.recordMetrics(eventType = Eventtype.BESKJED) {
+        metricsCollector.recordMetrics(eventType = Eventtype.BESKJED_INTERN) {
             events.forEach { event ->
                 try {
-                    val beskjedKey = event.getNonNullKey()
+                    val beskjedKey = event.key()
                     val beskjedEvent = event.value()
-                    countAllEventsFromKafkaForSystemUser(beskjedKey.getSystembruker())
+                    val producer = Producer(event.namespace, event.appnavn)
+                    countAllEventsFromKafkaForProducer(producer)
                     if(beskjedEvent.getEksternVarsling()) {
-                        val doknotifikasjonKey = DoknotifikasjonCreator.createDoknotifikasjonKey(beskjedKey, Eventtype.BESKJED)
+                        val doknotifikasjonKey = DoknotifikasjonCreator.createDoknotifikasjonKey(beskjedKey, Eventtype.BESKJED_INTERN)
                         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(beskjedKey, beskjedEvent)
-                        successfullyValidatedEvents[doknotifikasjonKey] = doknotifikasjon
+                        successfullyTransformedEvents[doknotifikasjonKey] = doknotifikasjon
                         varselbestillinger.add(VarselbestillingTransformer.fromBeskjed(beskjedKey, beskjedEvent, doknotifikasjon))
-                        countSuccessfulEksternvarslingForSystemUser(beskjedKey.getSystembruker())
+                        countSuccessfulEksternVarslingForProducer(producer)
                     }
-                } catch (nne: NokkelNullException) {
-                    countNokkelWasNull()
-                    log.warn("Beskjed-eventet manglet nøkkel. Topic: ${event.topic()}, Partition: ${event.partition()}, Offset: ${event.offset()}", nne)
-                } catch (fve: FieldValidationException) {
-                    countFailedEksternvarslingForSystemUser(event.systembruker ?: "NoProducerSpecified")
-                    log.warn("Eventet kan ikke brukes fordi det inneholder valideringsfeil, beskjed-eventet vil bli forkastet. EventId: ${event.eventId}", fve)
-                } catch (e: UnknownEventtypeException) {
-                    countFailedEksternvarslingForSystemUser(event.systembruker ?: "NoProducerSpecified")
-                    log.warn("Eventet kan ikke brukes fordi det inneholder ukjent eventtype, beskjed-eventet vil bli forkastet. EventId: ${event.eventId}", e)
-                } catch(cce: ClassCastException) {
-                    countFailedEksternvarslingForSystemUser(event.systembruker ?: "NoProducerSpecified")
-                    val funnetType = event.javaClass.name
-                    val eventId = event.eventId
-                    val systembruker = event.systembruker
-                    log.warn("Feil eventtype funnet på beskjed-topic. Fant et event av typen $funnetType. Eventet blir forkastet. EventId: $eventId, systembruker: $systembruker", cce)
                 } catch (e: Exception) {
-                    countFailedEksternvarslingForSystemUser(event.systembruker ?: "NoProducerSpecified")
+                    countFailedEksternvarslingForProducer(Producer(event.namespace, event.appnavn))
                     problematicEvents.add(event)
-                    log.warn("Validering av beskjed-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
+                    log.warn("Transformasjon av beskjed-event fra Kafka feilet, fullfører batch-en før polling stoppes.", e)
                 }
             }
-            if (successfullyValidatedEvents.isNotEmpty()) {
-                produceDoknotifikasjonerAndPersistToDB(this, successfullyValidatedEvents, varselbestillinger)
+            if (successfullyTransformedEvents.isNotEmpty()) {
+                produceDoknotifikasjonerAndPersistToDB(this, successfullyTransformedEvents, varselbestillinger)
             }
             if (problematicEvents.isNotEmpty()) {
-                throwExceptionIfFailedValidation(problematicEvents)
+                throwExceptionForProblematicEvents(problematicEvents)
             }
         }
     }
@@ -101,14 +84,14 @@ class BeskjedEventService(
     private fun logDuplicateVarselbestillinger(eventMetricsSession: EventMetricsSession, duplicateVarselbestillinger: List<Varselbestilling>) {
         duplicateVarselbestillinger.forEach{
             log.info("Varsel med bestillingsid ${it.bestillingsId} er allerede bestilt, bestiller ikke på nytt.")
-            eventMetricsSession.countDuplicateVarselbestillingForSystemUser(it.systembruker)
+            eventMetricsSession.countDuplicateVarselbestillingForProducer(Producer(it.namespace, it.appnavn))
         }
     }
 
-    private fun throwExceptionIfFailedValidation(problematicEvents: MutableList<ConsumerRecord<Nokkel, Beskjed>>) {
-        val message = "En eller flere beskjed-eventer kunne ikke sendes til varselbestiller fordi validering feilet."
-        val exception = UnvalidatableRecordException(message)
-        exception.addContext("antallMislykkedValidering", problematicEvents.size)
+    private fun throwExceptionForProblematicEvents(problematicEvents: MutableList<ConsumerRecord<NokkelIntern, BeskjedIntern>>) {
+        val message = "En eller flere beskjed-eventer kunne ikke sendes til varselbestiller fordi transformering feilet."
+        val exception = UntransformableRecordException(message)
+        exception.addContext("antallMislykkedeTransformasjoner", problematicEvents.size)
         throw exception
     }
 }

@@ -8,7 +8,7 @@ object DoknotifikasjonStoppTransformer {
     fun createDoknotifikasjonStopp(varselbestilling: Varselbestilling): DoknotifikasjonStopp {
         val doknotifikasjonStoppBuilder = DoknotifikasjonStopp.newBuilder()
                 .setBestillingsId(varselbestilling.bestillingsId)
-                .setBestillerId(varselbestilling.systembruker)
+                .setBestillerId(varselbestilling.appnavn)
         return doknotifikasjonStoppBuilder.build()
     }
 }

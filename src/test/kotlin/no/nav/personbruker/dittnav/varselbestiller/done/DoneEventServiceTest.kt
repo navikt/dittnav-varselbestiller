@@ -2,25 +2,21 @@ package no.nav.personbruker.dittnav.varselbestiller.done
 
 import io.mockk.*
 import kotlinx.coroutines.runBlocking
-import no.nav.brukernotifikasjon.schemas.Beskjed
-import no.nav.brukernotifikasjon.schemas.Done
-import no.nav.brukernotifikasjon.schemas.Nokkel
-import no.nav.brukernotifikasjon.schemas.builders.exception.FieldValidationException
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
+import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UntransformableRecordException
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.ConsumerRecordsObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.AvroDoknotifikasjonStoppObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppTransformer
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
-import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelObjectMother
-import no.nav.personbruker.dittnav.varselbestiller.oppgave.AvroOppgaveObjectMother
+import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelInternObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import org.amshove.kluent.`should be`
-import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.apache.kafka.clients.consumer.ConsumerRecords
+import org.amshove.kluent.`should throw`
+import org.amshove.kluent.invoking
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -48,35 +44,13 @@ class DoneEventServiceTest {
     }
 
     @Test
-    fun `Skal forkaste eventer som mangler nokkel`() {
-        val done = AvroDoneObjectMother.createDone("001")
-        val cr: ConsumerRecord<Nokkel, Done> = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName = "done", actualKey = null, actualEvent = done)
-        val records = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(cr)
-
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
-        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
-        }
-
-        coEvery { varselbestillingRepository.fetchVarselbestillingerForEventIds(allAny()) } returns listOf(VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-test-001", eventId = "001"))
-
-        runBlocking {
-            eventService.processEvents(records)
-        }
-
-        coVerify(exactly = 0) { doknotifikasjonStoppProducer.sendEventsAndPersistCancellation(allAny())}
-        coVerify (exactly = 1) { metricsSession.countNokkelWasNull() }
-        confirmVerified(doknotifikasjonStoppProducer)
-    }
-
-    @Test
     fun `Skal opprette DoknotifikasjonStopp for alle eventer som har ekstern varsling`() {
         val doneEventId1 = "001"
         val doneEventId2 = "002"
         val doneEventId3 = "003"
-        val doneConsumerRecord1 = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName = "done", actualKey = AvroNokkelObjectMother.createNokkelWithEventId(doneEventId1), actualEvent = AvroDoneObjectMother.createDone(eventId = doneEventId1))
-        val doneConsumerRecord2 = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName = "done", actualKey = AvroNokkelObjectMother.createNokkelWithEventId(doneEventId2), actualEvent =  AvroDoneObjectMother.createDone(eventId = doneEventId2))
-        val doneConsumerRecord3 = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName ="done", actualKey = AvroNokkelObjectMother.createNokkelWithEventId(doneEventId3), actualEvent = AvroDoneObjectMother.createDone(eventId = doneEventId3))
+        val doneConsumerRecord1 = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName = "done", actualKey = AvroNokkelInternObjectMother.createNokkelInternWithEventId(doneEventId1), actualEvent = AvroDoneInternObjectMother.createDoneIntern())
+        val doneConsumerRecord2 = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName = "done", actualKey = AvroNokkelInternObjectMother.createNokkelInternWithEventId(doneEventId2), actualEvent =  AvroDoneInternObjectMother.createDoneIntern())
+        val doneConsumerRecord3 = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName ="done", actualKey = AvroNokkelInternObjectMother.createNokkelInternWithEventId(doneEventId3), actualEvent = AvroDoneInternObjectMother.createDoneIntern())
         val records = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(listOf(doneConsumerRecord1, doneConsumerRecord2, doneConsumerRecord3))
 
         val slot = slot<suspend EventMetricsSession.() -> Unit>()
@@ -85,9 +59,9 @@ class DoneEventServiceTest {
         }
         val capturedListOfEntities = slot<Map<String, DoknotifikasjonStopp>>()
         coEvery { varselbestillingRepository.fetchVarselbestillingerForEventIds(listOf(doneEventId1, doneEventId2, doneEventId3)) } returns
-                listOf(VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId("B-test-001", doneEventId1),
-                        VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId("B-test-002", doneEventId2),
-                        VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId("B-test-003", doneEventId3))
+                listOf(VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId("B-dummyAppnavn-001", doneEventId1),
+                        VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId("B-dummyAppnavn-002", doneEventId2),
+                        VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId("B-dummyAppnavn-003", doneEventId3))
         coEvery { doknotifikasjonStoppProducer.sendEventsAndPersistCancellation(capture(capturedListOfEntities)) } returns Unit
 
         runBlocking {
@@ -95,8 +69,8 @@ class DoneEventServiceTest {
         }
 
         coVerify(exactly = 1) { doknotifikasjonStoppProducer.sendEventsAndPersistCancellation(any()) }
-        coVerify (exactly = 3) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
-        coVerify (exactly = 3) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
+        coVerify (exactly = 3) { metricsSession.countSuccessfulEksternVarslingForProducer(any()) }
+        coVerify (exactly = 3) { metricsSession.countAllEventsFromKafkaForProducer(any()) }
         capturedListOfEntities.captured.size `should be` records.count()
 
         confirmVerified(doknotifikasjonStoppProducer)
@@ -107,9 +81,9 @@ class DoneEventServiceTest {
         val doneEventId1 = "001"
         val doneEventId2 = "002"
         val doneEventId3 = "003"
-        val doneConsumerRecord1 = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName = "done", actualKey = AvroNokkelObjectMother.createNokkelWithEventId(doneEventId1), actualEvent = AvroDoneObjectMother.createDone(eventId = doneEventId1))
-        val doneConsumerRecord2 = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName = "done", actualKey = AvroNokkelObjectMother.createNokkelWithEventId(doneEventId2), actualEvent =  AvroDoneObjectMother.createDone(eventId = doneEventId2))
-        val doneConsumerRecord3 = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName ="done", actualKey = AvroNokkelObjectMother.createNokkelWithEventId(doneEventId3), actualEvent = AvroDoneObjectMother.createDone(eventId = doneEventId3))
+        val doneConsumerRecord1 = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName = "done", actualKey = AvroNokkelInternObjectMother.createNokkelInternWithEventId(doneEventId1), actualEvent = AvroDoneInternObjectMother.createDoneIntern())
+        val doneConsumerRecord2 = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName = "done", actualKey = AvroNokkelInternObjectMother.createNokkelInternWithEventId(doneEventId2), actualEvent =  AvroDoneInternObjectMother.createDoneIntern())
+        val doneConsumerRecord3 = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName ="done", actualKey = AvroNokkelInternObjectMother.createNokkelInternWithEventId(doneEventId3), actualEvent = AvroDoneInternObjectMother.createDoneIntern())
         val records = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(listOf(doneConsumerRecord1, doneConsumerRecord2, doneConsumerRecord3))
 
         val slot = slot<suspend EventMetricsSession.() -> Unit>()
@@ -119,8 +93,8 @@ class DoneEventServiceTest {
 
         val capturedListOfEntities = slot<Map<String, DoknotifikasjonStopp>>()
         coEvery { varselbestillingRepository.fetchVarselbestillingerForEventIds(listOf(doneEventId1, doneEventId2, doneEventId3)) } returns
-                listOf(VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId("B-test-001", doneEventId1),
-                        VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId("B-test-002", doneEventId2))
+                listOf(VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId("B-dummyAppnavn-001", doneEventId1),
+                        VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId("B-dummyAppnavn-002", doneEventId2))
         coEvery { doknotifikasjonStoppProducer.sendEventsAndPersistCancellation(capture(capturedListOfEntities)) } returns Unit
 
         runBlocking {
@@ -128,8 +102,8 @@ class DoneEventServiceTest {
         }
 
         coVerify(exactly = 1) { doknotifikasjonStoppProducer.sendEventsAndPersistCancellation(any())}
-        coVerify (exactly = 2) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
-        coVerify (exactly = 3) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
+        coVerify (exactly = 2) { metricsSession.countSuccessfulEksternVarslingForProducer(any()) }
+        coVerify (exactly = 3) { metricsSession.countAllEventsFromKafkaForProducer(any()) }
         capturedListOfEntities.captured.size `should be` 2
         confirmVerified(doknotifikasjonStoppProducer)
     }
@@ -139,9 +113,9 @@ class DoneEventServiceTest {
         val doneEventId1 = "001"
         val doneEventId2 = "002"
         val doneEventId3 = "003"
-        val doneConsumerRecord1 = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName = "done", actualKey = AvroNokkelObjectMother.createNokkelWithEventId(doneEventId1), actualEvent = AvroDoneObjectMother.createDone(eventId = doneEventId1))
-        val doneConsumerRecord2 = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName = "done", actualKey = AvroNokkelObjectMother.createNokkelWithEventId(doneEventId2), actualEvent =  AvroDoneObjectMother.createDone(eventId = doneEventId2))
-        val doneConsumerRecord3 = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName ="done", actualKey = AvroNokkelObjectMother.createNokkelWithEventId(doneEventId3), actualEvent = AvroDoneObjectMother.createDone(eventId = doneEventId3))
+        val doneConsumerRecord1 = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName = "done", actualKey = AvroNokkelInternObjectMother.createNokkelInternWithEventId(doneEventId1), actualEvent = AvroDoneInternObjectMother.createDoneIntern())
+        val doneConsumerRecord2 = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName = "done", actualKey = AvroNokkelInternObjectMother.createNokkelInternWithEventId(doneEventId2), actualEvent =  AvroDoneInternObjectMother.createDoneIntern())
+        val doneConsumerRecord3 = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName ="done", actualKey = AvroNokkelInternObjectMother.createNokkelInternWithEventId(doneEventId3), actualEvent = AvroDoneInternObjectMother.createDoneIntern())
         val records = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(listOf(doneConsumerRecord1, doneConsumerRecord2, doneConsumerRecord3))
 
         val slot = slot<suspend EventMetricsSession.() -> Unit>()
@@ -163,13 +137,13 @@ class DoneEventServiceTest {
         }
 
         coVerify(exactly = 1) { doknotifikasjonStoppProducer.sendEventsAndPersistCancellation(any())}
-        coVerify (exactly = 1) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
+        coVerify (exactly = 1) { metricsSession.countSuccessfulEksternVarslingForProducer(any()) }
         capturedListOfEntities.captured.size `should be` 1
         confirmVerified(doknotifikasjonStoppProducer)
     }
 
     @Test
-    fun `Skal haandtere at enkelte valideringer feiler og fortsette aa validere resten av batch-en`() {
+    fun `Skal haandtere at enkelte transformeringer feiler og fortsette aa validere resten av batch-en`() {
         val totalNumberOfRecords = 4
         val numberOfFailedTransformations = 1
         val numberOfSuccessfulTransformations = totalNumberOfRecords - numberOfFailedTransformations
@@ -183,49 +157,29 @@ class DoneEventServiceTest {
         val capturedListOfEntities = slot<Map<String, DoknotifikasjonStopp>>()
         coEvery { doknotifikasjonStoppProducer.sendEventsAndPersistCancellation(capture(capturedListOfEntities)) } returns Unit
         coEvery { varselbestillingRepository.fetchVarselbestillingerForEventIds(allAny()) } returns listOf(
-                VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-dummySystembruker-0", eventId = "0"),
-                VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-dummySystembruker-1", eventId = "1"),
-                VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-dummySystembruker-2", eventId = "2"),
-                VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-dummySystembruker-3", eventId = "3")
+                VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-dummyAppnavn-0", eventId = "0"),
+                VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-dummyAppnavn-1", eventId = "1"),
+                VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-dummyAppnavn-2", eventId = "2"),
+                VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-dummyAppnavn-3", eventId = "3")
         )
 
-        val fieldValidationException = FieldValidationException("Simulert feil i en test")
+        val fieldValidationException = UntransformableRecordException("Simulert feil i en test")
         val doknotifikasjonStopp = AvroDoknotifikasjonStoppObjectMother.giveMeANumberOfDoknotifikasjonStopp(5)
         coEvery { DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(ofType(Varselbestilling::class)) } throws fieldValidationException andThenMany doknotifikasjonStopp
 
-        runBlocking {
-            eventService.processEvents(records)
-        }
+        invoking {
+            runBlocking {
+                eventService.processEvents(records)
+            }
+        } `should throw` UntransformableRecordException::class
 
         coVerify(exactly = 1) { doknotifikasjonStoppProducer.sendEventsAndPersistCancellation(any()) }
-        coVerify(exactly = numberOfFailedTransformations) { metricsSession.countFailedEksternvarslingForSystemUser(any()) }
-        coVerify (exactly = numberOfSuccessfulTransformations) { metricsSession.countSuccessfulEksternvarslingForSystemUser(any()) }
-        coVerify (exactly = numberOfSuccessfulTransformations + numberOfFailedTransformations) { metricsSession.countAllEventsFromKafkaForSystemUser(any()) }
+        coVerify(exactly = numberOfFailedTransformations) { metricsSession.countFailedEksternvarslingForProducer(any()) }
+        coVerify (exactly = numberOfSuccessfulTransformations) { metricsSession.countSuccessfulEksternVarslingForProducer(any()) }
+        coVerify (exactly = numberOfSuccessfulTransformations + numberOfFailedTransformations) { metricsSession.countAllEventsFromKafkaForProducer(any()) }
         capturedListOfEntities.captured.size `should be` numberOfSuccessfulTransformations
 
         confirmVerified(doknotifikasjonStoppProducer)
     }
-
-    @Test
-    fun `Skal haandtere at et event med feil type har havnet paa topic`() {
-        val malplacedOppgave = AvroOppgaveObjectMother.createOppgave()
-        val cr = ConsumerRecordsObjectMother.createConsumerRecord("done", malplacedOppgave)
-        val malplacedRecords = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(cr)
-        val records = malplacedRecords as ConsumerRecords<Nokkel, Done>
-
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
-        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
-        }
-
-        runBlocking {
-            eventService.processEvents(records)
-        }
-
-        coVerify(exactly = 0) { doknotifikasjonStoppProducer.sendEventsAndPersistCancellation(allAny()) }
-        coVerify (exactly = 1) { metricsSession.countFailedEksternvarslingForSystemUser(any()) }
-        confirmVerified(doknotifikasjonStoppProducer)
-    }
-
 }
 

@@ -41,13 +41,13 @@ class PeriodicConsumerPollingCheck(
         val consumersThatShouldBeRestarted = mutableListOf<Eventtype>()
 
         if (shouldPollBeskjedToDoknotifikasjon() and appContext.beskjedConsumer.isStopped()) {
-            consumersThatShouldBeRestarted.add(Eventtype.BESKJED)
+            consumersThatShouldBeRestarted.add(Eventtype.BESKJED_INTERN)
         }
         if (shouldPollDoneToDoknotifikasjonStopp() and appContext.doneConsumer.isStopped()) {
-            consumersThatShouldBeRestarted.add(Eventtype.DONE)
+            consumersThatShouldBeRestarted.add(Eventtype.DONE_INTERN)
         }
         if (shouldPollOppgaveToDoknotifikasjon() and appContext.oppgaveConsumer.isStopped()) {
-            consumersThatShouldBeRestarted.add(Eventtype.OPPGAVE)
+            consumersThatShouldBeRestarted.add(Eventtype.OPPGAVE_INTERN)
         }
         return consumersThatShouldBeRestarted
     }

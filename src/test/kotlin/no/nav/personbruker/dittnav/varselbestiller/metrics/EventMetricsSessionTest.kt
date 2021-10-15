@@ -9,33 +9,33 @@ import org.junit.jupiter.api.Test
 
 internal class EventMetricsSessionTest {
 
-    private val systembruker = "dummySystembruker"
+    val producer = Producer("dummyNamespace", "dummyAppnavn")
 
     @Test
     fun `Skal returnere antall sendte duplikat`() {
         val numberOfDuplicates = 2
-        val session = EventMetricsSession(Eventtype.BESKJED)
+        val session = EventMetricsSession(Eventtype.BESKJED_INTERN)
         val conflictingKeysResult = conflictingKeysEvents(giveMeANumberOfVarselbestilling(numberOfDuplicates))
 
-        session.countDuplicateKeyEksternvarslingBySystemUser(conflictingKeysResult)
+        session.countDuplicateKeyEksternvarslingByProducer(conflictingKeysResult)
 
-        session.getEksternvarslingDuplicateKeys(systembruker) `should be` numberOfDuplicates
+        session.getEksternvarslingDuplicateKeys(producer) `should be` numberOfDuplicates
     }
 
     @Test
     fun `Skal returnere 0 hvis ingen duplikat er sendt`() {
         val numberOfEvents = 2
-        val session = EventMetricsSession(Eventtype.BESKJED)
+        val session = EventMetricsSession(Eventtype.BESKJED_INTERN)
         val result = successfulEvents(giveMeANumberOfVarselbestilling(numberOfEvents))
 
-        session.countDuplicateKeyEksternvarslingBySystemUser(result)
+        session.countDuplicateKeyEksternvarslingByProducer(result)
 
-        session.getEksternvarslingDuplicateKeys(systembruker) `should be` 0
+        session.getEksternvarslingDuplicateKeys(producer) `should be` 0
     }
 
     @Test
     fun `Skal fortsatt telle event hvis nokkel er null`() {
-        val session = EventMetricsSession(Eventtype.BESKJED)
+        val session = EventMetricsSession(Eventtype.BESKJED_INTERN)
 
         session.countNokkelWasNull()
 
@@ -45,13 +45,12 @@ internal class EventMetricsSessionTest {
 
     @Test
     fun `Skal telle rett antall totale events fra Kafka`() {
-        val session = EventMetricsSession(Eventtype.BESKJED)
-        val systemUser = "dummySystemUser"
+        val session = EventMetricsSession(Eventtype.BESKJED_INTERN)
 
         session.countNokkelWasNull()
-        session.countAllEventsFromKafkaForSystemUser(systemUser)
+        session.countAllEventsFromKafkaForProducer(producer)
 
         session.getAllEventsFromKafka() `should be` 2
-        session.getAllEventsFromKafka(systemUser) `should be` 1
+        session.getAllEventsFromKafka(producer) `should be` 1
     }
 }

@@ -2,22 +2,19 @@ package no.nav.personbruker.dittnav.varselbestiller.done
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import no.nav.brukernotifikasjon.schemas.Done
-import no.nav.brukernotifikasjon.schemas.Nokkel
+import no.nav.brukernotifikasjon.schemas.internal.DoneIntern
+import no.nav.brukernotifikasjon.schemas.internal.NokkelIntern
 import no.nav.common.KafkaEnvironment
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
 import no.nav.personbruker.dittnav.common.metrics.StubMetricsReporter
 import no.nav.personbruker.dittnav.varselbestiller.CapturingEventProcessor
 import no.nav.personbruker.dittnav.varselbestiller.common.database.LocalPostgresDatabase
-import no.nav.personbruker.dittnav.varselbestiller.common.getClient
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.*
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.config.Kafka
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
-import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameResolver
-import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameScrubber
-import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelObjectMother
+import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelInternObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.createVarselbestillinger
@@ -37,19 +34,15 @@ class DoneIT {
 
     private val database = LocalPostgresDatabase()
 
-    private val doneEvents = (1..10).map { AvroNokkelObjectMother.createNokkelWithEventId(it) to AvroDoneObjectMother.createDone(it) }.toMap()
+    private val doneEvents = (1..10).map { AvroNokkelInternObjectMother.createNokkelInternWithEventId(it) to AvroDoneInternObjectMother.createDoneIntern() }.toMap()
     private val varselbestillinger = listOf(VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-test-1", eventId = "1"),
                                                                 VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-test-2", eventId = "2"),
                                                                 VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-test-3", eventId = "3"))
 
     private val capturedDoknotifikasjonStopRecords = ArrayList<RecordKeyValueWrapper<String, DoknotifikasjonStopp>>()
 
-    private val producerNameAlias = "dittnav"
-    private val client = getClient(producerNameAlias)
     private val metricsReporter = StubMetricsReporter()
-    private val nameResolver = ProducerNameResolver(client, testEnvironment.eventHandlerURL)
-    private val nameScrubber = ProducerNameScrubber(nameResolver)
-    private val metricsCollector = MetricsCollector(metricsReporter, nameScrubber)
+    private val metricsCollector = MetricsCollector(metricsReporter)
 
     @BeforeAll
     fun setup() {
@@ -83,10 +76,10 @@ class DoneIT {
     }
 
     fun `Read all Done-events from our topic and verify that they have been sent to DoknotifikasjonStopp-topic`() {
-        val consumerProps = KafkaEmbed.consumerProps(testEnvironment, Eventtype.DONE, true)
-        val kafkaConsumer = KafkaConsumer<Nokkel, Done>(consumerProps)
+        val consumerProps = KafkaEmbed.consumerProps(testEnvironment, Eventtype.DONE_INTERN)
+        val kafkaConsumer = KafkaConsumer<NokkelIntern, DoneIntern>(consumerProps)
 
-        val producerProps = Kafka.producerProps(testEnvironment, Eventtype.DOKNOTIFIKASJON_STOPP, true)
+        val producerProps = Kafka.producerProps(testEnvironment, Eventtype.DOKNOTIFIKASJON_STOPP)
         val kafkaProducer = KafkaProducer<String, DoknotifikasjonStopp>(producerProps)
         val kafkaProducerWrapper = KafkaProducerWrapper(KafkaTestTopics.doknotifikasjonStopTopicName, kafkaProducer)
         val doknotifikasjonRepository = VarselbestillingRepository(database)
@@ -120,7 +113,7 @@ class DoneIT {
     }
 
     private fun `Wait until all DoknotifikasjonStopp-events have been received by target topic`() {
-        val targetConsumerProps = KafkaEmbed.consumerProps(testEnvironment, Eventtype.DOKNOTIFIKASJON_STOPP, true)
+        val targetConsumerProps = KafkaEmbed.consumerProps(testEnvironment, Eventtype.DOKNOTIFIKASJON_STOPP)
         val targetKafkaConsumer = KafkaConsumer<String, DoknotifikasjonStopp>(targetConsumerProps)
         val capturingProcessor = CapturingEventProcessor<String, DoknotifikasjonStopp>()
 
