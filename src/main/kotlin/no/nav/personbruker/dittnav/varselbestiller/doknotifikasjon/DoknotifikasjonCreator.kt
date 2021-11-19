@@ -57,7 +57,7 @@ object DoknotifikasjonCreator {
             .setEpostTekst(getDoknotifikasjonEmailText(Eventtype.INNBOKS))
             .setSmsTekst(getDoknotifikasjonSMSText(Eventtype.INNBOKS))
             .setAntallRenotifikasjoner(1)
-            .setRenotifikasjonIntervall(7)
+            .setRenotifikasjonIntervall(4)
             .setPrefererteKanaler(getPrefererteKanaler(innboks.getEksternVarsling(), innboks.getPrefererteKanaler()))
         return doknotifikasjonBuilder.build()
     }

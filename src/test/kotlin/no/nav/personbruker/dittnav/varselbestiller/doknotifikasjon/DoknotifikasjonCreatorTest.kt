@@ -66,7 +66,7 @@ class DoknotifikasjonCreatorTest {
         doknotifikasjon.getEpostTekst().`should not be null or empty`()
         doknotifikasjon.getSmsTekst().`should not be null or empty`()
         doknotifikasjon.getAntallRenotifikasjoner() `should be equal to` 1
-        doknotifikasjon.getRenotifikasjonIntervall() `should be equal to` 7
+        doknotifikasjon.getRenotifikasjonIntervall() `should be equal to` 4
         doknotifikasjon.getPrefererteKanaler().size `should be equal to` innboks.getPrefererteKanaler().size
     }
 
