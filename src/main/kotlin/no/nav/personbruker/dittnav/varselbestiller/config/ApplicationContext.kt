@@ -46,8 +46,7 @@ class ApplicationContext {
     val healthService = HealthService(this)
 
     var periodicConsumerPollingCheck = initializePeriodicConsumerPollingCheck()
-
-
+    
     private fun initializeBeskjedConsumer(): Consumer<NokkelIntern, BeskjedIntern> {
         val beskjedKafkaProps = Kafka.consumerProps(environment, Eventtype.BESKJED_INTERN)
         val beskjedEventService = BeskjedEventService(doknotifikasjonBeskjedProducer, doknotifikasjonRepository, metricsCollector)
