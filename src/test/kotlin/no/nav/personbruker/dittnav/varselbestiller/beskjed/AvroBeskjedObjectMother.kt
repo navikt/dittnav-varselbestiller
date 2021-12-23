@@ -50,7 +50,15 @@ object AvroBeskjedObjectMother {
         return createBeskjed(fodselsnummer, defaultTekst, defaultSikkerhetsnivaa, eksternVarsling, defaultLink, defaultGrupperingsid, defaultPrefererteKanaler)
     }
 
-    private fun createBeskjed(fodselsnummer: String, text: String, sikkerhetsnivaa: Int, eksternVarsling: Boolean, link: String, grupperingsid: String, prefererteKanaler: List<String>): Beskjed {
+    fun createBeskjedWithEpostVarslingstekst(epostVarslingstekst: String): Beskjed {
+        return createBeskjed(defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling, defaultLink, defaultGrupperingsid, defaultPrefererteKanaler, epostVarslingstekst = epostVarslingstekst)
+    }
+
+    fun createBeskjedWithSmsVarslingstekst(smsVarslingstekst: String): Beskjed {
+        return createBeskjed(defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling, defaultLink, defaultGrupperingsid, defaultPrefererteKanaler, smsVarslingstekst = smsVarslingstekst)
+    }
+
+    private fun createBeskjed(fodselsnummer: String, text: String, sikkerhetsnivaa: Int, eksternVarsling: Boolean, link: String, grupperingsid: String, prefererteKanaler: List<String>, epostVarslingstekst: String? = null, smsVarslingstekst: String? = null): Beskjed {
         return Beskjed(
                 Instant.now().toEpochMilli(),
                 Instant.now().toEpochMilli(),
@@ -60,7 +68,9 @@ object AvroBeskjedObjectMother {
                 link,
                 sikkerhetsnivaa,
                 eksternVarsling,
-                prefererteKanaler
+                prefererteKanaler,
+                epostVarslingstekst,
+                smsVarslingstekst
         )
     }
 

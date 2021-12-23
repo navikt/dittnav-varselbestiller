@@ -50,8 +50,17 @@ object AvroOppgaveObjectMother {
         return createOppgave(fodselsnummer, defaultTekst, defaultSikkerhetsnivaa, eksternVarsling, defaultLink, defaultGrupperingsid, defaultPrefererteKanaler)
     }
 
-    private fun createOppgave(fodselsnummer: String, tekst: String, sikkerhetsnivaa: Int, eksternVarsling: Boolean, link: String, grupperingsid: String, prefererteKanaler: List<String>): Oppgave {
+    fun createOppgaveWithEpostVarslingstekst(epostVarslingstekst: String): Oppgave {
+        return createOppgave(defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling, defaultLink, defaultGrupperingsid, defaultPrefererteKanaler, epostVarslingstekst = epostVarslingstekst)
+    }
+
+    fun createOppgaveWithSmsVarslingstekst(smsVarslingstekst: String): Oppgave {
+        return createOppgave(defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling, defaultLink, defaultGrupperingsid, defaultPrefererteKanaler, smsVarslingstekst = smsVarslingstekst)
+    }
+
+    private fun createOppgave(fodselsnummer: String, tekst: String, sikkerhetsnivaa: Int, eksternVarsling: Boolean, link: String, grupperingsid: String, prefererteKanaler: List<String>, epostVarslingstekst: String? = null, smsVarslingstekst: String? = null): Oppgave {
         return Oppgave(
+                Instant.now().toEpochMilli(),
                 Instant.now().toEpochMilli(),
                 fodselsnummer,
                 grupperingsid,
@@ -59,7 +68,9 @@ object AvroOppgaveObjectMother {
                 link,
                 sikkerhetsnivaa,
                 eksternVarsling,
-                prefererteKanaler
+                prefererteKanaler,
+                epostVarslingstekst,
+                smsVarslingstekst
         )
     }
 }

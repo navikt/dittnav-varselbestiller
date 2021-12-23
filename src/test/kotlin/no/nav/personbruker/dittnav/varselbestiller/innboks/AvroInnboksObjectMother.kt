@@ -52,7 +52,15 @@ object AvroInnboksObjectMother {
         return createInnboks(defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, eksternVarsling, defaultLink, defaultGrupperingsid, prefererteKanaler)
     }
 
-    private fun createInnboks(fodselsnummer: String, text: String, sikkerhetsnivaa: Int, eksternVarsling: Boolean, link: String, grupperingsid: String, prefererteKanaler: List<String>): Innboks {
+    fun createInnboksWithEpostVarslingstekst(epostVarslingstekst: String): Innboks {
+        return createInnboks(defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling, defaultLink, defaultGrupperingsid, defaultPrefererteKanaler, epostVarslingstekst = epostVarslingstekst)
+    }
+
+    fun createInnboksWithSmsVarslingstekst(smsVarslingstekst: String): Innboks {
+        return createInnboks(defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling, defaultLink, defaultGrupperingsid, defaultPrefererteKanaler, smsVarslingstekst = smsVarslingstekst)
+    }
+
+    private fun createInnboks(fodselsnummer: String, text: String, sikkerhetsnivaa: Int, eksternVarsling: Boolean, link: String, grupperingsid: String, prefererteKanaler: List<String>, epostVarslingstekst: String? = null, smsVarslingstekst: String? = null): Innboks {
         return Innboks(
             Instant.now().toEpochMilli(),
             fodselsnummer,
@@ -61,7 +69,9 @@ object AvroInnboksObjectMother {
             link,
             sikkerhetsnivaa,
             eksternVarsling,
-            prefererteKanaler
+            prefererteKanaler,
+            epostVarslingstekst,
+            smsVarslingstekst
         )
     }
 }
