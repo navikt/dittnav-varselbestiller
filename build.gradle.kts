@@ -38,7 +38,7 @@ val intTestImplementation by configurations.getting {
 configurations["intTestRuntimeOnly"].extendsFrom(configurations.testRuntimeOnly.get())
 
 dependencies {
-    implementation(Brukernotifikasjon.schemas_internal)
+    implementation("com.github.navikt:brukernotifikasjon-schemas-internal:feature~overstyre-varslingtekst-SNAPSHOT")
     implementation(DittNAV.Common.influxdb)
     implementation(DittNAV.Common.utils)
     implementation(Doknotifikasjon.schemas)

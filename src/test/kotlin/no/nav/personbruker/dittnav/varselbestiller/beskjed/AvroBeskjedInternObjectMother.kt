@@ -24,7 +24,15 @@ object AvroBeskjedInternObjectMother {
         return createBeskjedIntern(defaultTekst, defaultSikkerhetsnivaa, defaultLink, eksternVarsling, prefererteKanaler)
     }
 
-    fun createBeskjedIntern(text: String, sikkerhetsnivaa: Int, link: String, eksternVarsling: Boolean, prefererteKanaler: List<String>): BeskjedIntern {
+    fun createBeskjedWithEpostVarslingstekst(epostVarslingstekst: String): BeskjedIntern {
+        return createBeskjedIntern(defaultTekst, defaultSikkerhetsnivaa, defaultLink, defaultEksternVarsling, defaultPrefererteKanaler, epostVarslingstekst = epostVarslingstekst)
+    }
+
+    fun createBeskjedWithSmsVarslingstekst(smsVarslingstekst: String): BeskjedIntern {
+        return createBeskjedIntern(defaultTekst, defaultSikkerhetsnivaa, defaultLink, defaultEksternVarsling, defaultPrefererteKanaler, smsVarslingstekst = smsVarslingstekst)
+    }
+
+    fun createBeskjedIntern(text: String, sikkerhetsnivaa: Int, link: String, eksternVarsling: Boolean, prefererteKanaler: List<String>, epostVarslingstekst: String? = null, smsVarslingstekst: String? = null): BeskjedIntern {
         return BeskjedIntern(
                 Instant.now().toEpochMilli(),
                 Instant.now().toEpochMilli(),
@@ -32,7 +40,9 @@ object AvroBeskjedInternObjectMother {
                 link,
                 sikkerhetsnivaa,
                 eksternVarsling,
-                prefererteKanaler
+                prefererteKanaler,
+                epostVarslingstekst,
+                smsVarslingstekst
         )
     }
 }

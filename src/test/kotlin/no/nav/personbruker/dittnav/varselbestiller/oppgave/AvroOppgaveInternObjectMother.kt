@@ -3,6 +3,7 @@ package no.nav.personbruker.dittnav.varselbestiller.oppgave
 import no.nav.brukernotifikasjon.schemas.internal.OppgaveIntern
 import no.nav.brukernotifikasjon.schemas.internal.domain.PreferertKanal
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 object AvroOppgaveInternObjectMother {
 
@@ -23,14 +24,25 @@ object AvroOppgaveInternObjectMother {
         return createOppgave(defaultTekst, defaultSikkerhetsnivaa, eksternVarsling, defaultLink, prefererteKanaler)
     }
 
-    fun createOppgave(tekst: String, sikkerhetsnivaa: Int, eksternVarsling: Boolean, link: String, prefererteKanaler: List<String>): OppgaveIntern {
+    fun createOppgaveWithEpostVarslingstekst(epostVarslingstekst: String): OppgaveIntern {
+        return createOppgave(defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling, defaultLink, defaultPrefererteKanaler, epostVarslingstekst = epostVarslingstekst)
+    }
+
+    fun createOppgaveWithSmsVarslingstekst(smsVarslingstekst: String): OppgaveIntern {
+        return createOppgave(defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling, defaultLink, defaultPrefererteKanaler, smsVarslingstekst = smsVarslingstekst)
+    }
+
+    fun createOppgave(tekst: String, sikkerhetsnivaa: Int, eksternVarsling: Boolean, link: String, prefererteKanaler: List<String>, epostVarslingstekst: String? = null, smsVarslingstekst: String? = null): OppgaveIntern {
         return OppgaveIntern(
                 Instant.now().toEpochMilli(),
+                Instant.now().plus(7, ChronoUnit.DAYS).toEpochMilli(),
                 tekst,
                 link,
                 sikkerhetsnivaa,
                 eksternVarsling,
-                prefererteKanaler
+                prefererteKanaler,
+                epostVarslingstekst,
+                smsVarslingstekst
         )
     }
 }

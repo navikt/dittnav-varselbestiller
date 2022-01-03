@@ -17,8 +17,8 @@ object DoknotifikasjonCreator {
                 .setSikkerhetsnivaa(beskjed.getSikkerhetsnivaa())
                 .setFodselsnummer(nokkel.getFodselsnummer())
                 .setTittel("Beskjed fra NAV")
-                .setEpostTekst(getDoknotifikasjonEmailText(Eventtype.BESKJED_INTERN))
-                .setSmsTekst(getDoknotifikasjonSMSText(Eventtype.BESKJED_INTERN))
+                .setEpostTekst(getDoknotifikasjonEmailText(beskjed))
+                .setSmsTekst(getDoknotifikasjonSMSText(beskjed))
                 .setAntallRenotifikasjoner(0)
                 .setPrefererteKanaler(getPrefererteKanaler(beskjed.getEksternVarsling(), beskjed.getPrefererteKanaler()))
         return doknotifikasjonBuilder.build()
@@ -31,8 +31,8 @@ object DoknotifikasjonCreator {
                 .setSikkerhetsnivaa(oppgave.getSikkerhetsnivaa())
                 .setFodselsnummer(nokkel.getFodselsnummer())
                 .setTittel("Du har fått en oppgave fra NAV")
-                .setEpostTekst(getDoknotifikasjonEmailText(Eventtype.OPPGAVE_INTERN))
-                .setSmsTekst(getDoknotifikasjonSMSText(Eventtype.OPPGAVE_INTERN))
+                .setEpostTekst(getDoknotifikasjonEmailText(oppgave))
+                .setSmsTekst(getDoknotifikasjonSMSText(oppgave))
                 .setAntallRenotifikasjoner(1)
                 .setRenotifikasjonIntervall(7)
                 .setPrefererteKanaler(getPrefererteKanaler(oppgave.getEksternVarsling(), oppgave.getPrefererteKanaler()))
@@ -50,20 +50,20 @@ object DoknotifikasjonCreator {
         }
     }
 
-    private fun getDoknotifikasjonEmailText(eventtype: Eventtype): String {
-        return when (eventtype) {
-            Eventtype.BESKJED_INTERN -> this::class.java.getResource("/texts/epost_beskjed.txt").readText(Charsets.UTF_8)
-            Eventtype.OPPGAVE_INTERN -> this::class.java.getResource("/texts/epost_oppgave.txt").readText(Charsets.UTF_8)
-            else -> throw UnknownEventtypeException("Finnes ikke e-posttekst for $eventtype.")
-        }
+    private fun getDoknotifikasjonEmailText(event: BeskjedIntern): String {
+        return event.getEpostVarslingstekst() ?: this::class.java.getResource("/texts/epost_beskjed.txt").readText(Charsets.UTF_8)
     }
 
-    private fun getDoknotifikasjonSMSText(eventtype: Eventtype): String {
-        return when (eventtype) {
-            Eventtype.BESKJED_INTERN -> this::class.java.getResource("/texts/sms_beskjed.txt").readText(Charsets.UTF_8)
-            Eventtype.OPPGAVE_INTERN -> this::class.java.getResource("/texts/sms_oppgave.txt").readText(Charsets.UTF_8)
-            else -> throw UnknownEventtypeException("Finnes ikke SMS-tekst for $eventtype.")
-        }
+    private fun getDoknotifikasjonEmailText(event: OppgaveIntern): String {
+        return event.getEpostVarslingstekst() ?: this::class.java.getResource("/texts/epost_oppgave.txt").readText(Charsets.UTF_8)
+    }
+
+    private fun getDoknotifikasjonSMSText(event: BeskjedIntern): String {
+        return event.getSmsVarslingstekst() ?: this::class.java.getResource("/texts/sms_beskjed.txt").readText(Charsets.UTF_8)
+    }
+
+    private fun getDoknotifikasjonSMSText(event: OppgaveIntern): String {
+        return event.getSmsVarslingstekst() ?: this::class.java.getResource("/texts/sms_oppgave.txt").readText(Charsets.UTF_8)
     }
 
     private fun getPrefererteKanaler(eksternVarsling: Boolean, prefererteKanaler: List<String>?): List<PrefererteKanal> {
