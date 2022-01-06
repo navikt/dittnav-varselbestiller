@@ -158,7 +158,7 @@ class BeskjedEventServiceTest {
         } `should throw` UntransformableRecordException::class
 
         coVerify(exactly = 1) { doknotifikasjonProducer.sendAndPersistEvents(any(), any()) }
-        coVerify(exactly = numberOfFailedTransformations) { metricsSession.countFailedEksternvarslingForProducer(any()) }
+        coVerify(exactly = numberOfFailedTransformations) { metricsSession.countFailedEksternVarslingForProducer(any()) }
         coVerify(exactly = numberOfSuccessfulTransformations) { metricsSession.countSuccessfulEksternVarslingForProducer(any()) }
         coVerify(exactly = numberOfSuccessfulTransformations + numberOfFailedTransformations) { metricsSession.countAllEventsFromKafkaForProducer(any()) }
         capturedListOfEntities.captured.size `should be` numberOfSuccessfulTransformations

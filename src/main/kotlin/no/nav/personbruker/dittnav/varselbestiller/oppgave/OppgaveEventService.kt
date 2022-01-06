@@ -47,7 +47,7 @@ class OppgaveEventService(
                         countSuccessfulEksternVarslingForProducer(producer)
                     }
                 } catch (e: Exception) {
-                    countFailedEksternvarslingForProducer(Producer(event.namespace, event.appnavn))
+                    countFailedEksternVarslingForProducer(Producer(event.namespace, event.appnavn))
                     problematicEvents.add(event)
                     log.warn("Validering av oppgave-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
                 }
@@ -62,22 +62,22 @@ class OppgaveEventService(
     }
 
     private suspend fun produceDoknotifikasjonerAndPersistToDB(eventMetricsSession: EventMetricsSession,
-                                                               successfullyValidatedEvents: Map<String, Doknotifikasjon>,
+                                                               successfullyTransformedEvents: Map<String, Doknotifikasjon>,
                                                                varselbestillinger: List<Varselbestilling>): ListPersistActionResult<Varselbestilling> {
-        val duplicateVarselbestillinger = varselbestillingRepository.fetchVarselbestillingerForBestillingIds(successfullyValidatedEvents.keys.toList())
+        val duplicateVarselbestillinger = varselbestillingRepository.fetchVarselbestillingerForBestillingIds(successfullyTransformedEvents.keys.toList())
         return if(duplicateVarselbestillinger.isEmpty()) {
-            produce(successfullyValidatedEvents, varselbestillinger)
+            produce(successfullyTransformedEvents, varselbestillinger)
         } else {
             val duplicateBestillingIds = duplicateVarselbestillinger.map { it.bestillingsId }
-            val remainingValidatedEvents = successfullyValidatedEvents.filterKeys { bestillingsId -> !duplicateBestillingIds.contains(bestillingsId) }
+            val remainingTransformedEvents = successfullyTransformedEvents.filterKeys { bestillingsId -> !duplicateBestillingIds.contains(bestillingsId) }
             val varselbestillingerToOrder = varselbestillinger.filter { !duplicateBestillingIds.contains(it.bestillingsId)}
             logDuplicateVarselbestillinger(eventMetricsSession, duplicateVarselbestillinger)
-            produce(remainingValidatedEvents, varselbestillingerToOrder)
+            produce(remainingTransformedEvents, varselbestillingerToOrder)
         }
     }
 
-    private suspend fun produce(successfullyValidatedEvents: Map<String, Doknotifikasjon>, varselbestillinger: List<Varselbestilling>): ListPersistActionResult<Varselbestilling> {
-        return doknotifikasjonProducer.sendAndPersistEvents(successfullyValidatedEvents, varselbestillinger)
+    private suspend fun produce(successfullyTransformedEvents: Map<String, Doknotifikasjon>, varselbestillinger: List<Varselbestilling>): ListPersistActionResult<Varselbestilling> {
+        return doknotifikasjonProducer.sendAndPersistEvents(successfullyTransformedEvents, varselbestillinger)
     }
 
     private fun logDuplicateVarselbestillinger(eventMetricsSession: EventMetricsSession, duplicateVarselbestillinger: List<Varselbestilling>) {

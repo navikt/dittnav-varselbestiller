@@ -6,6 +6,7 @@ import no.nav.personbruker.dittnav.varselbestiller.beskjed.AvroBeskjedInternObje
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.FieldValidationException
 import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelInternObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.oppgave.AvroOppgaveInternObjectMother
+import no.nav.personbruker.dittnav.varselbestiller.innboks.AvroInnboksObjectMother
 import org.amshove.kluent.*
 import org.junit.jupiter.api.Test
 
@@ -50,6 +51,25 @@ class DoknotifikasjonCreatorTest {
     }
 
     @Test
+    fun `Skal opprette Doknotifikasjon fra Innboks`() {
+        val eventId = 1
+        val nokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventId)
+        val innboks = AvroInnboksObjectMother.createInnboks()
+        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(nokkel, innboks)
+
+        doknotifikasjon.getBestillingsId() `should be equal to` "I-${nokkel.getSystembruker()}-${nokkel.getEventId()}"
+        doknotifikasjon.getBestillerId() `should be equal to` nokkel.getSystembruker()
+        doknotifikasjon.getSikkerhetsnivaa() `should be equal to` 4
+        doknotifikasjon.getFodselsnummer() `should be equal to` innboks.getFodselsnummer()
+        doknotifikasjon.getTittel().`should not be null or empty`()
+        doknotifikasjon.getEpostTekst().`should not be null or empty`()
+        doknotifikasjon.getSmsTekst().`should not be null or empty`()
+        doknotifikasjon.getAntallRenotifikasjoner() `should be equal to` 1
+        doknotifikasjon.getRenotifikasjonIntervall() `should be equal to` 4
+        doknotifikasjon.getPrefererteKanaler().size `should be equal to` innboks.getPrefererteKanaler().size
+    }
+
+    @Test
     fun `Skal kaste FieldValidationException hvis preferert kanal for Beskjed ikke støttes av Doknotifikasjon`() {
         val eventId = 1
         val nokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventId)
@@ -88,6 +108,26 @@ class DoknotifikasjonCreatorTest {
         val oppgave = AvroOppgaveInternObjectMother.createOppgaveWithEksternVarslingOgPrefererteKanaler(false, listOf(PreferertKanal.SMS.toString()))
         invoking {
             DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(nokkel, oppgave)
+        } `should throw` FieldValidationException::class `with message containing` "Prefererte kanaler"
+    }
+
+    @Test
+    fun `Skal kaste FieldValidationException hvis preferert kanal for Innboks ikke støttes av Doknotifikasjon`() {
+        val eventId = 1
+        val nokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventId)
+        val innboks = AvroInnboksObjectMother.createInnboksWithEksternVarslingOgPrefererteKanaler(true, listOf("UgyldigKanal"))
+        invoking {
+            DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(nokkel, innboks)
+        } `should throw` FieldValidationException::class `with message containing` "preferert kanal"
+    }
+
+    @Test
+    fun `Skal kaste FieldValidationException hvis preferert kanal settes uten at ekstern varsling er satt for Innboks`() {
+        val eventId = 1
+        val nokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventId)
+        val innboks = AvroInnboksObjectMother.createInnboksWithEksternVarslingOgPrefererteKanaler(false, listOf(PreferertKanal.SMS.toString()))
+        invoking {
+            DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(nokkel, innboks)
         } `should throw` FieldValidationException::class `with message containing` "Prefererte kanaler"
     }
 }

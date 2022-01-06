@@ -63,7 +63,7 @@ internal class MetricsCollectorTest {
 
         runBlocking {
             metricsCollector.recordMetrics(Eventtype.BESKJED_INTERN) {
-                countFailedEksternvarslingForProducer(producer)
+                countFailedEksternVarslingForProducer(producer)
             }
         }
 
@@ -96,7 +96,7 @@ internal class MetricsCollectorTest {
             metricsCollector.recordMetrics(Eventtype.BESKJED_INTERN) {
                 countSuccessfulEksternVarslingForProducer(producer)
                 countSuccessfulEksternVarslingForProducer(producer)
-                countFailedEksternvarslingForProducer(producer)
+                countFailedEksternVarslingForProducer(producer)
                 countAllEventsFromKafkaForProducer(producer)
             }
         }

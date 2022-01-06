@@ -1,9 +1,7 @@
 package no.nav.personbruker.dittnav.varselbestiller.config
 
-import no.nav.brukernotifikasjon.schemas.internal.BeskjedIntern
-import no.nav.brukernotifikasjon.schemas.internal.DoneIntern
-import no.nav.brukernotifikasjon.schemas.internal.NokkelIntern
-import no.nav.brukernotifikasjon.schemas.internal.OppgaveIntern
+import no.nav.brukernotifikasjon.schemas.internal.*
+
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
 import no.nav.personbruker.dittnav.common.metrics.MetricsReporter
@@ -19,6 +17,7 @@ import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.Doknotifikasj
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.done.DoneEventService
 import no.nav.personbruker.dittnav.varselbestiller.health.HealthService
+import no.nav.personbruker.dittnav.varselbestiller.innboks.InnboksEventService
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.oppgave.OppgaveEventService
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
@@ -37,16 +36,19 @@ class ApplicationContext {
     val doknotifikasjonRepository = VarselbestillingRepository(database)
     val doknotifikasjonBeskjedProducer = initializeDoknotifikasjonProducer(Eventtype.BESKJED_INTERN)
     val doknotifikasjonOppgaveProducer = initializeDoknotifikasjonProducer(Eventtype.OPPGAVE_INTERN)
+    val doknotifikasjonInnboksProducer = initializeDoknotifikasjonProducer(Eventtype.INNBOKS_INTERN)
+
     val doknotifikasjonStopProducer = initializeDoknotifikasjonStoppProducer()
 
     var beskjedConsumer = initializeBeskjedConsumer()
     var oppgaveConsumer = initializeOppgaveConsumer()
+    var innboksConsumer = initializeInnboksConsumer()
     var doneConsumer = initializeDoneConsumer()
 
     val healthService = HealthService(this)
 
     var periodicConsumerPollingCheck = initializePeriodicConsumerPollingCheck()
-    
+
     private fun initializeBeskjedConsumer(): Consumer<NokkelIntern, BeskjedIntern> {
         val beskjedKafkaProps = Kafka.consumerProps(environment, Eventtype.BESKJED_INTERN)
         val beskjedEventService = BeskjedEventService(doknotifikasjonBeskjedProducer, doknotifikasjonRepository, metricsCollector)
@@ -57,6 +59,12 @@ class ApplicationContext {
         val oppgaveKafkaProps = Kafka.consumerProps(environment, Eventtype.OPPGAVE_INTERN)
         val oppgaveEventService = OppgaveEventService(doknotifikasjonOppgaveProducer, doknotifikasjonRepository, metricsCollector)
         return KafkaConsumerSetup.setupKafkaConsumer(environment.oppgaveTopicName, oppgaveKafkaProps, oppgaveEventService)
+    }
+
+    private fun initializeInnboksConsumer(): Consumer<NokkelIntern, InnboksIntern> {
+        val innboksKafkaProps = Kafka.consumerProps(environment, Eventtype.INNBOKS_INTERN)
+        val innboksEventService = InnboksEventService(doknotifikasjonInnboksProducer, doknotifikasjonRepository, metricsCollector)
+        return KafkaConsumerSetup.setupKafkaConsumer(environment.innboksTopicName, innboksKafkaProps, innboksEventService)
     }
 
     private fun initializeDoneConsumer(): Consumer<NokkelIntern, DoneIntern> {
@@ -96,6 +104,13 @@ class ApplicationContext {
             log.info("oppgaveConsumer har blitt reinstansiert.")
         } else {
             log.warn("oppgaveConsumer kunne ikke bli reinstansiert fordi den fortsatt er aktiv.")
+        }
+
+        if (innboksConsumer.isCompleted()) {
+            innboksConsumer = initializeInnboksConsumer()
+            log.info("innboksConsumer har blitt reinstansiert.")
+        } else {
+            log.warn("innboksConsumer kunne ikke bli reinstansiert fordi den fortsatt er aktiv.")
         }
 
         if (doneConsumer.isCompleted()) {

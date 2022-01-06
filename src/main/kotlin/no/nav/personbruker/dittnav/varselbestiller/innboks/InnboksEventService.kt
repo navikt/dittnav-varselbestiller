@@ -1,6 +1,7 @@
-package no.nav.personbruker.dittnav.varselbestiller.beskjed
+package no.nav.personbruker.dittnav.varselbestiller.innboks
 
-import no.nav.brukernotifikasjon.schemas.internal.BeskjedIntern
+
+import no.nav.brukernotifikasjon.schemas.internal.InnboksIntern
 import no.nav.brukernotifikasjon.schemas.internal.NokkelIntern
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.personbruker.dittnav.varselbestiller.common.EventBatchProcessorService
@@ -17,40 +18,39 @@ import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestil
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingTransformer
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class BeskjedEventService(
-        private val doknotifikasjonProducer: DoknotifikasjonProducer,
-        private val varselbestillingRepository: VarselbestillingRepository,
-        private val metricsCollector: MetricsCollector
-) : EventBatchProcessorService<NokkelIntern, BeskjedIntern> {
+class InnboksEventService(
+    private val doknotifikasjonProducer: DoknotifikasjonProducer,
+    private val varselbestillingRepository: VarselbestillingRepository,
+    private val metricsCollector: MetricsCollector
+) : EventBatchProcessorService<NokkelIntern, InnboksIntern> {
 
-    private val log: Logger = LoggerFactory.getLogger(BeskjedEventService::class.java)
+    private val log = LoggerFactory.getLogger(InnboksEventService::class.java)
 
-    override suspend fun processEvents(events: ConsumerRecords<NokkelIntern, BeskjedIntern>) {
+    override suspend fun processEvents(events: ConsumerRecords<NokkelIntern, InnboksIntern>) {
         val successfullyTransformedEvents = mutableMapOf<String, Doknotifikasjon>()
-        val problematicEvents = mutableListOf<ConsumerRecord<NokkelIntern, BeskjedIntern>>()
+        val problematicEvents = mutableListOf<ConsumerRecord<NokkelIntern, InnboksIntern>>()
         val varselbestillinger = mutableListOf<Varselbestilling>()
 
-        metricsCollector.recordMetrics(eventType = Eventtype.BESKJED_INTERN) {
+        metricsCollector.recordMetrics(eventType = Eventtype.INNBOKS_INTERN) {
             events.forEach { event ->
                 try {
-                    val beskjedKey = event.key()
-                    val beskjedEvent = event.value()
+                    val innboksKey = event.key()
+                    val innboksEvent = event.value()
                     val producer = Producer(event.namespace, event.appnavn)
                     countAllEventsFromKafkaForProducer(producer)
-                    if(beskjedEvent.getEksternVarsling()) {
-                        val doknotifikasjonKey = DoknotifikasjonCreator.createDoknotifikasjonKey(beskjedKey, Eventtype.BESKJED_INTERN)
-                        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(beskjedKey, beskjedEvent)
+                    if (innboksEvent.getEksternVarsling()) {
+                        val doknotifikasjonKey = DoknotifikasjonCreator.createDoknotifikasjonKey(innboksKey, Eventtype.INNBOKS_INTERN)
+                        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(innboksKey, innboksEvent)
                         successfullyTransformedEvents[doknotifikasjonKey] = doknotifikasjon
-                        varselbestillinger.add(VarselbestillingTransformer.fromBeskjed(beskjedKey, beskjedEvent, doknotifikasjon))
+                        varselbestillinger.add(VarselbestillingTransformer.fromInnboks(innboksKey, innboksEvent, doknotifikasjon))
                         countSuccessfulEksternVarslingForProducer(producer)
                     }
-                } catch (e: Exception) {
+                }  catch (e: Exception) {
                     countFailedEksternVarslingForProducer(Producer(event.namespace, event.appnavn))
                     problematicEvents.add(event)
-                    log.warn("Transformasjon av beskjed-event fra Kafka feilet, fullfører batch-en før polling stoppes.", e)
+                    log.warn("Validering av innboks-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
                 }
             }
             if (successfullyTransformedEvents.isNotEmpty()) {
@@ -71,7 +71,7 @@ class BeskjedEventService(
         } else {
             val duplicateBestillingIds = duplicateVarselbestillinger.map { it.bestillingsId }
             val remainingTransformedEvents = successfullyTransformedEvents.filterKeys { bestillingsId -> !duplicateBestillingIds.contains(bestillingsId) }
-            val varselbestillingerToOrder = varselbestillinger.filter { !duplicateBestillingIds.contains(it.bestillingsId) }
+            val varselbestillingerToOrder = varselbestillinger.filter { !duplicateBestillingIds.contains(it.bestillingsId)}
             logDuplicateVarselbestillinger(eventMetricsSession, duplicateVarselbestillinger)
             produce(remainingTransformedEvents, varselbestillingerToOrder)
         }
@@ -88,8 +88,8 @@ class BeskjedEventService(
         }
     }
 
-    private fun throwExceptionForProblematicEvents(problematicEvents: MutableList<ConsumerRecord<NokkelIntern, BeskjedIntern>>) {
-        val message = "En eller flere beskjed-eventer kunne ikke sendes til varselbestiller fordi transformering feilet."
+    private fun throwExceptionForProblematicEvents(problematicEvents: MutableList<ConsumerRecord<NokkelIntern, InnboksIntern>>) {
+        val message = "En eller flere innboks-eventer kunne ikke sendes til varselbestiller fordi transformering feilet."
         val exception = UntransformableRecordException(message)
         exception.addContext("antallMislykkedeTransformasjoner", problematicEvents.size)
         throw exception

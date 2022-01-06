@@ -46,6 +46,7 @@ object KafkaTestUtil {
                 influxdbRetentionPolicy = "",
                 beskjedTopicName = KafkaTestTopics.beskjedTopicName,
                 oppgaveTopicName = KafkaTestTopics.oppgaveTopicName,
+                innboksTopicName = KafkaTestTopics.innboksTopicName,
                 doneTopicName = KafkaTestTopics.doneTopicName,
                 doknotifikasjonTopicName = KafkaTestTopics.doknotifikasjonTopicName,
                 doknotifikasjonStopTopicName = KafkaTestTopics.doknotifikasjonStopTopicName

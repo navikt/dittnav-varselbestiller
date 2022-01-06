@@ -38,6 +38,7 @@ private fun Application.configureShutdownHook(appContext: ApplicationContext) {
             appContext.periodicConsumerPollingCheck.stop()
             appContext.doknotifikasjonBeskjedProducer.flushAndClose()
             appContext.doknotifikasjonOppgaveProducer.flushAndClose()
+            appContext.doknotifikasjonInnboksProducer.flushAndClose()
             appContext.doknotifikasjonStopProducer.flushAndClose()
         }
         appContext.database.dataSource.close()
