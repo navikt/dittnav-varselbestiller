@@ -130,7 +130,7 @@ class BeskjedEventServiceTest {
     }
 
     @Test
-    fun `Skal haandtere at enkelte transformeringer feiler og fortsette aa validere resten av batch-en`() {
+    fun `Skal haandtere at enkelte transformeringer feiler og fortsette aa transformere resten av batch-en`() {
         val totalNumberOfRecords = 5
         val numberOfFailedTransformations = 1
         val numberOfSuccessfulTransformations = totalNumberOfRecords - numberOfFailedTransformations

@@ -31,7 +31,7 @@ class OppgaveIT {
 
     private val database = LocalPostgresDatabase()
 
-    private val oppgaveEvents = (1..10).map { AvroNokkelInternObjectMother.createNokkelInternWithEventId(it) to AvroOppgaveInternObjectMother.createOppgaveWithEksternVarsling(eksternVarsling = true) }.toMap()
+    private val oppgaveEvents = (1..10).map { AvroNokkelInternObjectMother.createNokkelInternWithEventId(it) to AvroOppgaveInternObjectMother.createOppgaveInternWithEksternVarsling(eksternVarsling = true) }.toMap()
 
     private val capturedDoknotifikasjonRecords = ArrayList<RecordKeyValueWrapper<String, Doknotifikasjon>>()
 

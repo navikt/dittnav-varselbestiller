@@ -16,15 +16,15 @@ object AvroBeskjedInternObjectMother {
         return createBeskjedIntern(defaultTekst, defaultSikkerhetsnivaa, defaultLink, defaultEksternVarsling, defaultPrefererteKanaler)
     }
 
-    fun createBeskjedWithEksternVarsling(eksternVarsling: Boolean): BeskjedIntern {
-        return createBeskjedWithEksternVarslingOgPrefererteKanaler(eksternVarsling, defaultPrefererteKanaler)
+    fun createBeskjedInternWithEksternVarsling(eksternVarsling: Boolean): BeskjedIntern {
+        return createBeskjedInternWithEksternVarslingOgPrefererteKanaler(eksternVarsling, defaultPrefererteKanaler)
     }
 
-    fun createBeskjedWithEksternVarslingOgPrefererteKanaler(eksternVarsling: Boolean, prefererteKanaler: List<String>): BeskjedIntern {
+    fun createBeskjedInternWithEksternVarslingOgPrefererteKanaler(eksternVarsling: Boolean, prefererteKanaler: List<String>): BeskjedIntern {
         return createBeskjedIntern(defaultTekst, defaultSikkerhetsnivaa, defaultLink, eksternVarsling, prefererteKanaler)
     }
 
-    fun createBeskjedIntern(text: String, sikkerhetsnivaa: Int, link: String, eksternVarsling: Boolean, prefererteKanaler: List<String>): BeskjedIntern {
+    private fun createBeskjedIntern(text: String, sikkerhetsnivaa: Int, link: String, eksternVarsling: Boolean, prefererteKanaler: List<String>): BeskjedIntern {
         return BeskjedIntern(
                 Instant.now().toEpochMilli(),
                 Instant.now().toEpochMilli(),
