@@ -38,4 +38,3 @@ private fun throwExceptionIfNokkelIsInvalid(nokkel: Nokkel) {
     ValidationUtil.validateNonNullFieldMaxLength(nokkel.getSystembruker(), "systembruker", ValidationUtil.MAX_LENGTH_SYSTEMBRUKER)
     ValidationUtil.validateNonNullFieldMaxLength(nokkel.getEventId(), "eventId", ValidationUtil.MAX_LENGTH_EVENTID)
 }
-
