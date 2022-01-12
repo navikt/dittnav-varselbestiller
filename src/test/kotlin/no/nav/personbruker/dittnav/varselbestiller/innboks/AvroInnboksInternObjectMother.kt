@@ -1,35 +1,31 @@
-package no.nav.personbruker.dittnav.varselbestiller.oppgave
+package no.nav.personbruker.dittnav.varselbestiller.innboks
 
-import no.nav.brukernotifikasjon.schemas.internal.OppgaveIntern
+import no.nav.brukernotifikasjon.schemas.internal.InnboksIntern
 import no.nav.brukernotifikasjon.schemas.internal.domain.PreferertKanal
 import java.time.Instant
-import java.time.temporal.ChronoUnit
 
-object AvroOppgaveInternObjectMother {
+object AvroInnboksInternObjectMother {
 
-    private val defaultTekst = "Dette er oppgave til brukeren"
+    private val defaultTekst = "Dette er Innboks til brukeren"
     private val defaultSikkerhetsnivaa = 4
     private val defaultEksternVarsling = true
     private val defaultLink = "http://dummyUrl.no"
     private val defaultPrefererteKanaler = listOf(PreferertKanal.SMS.toString())
-    private val defaultSynligFremTil = Instant.now().plus(7, ChronoUnit.DAYS).toEpochMilli()
     private val defaultEpostVarslingstekst: String? = null
     private val defaultSmsVarslingstekst: String? = null
 
-    fun createOppgaveIntern(
-        tekst: String = defaultTekst,
-        synligFremTil: Long? = defaultSynligFremTil,
+    fun createInnboksIntern(
+        text: String = defaultTekst,
         sikkerhetsnivaa: Int = defaultSikkerhetsnivaa,
         eksternVarsling: Boolean = defaultEksternVarsling,
         link: String = defaultLink,
         prefererteKanaler: List<String> = defaultPrefererteKanaler,
         epostVarslingstekst: String? = defaultEpostVarslingstekst,
         smsVarslingstekst: String? = defaultSmsVarslingstekst
-    ): OppgaveIntern {
-        return OppgaveIntern(
+    ): InnboksIntern {
+        return InnboksIntern(
             Instant.now().toEpochMilli(),
-            synligFremTil,
-            tekst,
+            text,
             link,
             sikkerhetsnivaa,
             eksternVarsling,
@@ -39,31 +35,20 @@ object AvroOppgaveInternObjectMother {
         )
     }
 
-    fun createOppgaveInternWithEksternVarsling(eksternVarsling: Boolean): OppgaveIntern {
-        return createOppgaveIntern(
+    fun createInnboksInternWithEksternVarsling(eksternVarsling: Boolean): InnboksIntern {
+        return createInnboksIntern(
             eksternVarsling = eksternVarsling,
         )
     }
 
-    fun createOppgaveInternWithEksternVarslingOgPrefererteKanaler(
+    fun createInnboksInternWithEksternVarslingOgPrefererteKanaler(
         eksternVarsling: Boolean,
         prefererteKanaler: List<String>
-    ): OppgaveIntern {
-        return createOppgaveIntern(
+    ): InnboksIntern {
+        return createInnboksIntern(
             eksternVarsling = eksternVarsling,
             prefererteKanaler = prefererteKanaler
         )
     }
 
-    fun createOppgaveWithEpostVarslingstekst(epostVarslingstekst: String): OppgaveIntern {
-        return createOppgaveIntern(
-            epostVarslingstekst = epostVarslingstekst
-        )
-    }
-
-    fun createOppgaveWithSmsVarslingstekst(smsVarslingstekst: String): OppgaveIntern {
-        return createOppgaveIntern(
-            smsVarslingstekst = smsVarslingstekst
-        )
-    }
 }

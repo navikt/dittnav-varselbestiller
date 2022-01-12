@@ -4,6 +4,7 @@ import no.nav.personbruker.dittnav.varselbestiller.beskjed.AvroBeskjedInternObje
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.AvroDoknotifikasjonObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelInternObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.oppgave.AvroOppgaveInternObjectMother
+import no.nav.personbruker.dittnav.varselbestiller.innboks.AvroInnboksInternObjectMother
 import org.amshove.kluent.`should be equal to`
 import org.amshove.kluent.`should not be null`
 import org.junit.jupiter.api.Test
@@ -28,9 +29,24 @@ class VarselbestillingTransformerTest {
     @Test
     fun `Skal transformere fra Oppgave`() {
         val avroNokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(1)
-        val avroOppgave =  AvroOppgaveInternObjectMother.createOppgave()
+        val avroOppgave =  AvroOppgaveInternObjectMother.createOppgaveIntern()
         val avroDoknotifikasjon = AvroDoknotifikasjonObjectMother.createDoknotifikasjon("O-test-001")
         val varselbestilling = VarselbestillingTransformer.fromOppgave(avroNokkel, avroOppgave, avroDoknotifikasjon)
+
+        varselbestilling.bestillingsId `should be equal to` avroDoknotifikasjon.getBestillingsId()
+        varselbestilling.eventId `should be equal to` avroNokkel.getEventId()
+        varselbestilling.fodselsnummer `should be equal to` avroNokkel.getFodselsnummer()
+        varselbestilling.systembruker `should be equal to` avroNokkel.getSystembruker()
+        varselbestilling.appnavn `should be equal to` avroNokkel.getAppnavn()
+        varselbestilling.bestillingstidspunkt.`should not be null`()
+    }
+
+    @Test
+    fun `Skal transformere fra Innboks`() {
+        val avroNokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(1)
+        val avroInnboks =  AvroInnboksInternObjectMother.createInnboksIntern()
+        val avroDoknotifikasjon = AvroDoknotifikasjonObjectMother.createDoknotifikasjon("I-test-001")
+        val varselbestilling = VarselbestillingTransformer.fromInnboks(avroNokkel, avroInnboks, avroDoknotifikasjon)
 
         varselbestilling.bestillingsId `should be equal to` avroDoknotifikasjon.getBestillingsId()
         varselbestilling.eventId `should be equal to` avroNokkel.getEventId()

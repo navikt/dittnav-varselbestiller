@@ -3,6 +3,7 @@ package no.nav.personbruker.dittnav.varselbestiller.beskjed
 import no.nav.brukernotifikasjon.schemas.internal.BeskjedIntern
 import no.nav.brukernotifikasjon.schemas.internal.domain.PreferertKanal
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 object AvroBeskjedInternObjectMother {
 
@@ -11,38 +12,56 @@ object AvroBeskjedInternObjectMother {
     private val defaultEksternVarsling = true
     private val defaultLink = "http://dummyUrl.no"
     private val defaultPrefererteKanaler = listOf(PreferertKanal.SMS.toString())
+    private val defaultSynligFremTil = Instant.now().plus(7, ChronoUnit.DAYS).toEpochMilli()
+    private val defaultEpostVarslingstekst: String? = null
+    private val defaultSmsVarslingstekst: String? = null
 
-    fun createBeskjedIntern(): BeskjedIntern {
-        return createBeskjedIntern(defaultTekst, defaultSikkerhetsnivaa, defaultLink, defaultEksternVarsling, defaultPrefererteKanaler)
+    fun createBeskjedIntern(
+        text: String = defaultTekst,
+        synligFremTil: Long? = defaultSynligFremTil,
+        sikkerhetsnivaa: Int = defaultSikkerhetsnivaa,
+        link: String = defaultLink,
+        eksternVarsling: Boolean = defaultEksternVarsling,
+        prefererteKanaler: List<String> = defaultPrefererteKanaler,
+        epostVarslingstekst: String? = defaultEpostVarslingstekst,
+        smsVarslingstekst: String? = defaultSmsVarslingstekst
+    ): BeskjedIntern {
+        return BeskjedIntern(
+            Instant.now().toEpochMilli(),
+            synligFremTil,
+            text,
+            link,
+            sikkerhetsnivaa,
+            eksternVarsling,
+            prefererteKanaler,
+            epostVarslingstekst,
+            smsVarslingstekst
+        )
     }
 
-    fun createBeskjedWithEksternVarsling(eksternVarsling: Boolean): BeskjedIntern {
-        return createBeskjedWithEksternVarslingOgPrefererteKanaler(eksternVarsling, defaultPrefererteKanaler)
+    fun createBeskjedInternWithEksternVarsling(eksternVarsling: Boolean): BeskjedIntern {
+        return createBeskjedInternWithEksternVarslingOgPrefererteKanaler(eksternVarsling, defaultPrefererteKanaler)
     }
 
-    fun createBeskjedWithEksternVarslingOgPrefererteKanaler(eksternVarsling: Boolean, prefererteKanaler: List<String>): BeskjedIntern {
-        return createBeskjedIntern(defaultTekst, defaultSikkerhetsnivaa, defaultLink, eksternVarsling, prefererteKanaler)
+    fun createBeskjedInternWithEksternVarslingOgPrefererteKanaler(
+        eksternVarsling: Boolean,
+        prefererteKanaler: List<String>
+    ): BeskjedIntern {
+        return createBeskjedIntern(
+            eksternVarsling = eksternVarsling,
+            prefererteKanaler = prefererteKanaler
+        )
     }
 
     fun createBeskjedWithEpostVarslingstekst(epostVarslingstekst: String): BeskjedIntern {
-        return createBeskjedIntern(defaultTekst, defaultSikkerhetsnivaa, defaultLink, defaultEksternVarsling, defaultPrefererteKanaler, epostVarslingstekst = epostVarslingstekst)
+        return createBeskjedIntern(
+            epostVarslingstekst = epostVarslingstekst
+        )
     }
 
     fun createBeskjedWithSmsVarslingstekst(smsVarslingstekst: String): BeskjedIntern {
-        return createBeskjedIntern(defaultTekst, defaultSikkerhetsnivaa, defaultLink, defaultEksternVarsling, defaultPrefererteKanaler, smsVarslingstekst = smsVarslingstekst)
-    }
-
-    fun createBeskjedIntern(text: String, sikkerhetsnivaa: Int, link: String, eksternVarsling: Boolean, prefererteKanaler: List<String>, epostVarslingstekst: String? = null, smsVarslingstekst: String? = null): BeskjedIntern {
-        return BeskjedIntern(
-                Instant.now().toEpochMilli(),
-                Instant.now().toEpochMilli(),
-                text,
-                link,
-                sikkerhetsnivaa,
-                eksternVarsling,
-                prefererteKanaler,
-                epostVarslingstekst,
-                smsVarslingstekst
+        return createBeskjedIntern(
+            smsVarslingstekst = smsVarslingstekst
         )
     }
 }

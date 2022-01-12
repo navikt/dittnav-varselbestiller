@@ -1,6 +1,7 @@
 package no.nav.personbruker.dittnav.varselbestiller.varselbestilling
 
 import no.nav.brukernotifikasjon.schemas.internal.BeskjedIntern
+import no.nav.brukernotifikasjon.schemas.internal.InnboksIntern
 import no.nav.brukernotifikasjon.schemas.internal.NokkelIntern
 import no.nav.brukernotifikasjon.schemas.internal.OppgaveIntern
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
@@ -32,6 +33,19 @@ object VarselbestillingTransformer {
                 appnavn = key.getAppnavn(),
                 bestillingstidspunkt = LocalDateTime.now(ZoneId.of("UTC")),
                 prefererteKanaler = oppgave.getPrefererteKanaler()
+        )
+    }
+
+    fun fromInnboks(key: NokkelIntern, innboks: InnboksIntern, doknotifikasjon: Doknotifikasjon): Varselbestilling {
+        return Varselbestilling(
+            bestillingsId = doknotifikasjon.getBestillingsId(),
+            eventId = key.getEventId(),
+            fodselsnummer = key.getFodselsnummer(),
+            systembruker = key.getSystembruker(),
+            namespace = key.getNamespace(),
+            appnavn = key.getAppnavn(),
+            bestillingstidspunkt = LocalDateTime.now(ZoneId.of("UTC")),
+            prefererteKanaler = innboks.getPrefererteKanaler()
         )
     }
 }

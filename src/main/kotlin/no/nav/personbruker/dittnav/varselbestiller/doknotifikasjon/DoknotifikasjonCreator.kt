@@ -1,6 +1,7 @@
 package no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon
 
 import no.nav.brukernotifikasjon.schemas.internal.BeskjedIntern
+import no.nav.brukernotifikasjon.schemas.internal.InnboksIntern
 import no.nav.brukernotifikasjon.schemas.internal.NokkelIntern
 import no.nav.brukernotifikasjon.schemas.internal.OppgaveIntern
 import no.nav.doknotifikasjon.schemas.PrefererteKanal
@@ -39,12 +40,28 @@ object DoknotifikasjonCreator {
         return doknotifikasjonBuilder.build()
     }
 
+    fun createDoknotifikasjonFromInnboks(nokkel: NokkelIntern, innboks: InnboksIntern): no.nav.doknotifikasjon.schemas.Doknotifikasjon {
+        val doknotifikasjonBuilder = no.nav.doknotifikasjon.schemas.Doknotifikasjon.newBuilder()
+            .setBestillingsId(createDoknotifikasjonKey(nokkel, Eventtype.INNBOKS_INTERN))
+            .setBestillerId(nokkel.getSystembruker())
+            .setSikkerhetsnivaa(innboks.getSikkerhetsnivaa())
+            .setFodselsnummer(nokkel.getFodselsnummer())
+            .setTittel("Du har fått en melding fra NAV")
+            .setEpostTekst(getDoknotifikasjonEmailText(innboks))
+            .setSmsTekst(getDoknotifikasjonSMSText(innboks))
+            .setAntallRenotifikasjoner(1)
+            .setRenotifikasjonIntervall(4)
+            .setPrefererteKanaler(getPrefererteKanaler(innboks.getEksternVarsling(), innboks.getPrefererteKanaler()))
+        return doknotifikasjonBuilder.build()
+    }
+
     fun createDoknotifikasjonKey(nokkel: NokkelIntern, eventtype: Eventtype): String {
         val eventId = nokkel.getEventId()
         val appnavn = nokkel.getAppnavn()
         return when (eventtype) {
             Eventtype.BESKJED_INTERN -> "B-$appnavn-$eventId"
             Eventtype.OPPGAVE_INTERN -> "O-$appnavn-$eventId"
+            Eventtype.INNBOKS_INTERN -> "I-$appnavn-$eventId"
             Eventtype.DONE_INTERN -> "D-$appnavn-$eventId"
             else -> throw UnknownEventtypeException("$eventtype er ugyldig type for å generere Doknotifikasjon-key")
         }
@@ -58,12 +75,20 @@ object DoknotifikasjonCreator {
         return event.getEpostVarslingstekst() ?: this::class.java.getResource("/texts/epost_oppgave.txt").readText(Charsets.UTF_8)
     }
 
+    private fun getDoknotifikasjonEmailText(event: InnboksIntern): String {
+        return event.getEpostVarslingstekst() ?: this::class.java.getResource("/texts/epost_innboks.txt").readText(Charsets.UTF_8)
+    }
+
     private fun getDoknotifikasjonSMSText(event: BeskjedIntern): String {
         return event.getSmsVarslingstekst() ?: this::class.java.getResource("/texts/sms_beskjed.txt").readText(Charsets.UTF_8)
     }
 
     private fun getDoknotifikasjonSMSText(event: OppgaveIntern): String {
         return event.getSmsVarslingstekst() ?: this::class.java.getResource("/texts/sms_oppgave.txt").readText(Charsets.UTF_8)
+    }
+
+    private fun getDoknotifikasjonSMSText(event: InnboksIntern): String {
+        return event.getSmsVarslingstekst() ?: this::class.java.getResource("/texts/sms_innboks.txt").readText(Charsets.UTF_8)
     }
 
     private fun getPrefererteKanaler(eksternVarsling: Boolean, prefererteKanaler: List<String>?): List<PrefererteKanal> {
