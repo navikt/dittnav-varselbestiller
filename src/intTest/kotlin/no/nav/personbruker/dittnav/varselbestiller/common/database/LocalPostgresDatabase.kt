@@ -29,6 +29,7 @@ class LocalPostgresDatabase : Database {
 
     private fun flyway() {
         Flyway.configure()
+                .connectRetries(3)
                 .dataSource(dataSource)
                 .load()
                 .migrate()
