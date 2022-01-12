@@ -45,7 +45,7 @@ class DoneEventService(
                                 }
                             }
                         } catch (e: Exception) {
-                            countFailedEksternvarslingForProducer(Producer(nokkel.getNamespace(), nokkel.getAppnavn()))
+                            countFailedEksternVarslingForProducer(Producer(nokkel.getNamespace(), nokkel.getAppnavn()))
                             problematicEvents[nokkel] = event
                             log.warn("Eventet kan ikke brukes pga en ukjent feil, done-eventet vil bli forkastet. EventId: ${nokkel.getEventId()}", e)
                         }
@@ -70,7 +70,7 @@ class DoneEventService(
                 eventMetricsSession.countAllEventsFromKafkaForProducer(Producer(event.namespace, event.appnavn))
                 doneEvents[doneKey] = doneEvent
             }  catch (e: Exception) {
-                eventMetricsSession.countFailedEksternvarslingForProducer(Producer(event.namespace, event.appnavn))
+                eventMetricsSession.countFailedEksternVarslingForProducer(Producer(event.namespace, event.appnavn))
                 log.warn("Fikk en uventet feil ved prosessering av Done-event, fullfører batch-en.", e)
             }
         }

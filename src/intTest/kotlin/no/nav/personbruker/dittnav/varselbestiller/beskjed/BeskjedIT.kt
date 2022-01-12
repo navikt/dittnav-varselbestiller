@@ -31,7 +31,7 @@ class BeskjedIT {
 
     private val database = LocalPostgresDatabase()
 
-    private val beskjedEvents = (1..10).map { AvroNokkelInternObjectMother.createNokkelInternWithEventId(it) to AvroBeskjedInternObjectMother.createBeskjedWithEksternVarsling(eksternVarsling = true) }.toMap()
+    private val beskjedEvents = (1..10).map { AvroNokkelInternObjectMother.createNokkelInternWithEventId(it) to AvroBeskjedInternObjectMother.createBeskjedInternWithEksternVarsling(eksternVarsling = true) }.toMap()
 
     private val capturedDoknotifikasjonRecords = ArrayList<RecordKeyValueWrapper<String, Doknotifikasjon>>()
 

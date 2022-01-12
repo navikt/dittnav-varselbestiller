@@ -35,8 +35,8 @@ class PeriodicConsumerPollingCheckTest {
 
     @Test
     fun `Skal returnere en liste med konsumenter som har stoppet aa polle`() {
-        createResponsConsumerIsStopped(isBeskjedConsumerStopped = true, isDoneConsumerStopped = true, isOppgaveConsumerStopped = false)
-        createResponseShouldConsumerPollToDoknotifikasjon(shouldBeskjedPoll = true, shouldDonePoll = true, shouldOppgavePoll = true)
+        createResponsConsumerIsStopped(isBeskjedConsumerStopped = true, isDoneConsumerStopped = true, isOppgaveConsumerStopped = false, isInnboksConsumerStopped = false)
+        createResponseShouldConsumerPollToDoknotifikasjon(shouldBeskjedPoll = true, shouldDonePoll = true, shouldOppgavePoll = true, shouldInnboksPoll = true)
 
         runBlocking {
             periodicConsumerPollingCheck.getConsumersThatShouldBeRestarted().size `should be equal to` 2
@@ -45,8 +45,8 @@ class PeriodicConsumerPollingCheckTest {
 
     @Test
     fun `Skal returnere en tom liste hvis alle konsumenter kjorer som normalt`() {
-        createResponsConsumerIsStopped(isBeskjedConsumerStopped = false, isDoneConsumerStopped = false, isOppgaveConsumerStopped = false)
-        createResponseShouldConsumerPollToDoknotifikasjon(shouldBeskjedPoll = true, shouldDonePoll = true, shouldOppgavePoll = true)
+        createResponsConsumerIsStopped(isBeskjedConsumerStopped = false, isDoneConsumerStopped = false, isOppgaveConsumerStopped = false, isInnboksConsumerStopped = false)
+        createResponseShouldConsumerPollToDoknotifikasjon(shouldBeskjedPoll = true, shouldDonePoll = true, shouldOppgavePoll = true, shouldInnboksPoll = true)
 
 
         runBlocking {
@@ -56,8 +56,8 @@ class PeriodicConsumerPollingCheckTest {
 
     @Test
     fun `Skal kalle paa restartPolling hvis en eller flere konsumere har sluttet aa kjore`() {
-        createResponsConsumerIsStopped(isBeskjedConsumerStopped = true, isDoneConsumerStopped = false, isOppgaveConsumerStopped = true)
-        createResponseShouldConsumerPollToDoknotifikasjon(shouldBeskjedPoll = true, shouldDonePoll = true, shouldOppgavePoll = true)
+        createResponsConsumerIsStopped(isBeskjedConsumerStopped = true, isDoneConsumerStopped = false, isOppgaveConsumerStopped = true, isInnboksConsumerStopped = true)
+        createResponseShouldConsumerPollToDoknotifikasjon(shouldBeskjedPoll = true, shouldDonePoll = true, shouldOppgavePoll = true, shouldInnboksPoll = true)
 
 
         runBlocking {
@@ -70,8 +70,8 @@ class PeriodicConsumerPollingCheckTest {
 
     @Test
     fun `Skal ikke restarte polling hvis alle konsumere kjorer`() {
-        createResponsConsumerIsStopped(isBeskjedConsumerStopped = false, isDoneConsumerStopped = false, isOppgaveConsumerStopped = false)
-        createResponseShouldConsumerPollToDoknotifikasjon(shouldBeskjedPoll = true, shouldDonePoll = true, shouldOppgavePoll = true)
+        createResponsConsumerIsStopped(isBeskjedConsumerStopped = false, isDoneConsumerStopped = false, isOppgaveConsumerStopped = false, isInnboksConsumerStopped = false)
+        createResponseShouldConsumerPollToDoknotifikasjon(shouldBeskjedPoll = true, shouldDonePoll = true, shouldOppgavePoll = true, shouldInnboksPoll = true)
 
         runBlocking {
             periodicConsumerPollingCheck.checkIfConsumersAreRunningAndRestartIfTheyShouldRun()
@@ -83,8 +83,8 @@ class PeriodicConsumerPollingCheckTest {
 
     @Test
     fun `Skal kun restarte polling av beskjed-consumer hvis kun polling paa beskjed er satt til true`() {
-        createResponsConsumerIsStopped(isBeskjedConsumerStopped = true, isDoneConsumerStopped = true, isOppgaveConsumerStopped = true)
-        createResponseShouldConsumerPollToDoknotifikasjon(shouldBeskjedPoll = true, shouldDonePoll = false, shouldOppgavePoll = false)
+        createResponsConsumerIsStopped(isBeskjedConsumerStopped = true, isDoneConsumerStopped = true, isOppgaveConsumerStopped = true, isInnboksConsumerStopped = true)
+        createResponseShouldConsumerPollToDoknotifikasjon(shouldBeskjedPoll = true, shouldDonePoll = false, shouldOppgavePoll = false, shouldInnboksPoll = false)
 
         runBlocking {
             periodicConsumerPollingCheck.getConsumersThatShouldBeRestarted().size `should be equal to` 1
@@ -93,8 +93,8 @@ class PeriodicConsumerPollingCheckTest {
 
     @Test
     fun `Skal kun restarte polling av done-consumer hvis kun polling paa Done er satt til true`() {
-        createResponsConsumerIsStopped(isBeskjedConsumerStopped = true, isDoneConsumerStopped = true, isOppgaveConsumerStopped = true)
-        createResponseShouldConsumerPollToDoknotifikasjon(shouldBeskjedPoll = false, shouldDonePoll = true, shouldOppgavePoll = false)
+        createResponsConsumerIsStopped(isBeskjedConsumerStopped = true, isDoneConsumerStopped = true, isOppgaveConsumerStopped = true, isInnboksConsumerStopped = true)
+        createResponseShouldConsumerPollToDoknotifikasjon(shouldBeskjedPoll = false, shouldDonePoll = true, shouldOppgavePoll = false, shouldInnboksPoll = false)
 
         runBlocking {
             periodicConsumerPollingCheck.getConsumersThatShouldBeRestarted().size `should be equal to` 1
@@ -103,8 +103,18 @@ class PeriodicConsumerPollingCheckTest {
 
     @Test
     fun `Skal kun restarte polling av oppgave-consumer hvis kun polling paa Oppgave er satt til true`() {
-        createResponsConsumerIsStopped(isBeskjedConsumerStopped = true, isDoneConsumerStopped = true, isOppgaveConsumerStopped = true)
-        createResponseShouldConsumerPollToDoknotifikasjon(shouldBeskjedPoll = false, shouldDonePoll = false, shouldOppgavePoll = true)
+        createResponsConsumerIsStopped(isBeskjedConsumerStopped = true, isDoneConsumerStopped = true, isOppgaveConsumerStopped = true, isInnboksConsumerStopped = true)
+        createResponseShouldConsumerPollToDoknotifikasjon(shouldBeskjedPoll = false, shouldDonePoll = false, shouldOppgavePoll = true, shouldInnboksPoll = false)
+
+        runBlocking {
+            periodicConsumerPollingCheck.getConsumersThatShouldBeRestarted().size `should be equal to` 1
+        }
+    }
+
+    @Test
+    fun `Skal kun restarte polling av innboks-consumer hvis kun polling paa Innboks er satt til true`() {
+        createResponsConsumerIsStopped(isBeskjedConsumerStopped = true, isDoneConsumerStopped = true, isOppgaveConsumerStopped = true, isInnboksConsumerStopped = true)
+        createResponseShouldConsumerPollToDoknotifikasjon(shouldBeskjedPoll = false, shouldDonePoll = false, shouldOppgavePoll = false, shouldInnboksPoll = true)
 
         runBlocking {
             periodicConsumerPollingCheck.getConsumersThatShouldBeRestarted().size `should be equal to` 1
@@ -113,18 +123,22 @@ class PeriodicConsumerPollingCheckTest {
 
     private fun createResponsConsumerIsStopped(isBeskjedConsumerStopped: Boolean,
                                                isOppgaveConsumerStopped: Boolean,
+                                               isInnboksConsumerStopped: Boolean,
                                                isDoneConsumerStopped: Boolean) {
         coEvery { appContext.beskjedConsumer.isStopped() } returns isBeskjedConsumerStopped
-        coEvery { appContext.doneConsumer.isStopped() } returns isDoneConsumerStopped
         coEvery { appContext.oppgaveConsumer.isStopped() } returns isOppgaveConsumerStopped
+        coEvery { appContext.innboksConsumer.isStopped() } returns isInnboksConsumerStopped
+        coEvery { appContext.doneConsumer.isStopped() } returns isDoneConsumerStopped
+
     }
 
     private fun createResponseShouldConsumerPollToDoknotifikasjon(shouldBeskjedPoll: Boolean,
-                                                                  shouldDonePoll: Boolean,
-                                                                  shouldOppgavePoll: Boolean) {
+                                                                  shouldOppgavePoll: Boolean,
+                                                                  shouldInnboksPoll: Boolean,
+                                                                  shouldDonePoll: Boolean) {
         coEvery { shouldPollBeskjedToDoknotifikasjon() } returns shouldBeskjedPoll
-        coEvery { shouldPollDoneToDoknotifikasjonStopp() } returns shouldDonePoll
         coEvery { shouldPollOppgaveToDoknotifikasjon() } returns shouldOppgavePoll
+        coEvery { shouldPollInnboksToDoknotifikasjon() } returns shouldInnboksPoll
+        coEvery { shouldPollDoneToDoknotifikasjonStopp() } returns shouldDonePoll
     }
-
 }

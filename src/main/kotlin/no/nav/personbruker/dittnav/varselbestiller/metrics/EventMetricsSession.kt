@@ -24,7 +24,7 @@ class EventMetricsSession(val eventtype: Eventtype) {
         countNokkelWasNull++
     }
 
-    fun countFailedEksternvarslingForProducer(producer: Producer) {
+    fun countFailedEksternVarslingForProducer(producer: Producer) {
         countFailedEksternvarslingByProducer[producer] = countFailedEksternvarslingByProducer.getOrDefault(producer, 0).inc()
     }
 

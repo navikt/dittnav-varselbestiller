@@ -1,9 +1,9 @@
-package no.nav.personbruker.dittnav.varselbestiller.oppgave
+package no.nav.personbruker.dittnav.varselbestiller.innboks
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import no.nav.brukernotifikasjon.schemas.internal.InnboksIntern
 import no.nav.brukernotifikasjon.schemas.internal.NokkelIntern
-import no.nav.brukernotifikasjon.schemas.internal.OppgaveIntern
 import no.nav.common.KafkaEnvironment
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.personbruker.dittnav.common.metrics.StubMetricsReporter
@@ -24,16 +24,17 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-class OppgaveIT {
+class InnboksIT {
 
-    private val embeddedEnv = KafkaTestUtil.createDefaultKafkaEmbeddedInstance(listOf(KafkaTestTopics.oppgaveTopicName, KafkaTestTopics.doknotifikasjonTopicName))
+    private val embeddedEnv = KafkaTestUtil.createDefaultKafkaEmbeddedInstance(listOf(KafkaTestTopics.innboksTopicName, KafkaTestTopics.doknotifikasjonTopicName))
     private val testEnvironment = KafkaTestUtil.createEnvironmentForEmbeddedKafka(embeddedEnv)
 
     private val database = LocalPostgresDatabase()
 
-    private val oppgaveEvents = (1..10).map { AvroNokkelInternObjectMother.createNokkelInternWithEventId(it) to AvroOppgaveInternObjectMother.createOppgaveInternWithEksternVarsling(eksternVarsling = true) }.toMap()
+    private val innboksEvents = (1..10).map { AvroNokkelInternObjectMother.createNokkelInternWithEventId(it) to AvroInnboksInternObjectMother.createInnboksInternWithEksternVarsling(eksternVarsling = true) }.toMap()
 
     private val capturedDoknotifikasjonRecords = ArrayList<RecordKeyValueWrapper<String, Doknotifikasjon>>()
+
 
     private val metricsReporter = StubMetricsReporter()
     private val metricsCollector = MetricsCollector(metricsReporter)
@@ -54,21 +55,21 @@ class OppgaveIT {
     }
 
     @Test
-    fun `Should read Oppgave-events and send to varselbestiller-topic`() {
+    fun `Should read Innboks-events and send to varselbestiller-topic`() {
         runBlocking {
-            KafkaTestUtil.produceEvents(testEnvironment, KafkaTestTopics.oppgaveTopicName, oppgaveEvents)
+            KafkaTestUtil.produceEvents(testEnvironment, KafkaTestTopics.innboksTopicName, innboksEvents)
         } shouldBeEqualTo true
 
-        `Read all Oppgave-events from our topic and verify that they have been sent to varselbestiller-topic`()
+        `Read all Innboks-events from our topic and verify that they have been sent to varselbestiller-topic`()
 
-        oppgaveEvents.all {
+        innboksEvents.all {
             capturedDoknotifikasjonRecords.contains(RecordKeyValueWrapper(it.key, it.value))
         }
     }
 
-    fun `Read all Oppgave-events from our topic and verify that they have been sent to varselbestiller-topic`() {
-        val consumerProps = KafkaEmbed.consumerProps(testEnvironment, Eventtype.OPPGAVE_INTERN)
-        val kafkaConsumer = KafkaConsumer<NokkelIntern, OppgaveIntern>(consumerProps)
+    fun `Read all Innboks-events from our topic and verify that they have been sent to varselbestiller-topic`() {
+        val consumerProps = KafkaEmbed.consumerProps(testEnvironment, Eventtype.INNBOKS_INTERN)
+        val kafkaConsumer = KafkaConsumer<NokkelIntern, InnboksIntern>(consumerProps)
 
         val producerProps = Kafka.producerProps(testEnvironment, Eventtype.DOKNOTIFIKASJON)
         val kafkaProducer = KafkaProducer<String, Doknotifikasjon>(producerProps)
@@ -76,20 +77,20 @@ class OppgaveIT {
         val doknotifikasjonRepository = VarselbestillingRepository(database)
         val doknotifikasjonProducer = DoknotifikasjonProducer(kafkaProducerWrapper, doknotifikasjonRepository)
 
-        val eventService = OppgaveEventService(doknotifikasjonProducer, doknotifikasjonRepository, metricsCollector)
-        val consumer = Consumer(KafkaTestTopics.oppgaveTopicName, kafkaConsumer, eventService)
+        val eventService = InnboksEventService(doknotifikasjonProducer, doknotifikasjonRepository, metricsCollector)
+        val consumer = Consumer(KafkaTestTopics.innboksTopicName, kafkaConsumer, eventService)
 
         kafkaProducer.initTransactions()
         runBlocking {
             consumer.startPolling()
 
-            `Wait until all oppgave events have been received by target topic`()
+            `Wait until all innboks-events have been received by target topic`()
 
             consumer.stopPolling()
         }
     }
 
-    private fun `Wait until all oppgave events have been received by target topic`() {
+    private fun `Wait until all innboks-events have been received by target topic`() {
         val targetConsumerProps = KafkaEmbed.consumerProps(testEnvironment, Eventtype.DOKNOTIFIKASJON)
         val targetKafkaConsumer = KafkaConsumer<String, Doknotifikasjon>(targetConsumerProps)
         val capturingProcessor = CapturingEventProcessor<String, Doknotifikasjon>()
@@ -100,7 +101,7 @@ class OppgaveIT {
 
         targetConsumer.startPolling()
 
-        while (currentNumberOfRecords < oppgaveEvents.size) {
+        while (currentNumberOfRecords < innboksEvents.size) {
             runBlocking {
                 currentNumberOfRecords = capturingProcessor.getEvents().size
                 delay(100)
