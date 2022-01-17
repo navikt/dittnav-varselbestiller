@@ -12,7 +12,7 @@ object Flyway {
     }
 
     private fun configure(env: Environment): FluentConfiguration {
-        val configBuilder = Flyway.configure()
+        val configBuilder = Flyway.configure().connectRetries(5)
         val dataSource = createDataSourceForLocalDbWithUser(env)
         configBuilder.dataSource(dataSource)
 
