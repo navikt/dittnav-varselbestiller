@@ -18,9 +18,9 @@ tasks.withType<KotlinCompile> {
 }
 
 repositories {
-    jcenter()
     mavenCentral()
     maven("https://packages.confluent.io/maven")
+    maven ( "https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven" )
     mavenLocal()
     maven("https://jitpack.io")
 }
@@ -62,7 +62,7 @@ dependencies {
     testImplementation(Kafka.Apache.kafka_2_12)
     testImplementation(Kafka.Apache.streams)
     testImplementation(Kafka.Confluent.schemaRegistry)
-    testImplementation(Kluent.kluent)
+    testImplementation("org.amshove.kluent:kluent:1.68")
     testImplementation(Kotlinx.atomicfu)
     testImplementation(Ktor.clientMock)
     testImplementation(Mockk.mockk)
