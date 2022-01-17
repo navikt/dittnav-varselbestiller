@@ -62,7 +62,7 @@ dependencies {
     testImplementation(Kafka.Apache.kafka_2_12)
     testImplementation(Kafka.Apache.streams)
     testImplementation(Kafka.Confluent.schemaRegistry)
-    testImplementation("org.amshove.kluent:kluent:1.68")
+    testImplementation(Kluent.kluent)
     testImplementation(Kotlinx.atomicfu)
     testImplementation(Ktor.clientMock)
     testImplementation(Mockk.mockk)
