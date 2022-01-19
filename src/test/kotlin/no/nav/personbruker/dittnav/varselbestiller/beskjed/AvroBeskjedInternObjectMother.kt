@@ -14,6 +14,7 @@ object AvroBeskjedInternObjectMother {
     private val defaultPrefererteKanaler = listOf(PreferertKanal.SMS.toString())
     private val defaultSynligFremTil = Instant.now().plus(7, ChronoUnit.DAYS).toEpochMilli()
     private val defaultEpostVarslingstekst: String? = null
+    private val defaultEpostVarslingstittel: String? = null
     private val defaultSmsVarslingstekst: String? = null
 
     fun createBeskjedIntern(
@@ -24,6 +25,7 @@ object AvroBeskjedInternObjectMother {
         eksternVarsling: Boolean = defaultEksternVarsling,
         prefererteKanaler: List<String> = defaultPrefererteKanaler,
         epostVarslingstekst: String? = defaultEpostVarslingstekst,
+        epostVarslingstittel: String? = defaultEpostVarslingstittel,
         smsVarslingstekst: String? = defaultSmsVarslingstekst
     ): BeskjedIntern {
         return BeskjedIntern(
@@ -35,6 +37,7 @@ object AvroBeskjedInternObjectMother {
             eksternVarsling,
             prefererteKanaler,
             epostVarslingstekst,
+            epostVarslingstittel,
             smsVarslingstekst
         )
     }

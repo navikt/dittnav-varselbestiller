@@ -12,6 +12,7 @@ object AvroInnboksInternObjectMother {
     private val defaultLink = "http://dummyUrl.no"
     private val defaultPrefererteKanaler = listOf(PreferertKanal.SMS.toString())
     private val defaultEpostVarslingstekst: String? = null
+    private val defaultEpostVarslingstittel: String? = null
     private val defaultSmsVarslingstekst: String? = null
 
     fun createInnboksIntern(
@@ -21,6 +22,7 @@ object AvroInnboksInternObjectMother {
         link: String = defaultLink,
         prefererteKanaler: List<String> = defaultPrefererteKanaler,
         epostVarslingstekst: String? = defaultEpostVarslingstekst,
+        epostVarslingstittel: String? = defaultEpostVarslingstittel,
         smsVarslingstekst: String? = defaultSmsVarslingstekst
     ): InnboksIntern {
         return InnboksIntern(
@@ -31,6 +33,7 @@ object AvroInnboksInternObjectMother {
             eksternVarsling,
             prefererteKanaler,
             epostVarslingstekst,
+            epostVarslingstittel,
             smsVarslingstekst
         )
     }

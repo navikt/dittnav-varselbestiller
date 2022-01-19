@@ -14,6 +14,7 @@ object AvroOppgaveInternObjectMother {
     private val defaultPrefererteKanaler = listOf(PreferertKanal.SMS.toString())
     private val defaultSynligFremTil = Instant.now().plus(7, ChronoUnit.DAYS).toEpochMilli()
     private val defaultEpostVarslingstekst: String? = null
+    private val defaultEpostVarslingstittel: String? = null
     private val defaultSmsVarslingstekst: String? = null
 
     fun createOppgaveIntern(
@@ -24,6 +25,7 @@ object AvroOppgaveInternObjectMother {
         link: String = defaultLink,
         prefererteKanaler: List<String> = defaultPrefererteKanaler,
         epostVarslingstekst: String? = defaultEpostVarslingstekst,
+        epostVarslingstittel: String? = defaultEpostVarslingstittel,
         smsVarslingstekst: String? = defaultSmsVarslingstekst
     ): OppgaveIntern {
         return OppgaveIntern(
@@ -35,6 +37,7 @@ object AvroOppgaveInternObjectMother {
             eksternVarsling,
             prefererteKanaler,
             epostVarslingstekst,
+            epostVarslingstittel,
             smsVarslingstekst
         )
     }
