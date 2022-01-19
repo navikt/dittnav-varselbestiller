@@ -77,7 +77,21 @@ class DoknotifikasjonCreatorTest {
         val beskjed = AvroBeskjedObjectMother.createBeskjedWithEpostVarslingstekst("epost varslingstekst")
 
         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
-        doknotifikasjon.getEpostTekst() `should be equal to` "epost varslingstekst"
+        doknotifikasjon.getEpostTekst() `should contain` "epost varslingstekst"
+    }
+
+    @Test
+    internal fun `Skal opprette Doknotifikasjon med epost tekst fra Beskjed med epostVarslingstittel`() {
+        val eventId = 1
+        val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(eventId)
+        val beskjed = AvroBeskjedObjectMother.createBeskjed(
+            epostVarslingstekst = "epost varslingstekst",
+            epostVarslingstittel = "epost tittel"
+        )
+
+        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
+        doknotifikasjon.getEpostTekst() `should contain` "epost tittel"
+        doknotifikasjon.getTittel() `should be equal to` "epost tittel"
     }
 
     @Test
@@ -117,7 +131,21 @@ class DoknotifikasjonCreatorTest {
         val oppgave = AvroOppgaveObjectMother.createOppgaveWithEpostVarslingstekst("epost varslingstekst")
 
         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(nokkel, oppgave)
-        doknotifikasjon.getEpostTekst() `should be equal to` "epost varslingstekst"
+        doknotifikasjon.getEpostTekst() `should contain` "epost varslingstekst"
+    }
+
+    @Test
+    internal fun `Skal opprette Doknotifikasjon med epost tekst fra Oppgave med epostVarslingstittel`() {
+        val eventId = 1
+        val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(eventId)
+        val oppgave = AvroOppgaveObjectMother.createOppgave(
+            epostVarslingstekst = "epost varslingstekst",
+            epostVarslingstittel = "epost tittel"
+        )
+
+        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(nokkel, oppgave)
+        doknotifikasjon.getEpostTekst() `should contain` "epost tittel"
+        doknotifikasjon.getTittel() `should be equal to` "epost tittel"
     }
 
     @Test
@@ -157,7 +185,21 @@ class DoknotifikasjonCreatorTest {
         val innboks = AvroInnboksObjectMother.createInnboksWithEpostVarslingstekst("epost varslingstekst")
 
         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(nokkel, innboks)
-        doknotifikasjon.getEpostTekst() `should be equal to` "epost varslingstekst"
+        doknotifikasjon.getEpostTekst() `should contain` "epost varslingstekst"
+    }
+
+    @Test
+    internal fun `Skal opprette Doknotifikasjon med epost tekst fra Innboks med epostVarslingstittel`() {
+        val eventId = 1
+        val nokkel = AvroNokkelObjectMother.createNokkelWithEventId(eventId)
+        val innboks = AvroInnboksObjectMother.createInnboks(
+            epostVarslingstekst = "epost varslingstekst",
+            epostVarslingstittel = "epost tittel"
+        )
+
+        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(nokkel, innboks)
+        doknotifikasjon.getEpostTekst() `should contain` "epost tittel"
+        doknotifikasjon.getTittel() `should be equal to` "epost tittel"
     }
 
     @Test

@@ -14,64 +14,96 @@ object AvroBeskjedObjectMother {
     private val defaultGrupperingsid = "123"
     private val defaultPrefererteKanaler = listOf(PreferertKanal.SMS.toString())
 
-    fun createBeskjed(): Beskjed {
-        return createBeskjed(defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling, defaultLink, defaultGrupperingsid, defaultPrefererteKanaler)
-    }
-
-    fun createBeskjedWithFodselsnummer(fodselsnummer: String): Beskjed {
-        return createBeskjed(fodselsnummer, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling, defaultLink, defaultGrupperingsid, defaultPrefererteKanaler)
-    }
-
-    fun createBeskjedWithText(text: String): Beskjed {
-        return createBeskjed(defaultFodselsnr, text, defaultSikkerhetsnivaa, defaultEksternVarsling, defaultLink, defaultGrupperingsid, defaultPrefererteKanaler)
-    }
-
-    fun createBeskjedWithSikkerhetsnivaa(nivaa: Int): Beskjed {
-        return createBeskjed(defaultFodselsnr, defaultTekst, nivaa, defaultEksternVarsling, defaultLink, defaultGrupperingsid, defaultPrefererteKanaler)
-    }
-
-    fun createBeskjedWithLink(link: String): Beskjed {
-        return createBeskjed(defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling, link, defaultGrupperingsid, defaultPrefererteKanaler)
-    }
-
-    fun createBeskjedWithGrupperingsid(grupperingsid: String): Beskjed {
-        return createBeskjed(defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling, defaultLink, grupperingsid, defaultPrefererteKanaler)
-    }
-
-    fun createBeskjedWithEksternVarsling(eksternVarsling: Boolean): Beskjed {
-        return createBeskjedWithFodselsnummerOgEksternVarsling(defaultFodselsnr, eksternVarsling)
-    }
-
-    fun createBeskjedWithEksternVarslingOgPrefererteKanaler(eksternVarsling: Boolean, prefererteKanaler: List<String>): Beskjed {
-        return createBeskjed(defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, eksternVarsling, defaultLink, defaultGrupperingsid, prefererteKanaler)
-    }
-
-    fun createBeskjedWithFodselsnummerOgEksternVarsling(fodselsnummer: String, eksternVarsling: Boolean): Beskjed {
-        return createBeskjed(fodselsnummer, defaultTekst, defaultSikkerhetsnivaa, eksternVarsling, defaultLink, defaultGrupperingsid, defaultPrefererteKanaler)
-    }
-
-    fun createBeskjedWithEpostVarslingstekst(epostVarslingstekst: String): Beskjed {
-        return createBeskjed(defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling, defaultLink, defaultGrupperingsid, defaultPrefererteKanaler, epostVarslingstekst = epostVarslingstekst)
-    }
-
-    fun createBeskjedWithSmsVarslingstekst(smsVarslingstekst: String): Beskjed {
-        return createBeskjed(defaultFodselsnr, defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling, defaultLink, defaultGrupperingsid, defaultPrefererteKanaler, smsVarslingstekst = smsVarslingstekst)
-    }
-
-    private fun createBeskjed(fodselsnummer: String, text: String, sikkerhetsnivaa: Int, eksternVarsling: Boolean, link: String, grupperingsid: String, prefererteKanaler: List<String>, epostVarslingstekst: String? = null, smsVarslingstekst: String? = null): Beskjed {
+    fun createBeskjed(
+        fodselsnummer: String = defaultFodselsnr,
+        text: String = defaultTekst,
+        sikkerhetsnivaa: Int = defaultSikkerhetsnivaa,
+        eksternVarsling: Boolean = defaultEksternVarsling,
+        link: String = defaultLink,
+        grupperingsid: String = defaultGrupperingsid,
+        prefererteKanaler: List<String> = defaultPrefererteKanaler,
+        epostVarslingstekst: String? = null,
+        epostVarslingstittel: String? = null,
+        smsVarslingstekst: String? = null
+    ): Beskjed {
         return Beskjed(
-                Instant.now().toEpochMilli(),
-                Instant.now().toEpochMilli(),
-                fodselsnummer,
-                grupperingsid,
-                text,
-                link,
-                sikkerhetsnivaa,
-                eksternVarsling,
-                prefererteKanaler,
-                epostVarslingstekst,
-                smsVarslingstekst
+            Instant.now().toEpochMilli(),
+            Instant.now().toEpochMilli(),
+            fodselsnummer,
+            grupperingsid,
+            text,
+            link,
+            sikkerhetsnivaa,
+            eksternVarsling,
+            prefererteKanaler,
+            epostVarslingstekst,
+            epostVarslingstittel,
+            smsVarslingstekst
         )
     }
 
+    fun createBeskjedWithFodselsnummer(fodselsnummer: String): Beskjed {
+        return createBeskjed(
+            fodselsnummer = fodselsnummer,
+        )
+    }
+
+    fun createBeskjedWithText(text: String): Beskjed {
+        return createBeskjed(
+            text = text,
+        )
+    }
+
+    fun createBeskjedWithSikkerhetsnivaa(nivaa: Int): Beskjed {
+        return createBeskjed(
+            sikkerhetsnivaa = nivaa,
+        )
+    }
+
+    fun createBeskjedWithLink(link: String): Beskjed {
+        return createBeskjed(
+            link = link,
+        )
+    }
+
+    fun createBeskjedWithGrupperingsid(grupperingsid: String): Beskjed {
+        return createBeskjed(
+            grupperingsid = grupperingsid,
+        )
+    }
+
+    fun createBeskjedWithEksternVarsling(eksternVarsling: Boolean): Beskjed {
+        return createBeskjed(
+            eksternVarsling = eksternVarsling,
+        )
+    }
+
+    fun createBeskjedWithEksternVarslingOgPrefererteKanaler(
+        eksternVarsling: Boolean,
+        prefererteKanaler: List<String>
+    ): Beskjed {
+        return createBeskjed(
+            eksternVarsling = eksternVarsling,
+            prefererteKanaler = prefererteKanaler
+        )
+    }
+
+    fun createBeskjedWithFodselsnummerOgEksternVarsling(fodselsnummer: String, eksternVarsling: Boolean): Beskjed {
+        return createBeskjed(
+            fodselsnummer = fodselsnummer,
+            eksternVarsling = eksternVarsling,
+        )
+    }
+
+    fun createBeskjedWithEpostVarslingstekst(epostVarslingstekst: String): Beskjed {
+        return createBeskjed(
+            epostVarslingstekst = epostVarslingstekst
+        )
+    }
+
+    fun createBeskjedWithSmsVarslingstekst(smsVarslingstekst: String): Beskjed {
+        return createBeskjed(
+            smsVarslingstekst = smsVarslingstekst
+        )
+    }
 }
