@@ -13,7 +13,9 @@ import no.nav.personbruker.dittnav.varselbestiller.common.getClient
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.*
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.config.Kafka
+import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
+import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppTransformer
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameResolver
 import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameScrubber
@@ -24,6 +26,7 @@ import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.createVarsel
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.deleteAllVarselbestilling
 import org.amshove.kluent.`should be equal to`
 import org.amshove.kluent.shouldBeEqualTo
+import org.amshove.kluent.shouldHaveSize
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.junit.jupiter.api.AfterAll
@@ -77,8 +80,8 @@ class DoneIT {
 
         `Read all Done-events from our topic and verify that they have been sent to DoknotifikasjonStopp-topic`()
 
-        doneEvents.all {
-            capturedDoknotifikasjonStopRecords.contains(RecordKeyValueWrapper(it.key, it.value))
+        varselbestillinger.all {
+            capturedDoknotifikasjonStopRecords.contains(RecordKeyValueWrapper(it.bestillingsId, DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(it)))
         }
     }
 

@@ -13,6 +13,7 @@ import no.nav.personbruker.dittnav.varselbestiller.common.getClient
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.*
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.config.Kafka
+import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameResolver
@@ -69,7 +70,9 @@ class InnboksIT {
         `Read all Innboks-events from our topic and verify that they have been sent to varselbestiller-topic`()
 
         innboksEvents.all {
-            capturedDoknotifikasjonRecords.contains(RecordKeyValueWrapper(it.key, it.value))
+            val key = DoknotifikasjonCreator.createDoknotifikasjonKey(it.key, Eventtype.INNBOKS)
+            val value = DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(it.key, it.value)
+            capturedDoknotifikasjonRecords.contains(RecordKeyValueWrapper(key, value))
         }
     }
 
