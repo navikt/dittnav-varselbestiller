@@ -11,27 +11,47 @@ object AvroInnboksInternObjectMother {
     private val defaultEksternVarsling = true
     private val defaultLink = "http://dummyUrl.no"
     private val defaultPrefererteKanaler = listOf(PreferertKanal.SMS.toString())
+    private val defaultEpostVarslingstekst: String? = null
+    private val defaultEpostVarslingstittel: String? = null
+    private val defaultSmsVarslingstekst: String? = null
 
-    fun createInnboksIntern(): InnboksIntern {
-        return createInnboksIntern(defaultTekst, defaultSikkerhetsnivaa, defaultEksternVarsling, defaultLink, defaultPrefererteKanaler)
-    }
-
-    fun createInnboksInternWithEksternVarsling(eksternVarsling: Boolean): InnboksIntern {
-        return createInnboksIntern(defaultTekst, defaultSikkerhetsnivaa, eksternVarsling, defaultLink, defaultPrefererteKanaler)
-    }
-
-    fun createInnboksInternWithEksternVarslingOgPrefererteKanaler(eksternVarsling: Boolean, prefererteKanaler: List<String>): InnboksIntern {
-        return createInnboksIntern(defaultTekst, defaultSikkerhetsnivaa, eksternVarsling, defaultLink, prefererteKanaler)
-    }
-
-    private fun createInnboksIntern(text: String, sikkerhetsnivaa: Int, eksternVarsling: Boolean, link: String, prefererteKanaler: List<String>): InnboksIntern {
+    fun createInnboksIntern(
+        text: String = defaultTekst,
+        sikkerhetsnivaa: Int = defaultSikkerhetsnivaa,
+        eksternVarsling: Boolean = defaultEksternVarsling,
+        link: String = defaultLink,
+        prefererteKanaler: List<String> = defaultPrefererteKanaler,
+        epostVarslingstekst: String? = defaultEpostVarslingstekst,
+        epostVarslingstittel: String? = defaultEpostVarslingstittel,
+        smsVarslingstekst: String? = defaultSmsVarslingstekst
+    ): InnboksIntern {
         return InnboksIntern(
             Instant.now().toEpochMilli(),
             text,
             link,
             sikkerhetsnivaa,
             eksternVarsling,
-            prefererteKanaler
+            prefererteKanaler,
+            epostVarslingstekst,
+            epostVarslingstittel,
+            smsVarslingstekst
         )
     }
+
+    fun createInnboksInternWithEksternVarsling(eksternVarsling: Boolean): InnboksIntern {
+        return createInnboksIntern(
+            eksternVarsling = eksternVarsling,
+        )
+    }
+
+    fun createInnboksInternWithEksternVarslingOgPrefererteKanaler(
+        eksternVarsling: Boolean,
+        prefererteKanaler: List<String>
+    ): InnboksIntern {
+        return createInnboksIntern(
+            eksternVarsling = eksternVarsling,
+            prefererteKanaler = prefererteKanaler
+        )
+    }
+
 }

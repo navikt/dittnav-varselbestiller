@@ -70,6 +70,168 @@ class DoknotifikasjonCreatorTest {
     }
 
     @Test
+    fun `Skal opprette Doknotifikasjon med epost tekst fra Beskjed med epostVarslingstekst`() {
+        val eventId = 1
+        val nokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventId)
+        val beskjed = AvroBeskjedInternObjectMother.createBeskjedWithEpostVarslingstekst("epost varslingstekst")
+
+        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
+        doknotifikasjon.getEpostTekst() `should contain` "epost varslingstekst"
+    }
+
+    @Test
+    internal fun `Skal opprette Doknotifikasjon med epost tekst fra Beskjed med epostVarslingstittel`() {
+        val eventId = 1
+        val nokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventId)
+        val beskjed = AvroBeskjedInternObjectMother.createBeskjedIntern(
+            epostVarslingstekst = "epost varslingstekst",
+            epostVarslingstittel = "epost tittel"
+        )
+
+        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
+        doknotifikasjon.getEpostTekst() `should contain` "epost tittel"
+        doknotifikasjon.getTittel() `should be equal to` "epost tittel"
+    }
+
+    @Test
+    fun `Skal opprette Doknotifikasjon med default epost tekst fra Beskjed uten epostVarslingstekst`() {
+        val eventId = 1
+        val nokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventId)
+        val beskjed = AvroBeskjedInternObjectMother.createBeskjedIntern()
+
+        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
+        doknotifikasjon.getEpostTekst() `should be equal to` this::class.java.getResource("/texts/epost_beskjed.txt").readText(Charsets.UTF_8)
+    }
+
+    @Test
+    fun `Skal opprette Doknotifikasjon med sms tekst fra Beskjed med smsVarslingstekst`() {
+        val eventId = 1
+        val nokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventId)
+        val beskjed = AvroBeskjedInternObjectMother.createBeskjedWithSmsVarslingstekst("sms varslingstekst")
+
+        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
+        doknotifikasjon.getSmsTekst() `should be equal to` "sms varslingstekst"
+    }
+
+    @Test
+    internal fun `Skal opprette Doknotifikasjon med sms tekst fra Beskjed uten smsVarslingstekst`() {
+        val eventId = 1
+        val nokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventId)
+        val beskjed = AvroBeskjedInternObjectMother.createBeskjedIntern()
+
+        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
+        doknotifikasjon.getSmsTekst() `should be equal to` this::class.java.getResource("/texts/sms_beskjed.txt").readText(Charsets.UTF_8)
+    }
+
+    @Test
+    internal fun `Skal opprette Doknotifikasjon med epost tekst fra Oppgave med epostVarslingstekst`() {
+        val eventId = 1
+        val nokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventId)
+        val oppgave = AvroOppgaveInternObjectMother.createOppgaveWithEpostVarslingstekst("epost varslingstekst")
+
+        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(nokkel, oppgave)
+        doknotifikasjon.getEpostTekst() `should contain` "epost varslingstekst"
+    }
+
+    @Test
+    internal fun `Skal opprette Doknotifikasjon med epost tekst fra Oppgave med epostVarslingstittel`() {
+        val eventId = 1
+        val nokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventId)
+        val oppgave = AvroOppgaveInternObjectMother.createOppgaveIntern(
+            epostVarslingstekst = "epost varslingstekst",
+            epostVarslingstittel = "epost tittel"
+        )
+
+        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(nokkel, oppgave)
+        doknotifikasjon.getEpostTekst() `should contain` "epost tittel"
+        doknotifikasjon.getTittel() `should be equal to` "epost tittel"
+    }
+
+    @Test
+    internal fun `Skal opprette Doknotifikasjon med default epost tekst fra Oppgave uten epostVarslingstekst`() {
+        val eventId = 1
+        val nokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventId)
+        val oppgave = AvroOppgaveInternObjectMother.createOppgaveIntern()
+
+        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(nokkel, oppgave)
+        doknotifikasjon.getEpostTekst() `should be equal to` this::class.java.getResource("/texts/epost_oppgave.txt").readText(Charsets.UTF_8)
+    }
+
+    @Test
+    internal fun `Skal opprette Doknotifikasjon med sms tekst fra Oppgave med smsVarslingstekst`() {
+        val eventId = 1
+        val nokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventId)
+        val oppgave = AvroOppgaveInternObjectMother.createOppgaveWithSmsVarslingstekst("sms varslingstekst")
+
+        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(nokkel, oppgave)
+        doknotifikasjon.getSmsTekst() `should be equal to` "sms varslingstekst"
+    }
+
+    @Test
+    internal fun `Skal opprette Doknotifikasjon med sms tekst fra Oppgave uten smsVarslingstekst`() {
+        val eventId = 1
+        val nokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventId)
+        val oppgave = AvroOppgaveInternObjectMother.createOppgaveIntern()
+
+        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(nokkel, oppgave)
+        doknotifikasjon.getSmsTekst() `should be equal to` this::class.java.getResource("/texts/sms_oppgave.txt").readText(Charsets.UTF_8)
+    }
+
+    @Test
+    internal fun `Skal opprette Doknotifikasjon med epost tekst fra Innboks med epostVarslingstekst`() {
+        val eventId = 1
+        val nokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventId)
+        val innboks = AvroInnboksInternObjectMother.createInnboksIntern(epostVarslingstekst = "epost varslingstekst")
+
+        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(nokkel, innboks)
+        doknotifikasjon.getEpostTekst() `should contain` "epost varslingstekst"
+    }
+
+    @Test
+    internal fun `Skal opprette Doknotifikasjon med epost tekst fra Innboks med epostVarslingstittel`() {
+        val eventId = 1
+        val nokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventId)
+        val innboks = AvroInnboksInternObjectMother.createInnboksIntern(
+            epostVarslingstekst = "epost varslingstekst",
+            epostVarslingstittel = "epost tittel"
+        )
+
+        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(nokkel, innboks)
+        doknotifikasjon.getEpostTekst() `should contain` "epost tittel"
+        doknotifikasjon.getTittel() `should be equal to` "epost tittel"
+    }
+
+    @Test
+    internal fun `Skal opprette Doknotifikasjon med default epost tekst fra Innboks uten epostVarslingstekst`() {
+        val eventId = 1
+        val nokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventId)
+        val innboks = AvroInnboksInternObjectMother.createInnboksIntern()
+
+        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(nokkel, innboks)
+        doknotifikasjon.getEpostTekst() `should be equal to` this::class.java.getResource("/texts/epost_innboks.txt").readText(Charsets.UTF_8)
+    }
+
+    @Test
+    internal fun `Skal opprette Doknotifikasjon med sms tekst fra Innboks med smsVarslingstekst`() {
+        val eventId = 1
+        val nokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventId)
+        val innboks = AvroInnboksInternObjectMother.createInnboksIntern(smsVarslingstekst = "sms varslingstekst")
+
+        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(nokkel, innboks)
+        doknotifikasjon.getSmsTekst() `should be equal to` "sms varslingstekst"
+    }
+
+    @Test
+    internal fun `Skal opprette Doknotifikasjon med sms tekst fra Innboks uten smsVarslingstekst`() {
+        val eventId = 1
+        val nokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventId)
+        val innboks = AvroInnboksInternObjectMother.createInnboksIntern()
+
+        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(nokkel, innboks)
+        doknotifikasjon.getSmsTekst() `should be equal to` this::class.java.getResource("/texts/sms_innboks.txt").readText(Charsets.UTF_8)
+    }
+
+    @Test
     fun `Skal kaste FieldValidationException hvis preferert kanal for Beskjed ikke støttes av Doknotifikasjon`() {
         val eventId = 1
         val nokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventId)

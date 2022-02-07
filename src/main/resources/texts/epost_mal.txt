@@ -1,0 +1,1 @@
+<!DOCTYPE html><html><head><title>${EPOST_VARSELTITTEL}</title></head><body>${EPOST_VARSELTEKST}</body></html>

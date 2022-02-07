@@ -17,9 +17,9 @@ object DoknotifikasjonCreator {
                 .setBestillerId(nokkel.getAppnavn())
                 .setSikkerhetsnivaa(beskjed.getSikkerhetsnivaa())
                 .setFodselsnummer(nokkel.getFodselsnummer())
-                .setTittel("Beskjed fra NAV")
-                .setEpostTekst(getDoknotifikasjonEmailText(Eventtype.BESKJED_INTERN))
-                .setSmsTekst(getDoknotifikasjonSMSText(Eventtype.BESKJED_INTERN))
+                .setTittel(getDoknotifikasjonEmailTitle(beskjed))
+                .setEpostTekst(getDoknotifikasjonEmailText(beskjed))
+                .setSmsTekst(getDoknotifikasjonSMSText(beskjed))
                 .setAntallRenotifikasjoner(0)
                 .setPrefererteKanaler(getPrefererteKanaler(beskjed.getEksternVarsling(), beskjed.getPrefererteKanaler()))
         return doknotifikasjonBuilder.build()
@@ -31,9 +31,9 @@ object DoknotifikasjonCreator {
                 .setBestillerId(nokkel.getAppnavn())
                 .setSikkerhetsnivaa(oppgave.getSikkerhetsnivaa())
                 .setFodselsnummer(nokkel.getFodselsnummer())
-                .setTittel("Du har fått en oppgave fra NAV")
-                .setEpostTekst(getDoknotifikasjonEmailText(Eventtype.OPPGAVE_INTERN))
-                .setSmsTekst(getDoknotifikasjonSMSText(Eventtype.OPPGAVE_INTERN))
+                .setTittel(getDoknotifikasjonEmailTitle(oppgave))
+                .setEpostTekst(getDoknotifikasjonEmailText(oppgave))
+                .setSmsTekst(getDoknotifikasjonSMSText(oppgave))
                 .setAntallRenotifikasjoner(1)
                 .setRenotifikasjonIntervall(7)
                 .setPrefererteKanaler(getPrefererteKanaler(oppgave.getEksternVarsling(), oppgave.getPrefererteKanaler()))
@@ -46,9 +46,9 @@ object DoknotifikasjonCreator {
             .setBestillerId(nokkel.getSystembruker())
             .setSikkerhetsnivaa(innboks.getSikkerhetsnivaa())
             .setFodselsnummer(nokkel.getFodselsnummer())
-            .setTittel("Du har fått en melding fra NAV")
-            .setEpostTekst(getDoknotifikasjonEmailText(Eventtype.INNBOKS_INTERN))
-            .setSmsTekst(getDoknotifikasjonSMSText(Eventtype.INNBOKS_INTERN))
+            .setTittel(getDoknotifikasjonEmailTitle(innboks))
+            .setEpostTekst(getDoknotifikasjonEmailText(innboks))
+            .setSmsTekst(getDoknotifikasjonSMSText(innboks))
             .setAntallRenotifikasjoner(1)
             .setRenotifikasjonIntervall(4)
             .setPrefererteKanaler(getPrefererteKanaler(innboks.getEksternVarsling(), innboks.getPrefererteKanaler()))
@@ -67,22 +67,61 @@ object DoknotifikasjonCreator {
         }
     }
 
-    private fun getDoknotifikasjonEmailText(eventtype: Eventtype): String {
-        return when (eventtype) {
-            Eventtype.BESKJED_INTERN -> this::class.java.getResource("/texts/epost_beskjed.txt").readText(Charsets.UTF_8)
-            Eventtype.OPPGAVE_INTERN -> this::class.java.getResource("/texts/epost_oppgave.txt").readText(Charsets.UTF_8)
-            Eventtype.INNBOKS_INTERN -> this::class.java.getResource("/texts/epost_innboks.txt").readText(Charsets.UTF_8)
-            else -> throw UnknownEventtypeException("Finnes ikke e-posttekst for $eventtype.")
+    private fun getDoknotifikasjonEmailText(event: BeskjedIntern): String {
+        if (event.getEpostVarslingstekst() != null) {
+            val title = getDoknotifikasjonEmailTitle(event)
+            val body = event.getEpostVarslingstekst()
+            return replaceInEmailTemplate(title, body)
         }
+        return event.getEpostVarslingstekst() ?: this::class.java.getResource("/texts/epost_beskjed.txt").readText(Charsets.UTF_8)
     }
 
-    private fun getDoknotifikasjonSMSText(eventtype: Eventtype): String {
-        return when (eventtype) {
-            Eventtype.BESKJED_INTERN -> this::class.java.getResource("/texts/sms_beskjed.txt").readText(Charsets.UTF_8)
-            Eventtype.OPPGAVE_INTERN -> this::class.java.getResource("/texts/sms_oppgave.txt").readText(Charsets.UTF_8)
-            Eventtype.INNBOKS_INTERN -> this::class.java.getResource("/texts/sms_innboks.txt").readText(Charsets.UTF_8)
-            else -> throw UnknownEventtypeException("Finnes ikke SMS-tekst for $eventtype.")
+    private fun getDoknotifikasjonEmailTitle(event: BeskjedIntern): String {
+        return event.getEpostVarslingstittel() ?: "Beskjed fra NAV"
+    }
+
+    private fun getDoknotifikasjonEmailText(event: OppgaveIntern): String {
+        if (event.getEpostVarslingstekst() != null) {
+            val title = getDoknotifikasjonEmailTitle(event)
+            val body = event.getEpostVarslingstekst()
+            return replaceInEmailTemplate(title, body)
         }
+        return event.getEpostVarslingstekst() ?: this::class.java.getResource("/texts/epost_oppgave.txt").readText(Charsets.UTF_8)
+    }
+
+    private fun getDoknotifikasjonEmailTitle(event: OppgaveIntern): String {
+        return event.getEpostVarslingstittel() ?: "Du har fått en oppgave fra NAV"
+    }
+
+    private fun getDoknotifikasjonEmailText(event: InnboksIntern): String {
+        if (event.getEpostVarslingstekst() != null) {
+            val title = getDoknotifikasjonEmailTitle(event)
+            val body = event.getEpostVarslingstekst()
+            return replaceInEmailTemplate(title, body)
+        }
+        return this::class.java.getResource("/texts/epost_innboks.txt").readText(Charsets.UTF_8)
+    }
+
+    private fun getDoknotifikasjonEmailTitle(event: InnboksIntern): String {
+        return event.getEpostVarslingstittel() ?: "Du har fått en melding fra NAV"
+    }
+
+    private fun replaceInEmailTemplate(title: String, body: String): String {
+        val emailTemplate = this::class.java.getResource("/texts/epost_mal.txt").readText(Charsets.UTF_8)
+
+        return emailTemplate.replace("\${EPOST_VARSELTITTEL}", title).replace("\${EPOST_VARSELTEKST}", body)
+    }
+
+    private fun getDoknotifikasjonSMSText(event: BeskjedIntern): String {
+        return event.getSmsVarslingstekst() ?: this::class.java.getResource("/texts/sms_beskjed.txt").readText(Charsets.UTF_8)
+    }
+
+    private fun getDoknotifikasjonSMSText(event: OppgaveIntern): String {
+        return event.getSmsVarslingstekst() ?: this::class.java.getResource("/texts/sms_oppgave.txt").readText(Charsets.UTF_8)
+    }
+
+    private fun getDoknotifikasjonSMSText(event: InnboksIntern): String {
+        return event.getSmsVarslingstekst() ?: this::class.java.getResource("/texts/sms_innboks.txt").readText(Charsets.UTF_8)
     }
 
     private fun getPrefererteKanaler(eksternVarsling: Boolean, prefererteKanaler: List<String>?): List<PrefererteKanal> {
