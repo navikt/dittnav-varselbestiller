@@ -16,6 +16,7 @@ import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaEmbed
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaTestUtil
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.config.Kafka
+import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameResolver
@@ -72,7 +73,9 @@ class OppgaveIT {
         `Read all Oppgave-events from our topic and verify that they have been sent to varselbestiller-topic`()
 
         oppgaveEvents.all {
-            capturedDoknotifikasjonRecords.contains(RecordKeyValueWrapper(it.key, it.value))
+            val key = DoknotifikasjonCreator.createDoknotifikasjonKey(it.key, Eventtype.OPPGAVE)
+            val value = DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(it.key, it.value)
+            capturedDoknotifikasjonRecords.contains(RecordKeyValueWrapper(key, value))
         }
     }
 
