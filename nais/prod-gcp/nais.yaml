@@ -6,7 +6,7 @@ metadata:
   labels:
     team: min-side
 spec:
-  encFrom:
+  envFrom:
     - secret: dittnav-varselbestiller-secrets
     - secret: influxdb-credentials
   image: {{version}}
