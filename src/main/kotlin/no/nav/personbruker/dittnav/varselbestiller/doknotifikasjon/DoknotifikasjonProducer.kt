@@ -18,9 +18,9 @@ class DoknotifikasjonProducer(
     ): ListPersistActionResult<Varselbestilling> {
         val events = successfullyValidatedEvents.map { RecordKeyValueWrapper(it.key, it.value) }
         return try {
-            producer.sendEventsAndLeaveTransactionOpen(events)
+            //producer.sendEventsAndLeaveTransactionOpen(events)
             val result = varselbestillingRepository.persistInOneBatch(varselbestillinger)
-            producer.commitCurrentTransaction()
+            //producer.commitCurrentTransaction()
             result
         } catch (e: Exception) {
             producer.abortCurrentTransaction()
