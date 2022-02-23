@@ -7,7 +7,6 @@ import no.nav.personbruker.dittnav.common.metrics.MetricsReporter
 import no.nav.personbruker.dittnav.common.metrics.StubMetricsReporter
 import no.nav.personbruker.dittnav.common.metrics.influx.InfluxMetricsReporter
 import no.nav.personbruker.dittnav.common.metrics.influx.SensuConfig
-import no.nav.personbruker.dittnav.varselbestiller.beskjed.BeskjedEventService
 import no.nav.personbruker.dittnav.varselbestiller.common.database.Database
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Consumer
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaProducerWrapper
@@ -16,11 +15,9 @@ import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.Doknotifikasj
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.done.DoneEventService
 import no.nav.personbruker.dittnav.varselbestiller.health.HealthService
-import no.nav.personbruker.dittnav.varselbestiller.innboks.InnboksEventService
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameResolver
 import no.nav.personbruker.dittnav.varselbestiller.metrics.ProducerNameScrubber
-import no.nav.personbruker.dittnav.varselbestiller.oppgave.OppgaveEventService
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.slf4j.LoggerFactory
@@ -39,14 +36,18 @@ class ApplicationContext {
     val metricsCollector = MetricsCollector(metricsReporter, nameScrubber)
 
     val doknotifikasjonRepository = VarselbestillingRepository(database)
+    /*
     val doknotifikasjonBeskjedProducer = initializeDoknotifikasjonProducer(Eventtype.BESKJED)
     val doknotifikasjonOppgaveProducer = initializeDoknotifikasjonProducer(Eventtype.OPPGAVE)
     val doknotifikasjonInnboksProducer = initializeDoknotifikasjonProducer(Eventtype.INNBOKS)
+     */
     val doknotifikasjonStopProducer = initializeDoknotifikasjonStoppProducer()
 
+    /*
     var beskjedConsumer = initializeBeskjedConsumer()
     var oppgaveConsumer = initializeOppgaveConsumer()
     var innboksConsumer = initializeInnboksConsumer()
+     */
     var doneConsumer = initializeDoneConsumer()
 
     val healthService = HealthService(this)
@@ -54,6 +55,7 @@ class ApplicationContext {
     var periodicConsumerPollingCheck = initializePeriodicConsumerPollingCheck()
 
 
+    /*
     private fun initializeBeskjedConsumer(): Consumer<Nokkel, Beskjed> {
         val beskjedKafkaProps = Kafka.consumerProps(environment, Eventtype.BESKJED)
         val beskjedEventService = BeskjedEventService(doknotifikasjonBeskjedProducer, doknotifikasjonRepository, metricsCollector)
@@ -71,6 +73,7 @@ class ApplicationContext {
         val innboksEventService = InnboksEventService(doknotifikasjonInnboksProducer, doknotifikasjonRepository, metricsCollector)
         return KafkaConsumerSetup.setupKafkaConsumer(environment.innboksTopicName, innboksKafkaProps, innboksEventService)
     }
+     */
 
     private fun initializeDoneConsumer(): Consumer<Nokkel, Done> {
         val doneKafkaProps = Kafka.consumerProps(environment, Eventtype.DONE)
@@ -96,6 +99,7 @@ class ApplicationContext {
 
     private fun initializePeriodicConsumerPollingCheck() = PeriodicConsumerPollingCheck(this)
 
+    /*
     fun reinitializeConsumers() {
         if (beskjedConsumer.isCompleted()) {
             beskjedConsumer = initializeBeskjedConsumer()
@@ -125,6 +129,7 @@ class ApplicationContext {
             log.warn("doneConsumer kunne ikke bli reinstansiert fordi den fortsatt er aktiv.")
         }
     }
+     */
 
     fun reinitializePeriodicConsumerPollingCheck() {
         if (periodicConsumerPollingCheck.isCompleted()) {
