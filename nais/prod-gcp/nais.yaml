@@ -8,6 +8,7 @@ metadata:
 spec:
   encFrom:
     - secret: dittnav-varselbestiller-secrets
+    - secret: influxdb-credentials
   image: {{version}}
   port: 8080
   liveness:
