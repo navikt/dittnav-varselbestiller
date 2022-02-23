@@ -43,7 +43,7 @@ object DoknotifikasjonCreator {
     fun createDoknotifikasjonFromInnboks(nokkel: NokkelIntern, innboks: InnboksIntern): no.nav.doknotifikasjon.schemas.Doknotifikasjon {
         val doknotifikasjonBuilder = no.nav.doknotifikasjon.schemas.Doknotifikasjon.newBuilder()
             .setBestillingsId(createDoknotifikasjonKey(nokkel, Eventtype.INNBOKS_INTERN))
-            .setBestillerId(nokkel.getSystembruker())
+            .setBestillerId(nokkel.getAppnavn())
             .setSikkerhetsnivaa(innboks.getSikkerhetsnivaa())
             .setFodselsnummer(nokkel.getFodselsnummer())
             .setTittel(getDoknotifikasjonEmailTitle(innboks))
