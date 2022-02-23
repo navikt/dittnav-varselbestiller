@@ -58,7 +58,7 @@ class DoknotifikasjonCreatorTest {
         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(nokkel, innboks)
 
         doknotifikasjon.getBestillingsId() `should be equal to` "I-${nokkel.getAppnavn()}-${nokkel.getEventId()}"
-        doknotifikasjon.getBestillerId() `should be equal to` nokkel.getSystembruker()
+        doknotifikasjon.getBestillerId() `should be equal to` nokkel.getAppnavn()
         doknotifikasjon.getSikkerhetsnivaa() `should be equal to` 4
         doknotifikasjon.getFodselsnummer() `should be equal to` nokkel.getFodselsnummer()
         doknotifikasjon.getTittel().`should not be null or empty`()
