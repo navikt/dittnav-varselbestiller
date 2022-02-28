@@ -15,9 +15,9 @@ class DoknotifikasjonStoppProducer(
         val keys = events.map { it.key }
 
         try {
-            //producer.sendEventsAndLeaveTransactionOpen(events)
+            producer.sendEventsAndLeaveTransactionOpen(events)
             varselbestillingRepository.cancelVarselbestilling(keys)
-            //producer.commitCurrentTransaction()
+            producer.commitCurrentTransaction()
         } catch (e: Exception) {
             producer.abortCurrentTransaction()
             throw e
