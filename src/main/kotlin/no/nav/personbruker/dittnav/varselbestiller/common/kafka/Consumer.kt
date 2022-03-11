@@ -10,7 +10,6 @@ import no.nav.personbruker.dittnav.varselbestiller.health.HealthCheck
 import no.nav.personbruker.dittnav.varselbestiller.health.HealthStatus
 import no.nav.personbruker.dittnav.varselbestiller.health.Status
 import org.apache.kafka.clients.consumer.ConsumerRecords
-import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.errors.RetriableException
 import org.apache.kafka.common.errors.TopicAuthorizationException
 import org.slf4j.Logger
@@ -20,11 +19,11 @@ import java.time.temporal.ChronoUnit
 import kotlin.coroutines.CoroutineContext
 
 class Consumer<K, V>(
-        val topic: String,
-        val kafkaConsumer: KafkaConsumer<K, V>,
-        val eventBatchProcessorService: EventBatchProcessorService<K, V>,
-        val job: Job = Job(),
-        val timeToPauseInCaseOfPeriodicErrorsInMs : Long = ONE_MINUTE_IN_MS
+    val topic: String,
+    private val kafkaConsumer: org.apache.kafka.clients.consumer.Consumer<K, V>,
+    private val eventBatchProcessorService: EventBatchProcessorService<K, V>,
+    val job: Job = Job(),
+    val timeToPauseInCaseOfPeriodicErrorsInMs : Long = ONE_MINUTE_IN_MS
 ) : CoroutineScope, HealthCheck {
 
     private val log: Logger = LoggerFactory.getLogger(Consumer::class.java)
@@ -108,7 +107,7 @@ class Consumer<K, V>(
         }
     }
 
-    fun ConsumerRecords<K, V>.containsEvents() = count() > 0
+    private fun ConsumerRecords<K, V>.containsEvents() = count() > 0
 
     private suspend fun rollbackOffset() {
         withContext(Dispatchers.IO) {
@@ -116,7 +115,7 @@ class Consumer<K, V>(
         }
     }
 
-    fun <K, V> KafkaConsumer<K, V>.rollbackToLastCommitted() {
+    fun <K, V> org.apache.kafka.clients.consumer.Consumer<K, V>.rollbackToLastCommitted() {
         committed(assignment()).forEach { (partition, metadata) ->
             seek(partition, metadata.offset())
         }

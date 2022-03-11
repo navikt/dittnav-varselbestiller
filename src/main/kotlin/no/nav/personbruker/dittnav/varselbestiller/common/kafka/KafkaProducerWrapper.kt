@@ -2,15 +2,14 @@ package no.nav.personbruker.dittnav.varselbestiller.common.kafka
 
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.exception.RetriableKafkaException
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.exception.UnretriableKafkaException
-import org.apache.kafka.clients.producer.KafkaProducer
+import org.apache.kafka.clients.producer.Producer
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.KafkaException
 import org.slf4j.LoggerFactory
-import java.lang.IllegalStateException
 
 class KafkaProducerWrapper<K, V>(
     private val topicName: String,
-    private val kafkaProducer: KafkaProducer<K, V>
+    private val kafkaProducer: Producer<K, V>
 ) {
 
     val log = LoggerFactory.getLogger(KafkaProducerWrapper::class.java)
