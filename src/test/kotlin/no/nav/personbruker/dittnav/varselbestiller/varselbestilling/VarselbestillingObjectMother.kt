@@ -3,6 +3,7 @@ package no.nav.personbruker.dittnav.varselbestiller.varselbestilling
 import no.nav.brukernotifikasjon.schemas.internal.domain.PreferertKanal
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 
 object VarselbestillingObjectMother {
 
@@ -11,7 +12,7 @@ object VarselbestillingObjectMother {
     private val defaultSystembruker = "dummySystembruker"
     private val defaultNamespace = "dummyNamespace"
     private val defaultAppnavn = "dummyAppnavn"
-    private val defaultBestillingstidspunkt = LocalDateTime.now(ZoneId.of("UTC"))
+    private val defaultBestillingstidspunkt = LocalDateTime.now(ZoneId.of("UTC")).truncatedTo(ChronoUnit.MILLIS)
     private val defaultBestillingsId = "B-$defaultAppnavn-$defaultEventId"
     private val defaultPrefererteKanaler = listOf(PreferertKanal.SMS.toString(), PreferertKanal.EPOST.toString())
 
