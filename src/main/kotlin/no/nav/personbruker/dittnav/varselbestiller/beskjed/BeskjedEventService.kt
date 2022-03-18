@@ -9,6 +9,7 @@ import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.Untransform
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
+import no.nav.personbruker.dittnav.varselbestiller.done.earlycancellation.EarlyCancellationRepository
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.metrics.Producer
@@ -23,6 +24,7 @@ import org.slf4j.LoggerFactory
 class BeskjedEventService(
         private val doknotifikasjonProducer: DoknotifikasjonProducer,
         private val varselbestillingRepository: VarselbestillingRepository,
+        private val earlyCancellationRepository: EarlyCancellationRepository,
         private val metricsCollector: MetricsCollector
 ) : EventBatchProcessorService<NokkelIntern, BeskjedIntern> {
 
@@ -34,8 +36,17 @@ class BeskjedEventService(
         val varselbestillinger = mutableListOf<Varselbestilling>()
 
         metricsCollector.recordMetrics(eventType = Eventtype.BESKJED_INTERN) {
+            val eventIds = events.mapNotNull { it.eventId }
+            val earlyCancellations = earlyCancellationRepository.findByEventIds(eventIds)
             events.forEach { event ->
                 try {
+                    // TODO: Sjekke om det finnes en done event i unmatched tabel, ignorer? lage en metrik for dette?
+                    val earlyCancellation = earlyCancellations.firstOrNull { it.eventId == event.eventId }
+                    if (earlyCancellation != null) {
+                        log.info("Beskjed-eventet var tid")
+                        return@forEach
+                    }
+
                     val beskjedKey = event.key()
                     val beskjedEvent = event.value()
                     val producer = Producer(event.namespace, event.appnavn)

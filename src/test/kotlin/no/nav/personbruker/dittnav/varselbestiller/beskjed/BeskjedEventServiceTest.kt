@@ -12,14 +12,16 @@ import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.successfu
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.AvroDoknotifikasjonObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
+import no.nav.personbruker.dittnav.varselbestiller.done.earlycancellation.EarlyCancellation
+import no.nav.personbruker.dittnav.varselbestiller.done.earlycancellation.EarlyCancellationRepository
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
+import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelInternObjectMother
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother.giveMeANumberOfVarselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
-import org.amshove.kluent.`should be`
-import org.amshove.kluent.`should throw`
-import org.amshove.kluent.invoking
+import org.amshove.kluent.*
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -29,15 +31,17 @@ class BeskjedEventServiceTest {
 
     private val doknotifikasjonProducer = mockk<DoknotifikasjonProducer>(relaxed = true)
     private val varselbestillingRepository = mockk<VarselbestillingRepository>(relaxed = true)
+    private val earlyCancellationRepository = mockk<EarlyCancellationRepository>(relaxed = true)
     private val metricsCollector = mockk<MetricsCollector>(relaxed = true)
     private val metricsSession = mockk<EventMetricsSession>(relaxed = true)
-    private val eventService = BeskjedEventService(doknotifikasjonProducer, varselbestillingRepository, metricsCollector)
+    private val eventService = BeskjedEventService(doknotifikasjonProducer, varselbestillingRepository, earlyCancellationRepository, metricsCollector)
 
     @BeforeEach
     private fun resetMocks() {
         mockkObject(DoknotifikasjonCreator)
         clearMocks(doknotifikasjonProducer)
         clearMocks(varselbestillingRepository)
+        clearMocks(earlyCancellationRepository)
         clearMocks(metricsCollector)
         clearMocks(metricsSession)
         coEvery { varselbestillingRepository.fetchVarselbestillingerForEventIds(allAny()) } returns Collections.emptyList()
@@ -187,5 +191,38 @@ class BeskjedEventServiceTest {
 
         coVerify(exactly = numberOfRecords) { metricsSession.countSuccessfulEksternVarslingForProducer(any()) }
         coVerify(exactly = numberOfRecords) { metricsSession.countAllEventsFromKafkaForProducer(any()) }
+    }
+
+    @Test
+    fun `Skal ikke bestille varsler for eventer som var tidligere kansellert`() {
+        val records = ConsumerRecordsObjectMother.createBeskjedRecords(
+            topicName = "dummyTopic",
+            totalNumber = 3,
+            withEksternVarsling = true
+        ).toMutableList()
+        val eventIdForEventWitheEarlyCancellation = "event-with-early-cancellation-id"
+        val recordWithEarlyCancellation = ConsumerRecordsObjectMother.createConsumerRecordWithKey(
+            "dummyTopic",
+            AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventIdForEventWitheEarlyCancellation),
+            AvroBeskjedInternObjectMother.createBeskjedIntern(eksternVarsling = true)
+        )
+        records.add(recordWithEarlyCancellation)
+        val consumerRecords = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(records)
+
+        coEvery { earlyCancellationRepository.findByEventIds(any()) } returns listOf(
+            EarlyCancellation(eventIdForEventWitheEarlyCancellation, "app")
+        )
+        val slot = slot<suspend EventMetricsSession.() -> Unit>()
+        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers { slot.captured.invoke(metricsSession) }
+        val capturedVarsler = slot<List<Varselbestilling>>()
+        coEvery { doknotifikasjonProducer.sendAndPersistEvents(any(), capture(capturedVarsler)) } returns ListPersistActionResult.emptyInstance()
+
+        runBlocking {
+            eventService.processEvents(consumerRecords)
+        }
+
+        coVerify(exactly = 1) { doknotifikasjonProducer.sendAndPersistEvents(any(), any()) }
+        capturedVarsler.captured.size `should be equal to` 3
+        capturedVarsler.captured.map { it.eventId } shouldNotContain eventIdForEventWitheEarlyCancellation
     }
 }

@@ -53,7 +53,7 @@ class ApplicationContext {
 
     private fun initializeBeskjedConsumer(): Consumer<NokkelIntern, BeskjedIntern> {
         val beskjedKafkaProps = Kafka.consumerProps(environment, Eventtype.BESKJED_INTERN)
-        val beskjedEventService = BeskjedEventService(doknotifikasjonBeskjedProducer, doknotifikasjonRepository, metricsCollector)
+        val beskjedEventService = BeskjedEventService(doknotifikasjonBeskjedProducer, doknotifikasjonRepository, earlyCancellationRepository, metricsCollector)
         return KafkaConsumerSetup.setupKafkaConsumer(environment.beskjedTopicName, beskjedKafkaProps, beskjedEventService)
     }
 
