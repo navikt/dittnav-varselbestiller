@@ -16,6 +16,7 @@ import no.nav.personbruker.dittnav.varselbestiller.common.kafka.polling.Periodic
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.done.DoneEventService
+import no.nav.personbruker.dittnav.varselbestiller.done.earlycancellation.EarlyCancellationRepository
 import no.nav.personbruker.dittnav.varselbestiller.health.HealthService
 import no.nav.personbruker.dittnav.varselbestiller.innboks.InnboksEventService
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
@@ -32,6 +33,7 @@ class ApplicationContext {
 
     val metricsReporter = resolveMetricsReporter(environment)
     val metricsCollector = MetricsCollector(metricsReporter)
+    val earlyCancellationRepository = EarlyCancellationRepository(database)
 
     val doknotifikasjonRepository = VarselbestillingRepository(database)
     val doknotifikasjonBeskjedProducer = initializeDoknotifikasjonProducer(Eventtype.BESKJED_INTERN)
@@ -69,7 +71,7 @@ class ApplicationContext {
 
     private fun initializeDoneConsumer(): Consumer<NokkelIntern, DoneIntern> {
         val doneKafkaProps = Kafka.consumerProps(environment, Eventtype.DONE_INTERN)
-        val doneEventService = DoneEventService(doknotifikasjonStopProducer, doknotifikasjonRepository, metricsCollector)
+        val doneEventService = DoneEventService(doknotifikasjonStopProducer, doknotifikasjonRepository, earlyCancellationRepository, metricsCollector)
         return KafkaConsumerSetup.setupKafkaConsumer(environment.doneTopicName, doneKafkaProps, doneEventService)
     }
 

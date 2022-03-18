@@ -5,15 +5,19 @@ import kotlinx.coroutines.runBlocking
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UntransformableRecordException
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.ConsumerRecordsObjectMother
+import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.successfulEvents
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.AvroDoknotifikasjonStoppObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppTransformer
+import no.nav.personbruker.dittnav.varselbestiller.done.earlycancellation.EarlyCancellation
+import no.nav.personbruker.dittnav.varselbestiller.done.earlycancellation.EarlyCancellationRepository
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelInternObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
+import org.amshove.kluent.`should be equal to`
 import org.amshove.kluent.`should be`
 import org.amshove.kluent.`should throw`
 import org.amshove.kluent.invoking
@@ -25,9 +29,10 @@ class DoneEventServiceTest {
 
     private val doknotifikasjonStoppProducer = mockk<DoknotifikasjonStoppProducer>(relaxed = true)
     private val varselbestillingRepository = mockk<VarselbestillingRepository>(relaxed = true)
+    private val earlyCancellationRepository = mockk<EarlyCancellationRepository>(relaxed = true)
     private val metricsCollector = mockk<MetricsCollector>(relaxed = true)
     private val metricsSession = mockk<EventMetricsSession>(relaxed = true)
-    private val eventService = DoneEventService(doknotifikasjonStoppProducer, varselbestillingRepository, metricsCollector)
+    private val eventService = DoneEventService(doknotifikasjonStoppProducer, varselbestillingRepository, earlyCancellationRepository, metricsCollector)
 
     @BeforeEach
     private fun resetMocks() {
@@ -106,6 +111,29 @@ class DoneEventServiceTest {
         coVerify (exactly = 3) { metricsSession.countAllEventsFromKafkaForProducer(any()) }
         capturedListOfEntities.captured.size `should be` 2
         confirmVerified(doknotifikasjonStoppProducer)
+    }
+
+    @Test
+    internal fun `Skal lege unmatched done eventer record for når det finnes ingen varsel for eventet`() {
+        val doneEventId = "early-cancellation-id"
+        val earlyDoneConsumerRecord = ConsumerRecordsObjectMother.createConsumerRecordWithKey(topicName ="done", actualKey = AvroNokkelInternObjectMother.createNokkelInternWithEventId(doneEventId), actualEvent = AvroDoneInternObjectMother.createDoneIntern())
+        val records = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(listOf(earlyDoneConsumerRecord))
+
+        val slot = slot<suspend EventMetricsSession.() -> Unit>()
+        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
+            slot.captured.invoke(metricsSession)
+        }
+        coEvery { varselbestillingRepository.fetchVarselbestillingerForEventIds(listOf(doneEventId)) } returns listOf()
+        val capturedListOfEntities = slot<List<EarlyCancellation>>()
+        coEvery { earlyCancellationRepository.persistInBatch(capture(capturedListOfEntities)) } returns successfulEvents(listOf())
+
+        runBlocking {
+            eventService.processEvents(records)
+        }
+
+        coVerify (exactly = 1) { metricsSession.countAllEventsFromKafkaForProducer(any()) }
+        capturedListOfEntities.captured.size `should be equal to` 1
+        capturedListOfEntities.captured.first().eventId `should be equal to` doneEventId
     }
 
     @Test

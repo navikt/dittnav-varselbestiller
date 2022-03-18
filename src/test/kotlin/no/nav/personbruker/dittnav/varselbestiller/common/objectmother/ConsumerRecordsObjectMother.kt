@@ -50,7 +50,7 @@ object ConsumerRecordsObjectMother {
         return ConsumerRecords(records)
     }
 
-    private fun createBeskjedRecords(topicName: String, totalNumber: Int, withEksternVarsling: Boolean): List<ConsumerRecord<NokkelIntern, BeskjedIntern>> {
+    fun createBeskjedRecords(topicName: String, totalNumber: Int, withEksternVarsling: Boolean): List<ConsumerRecord<NokkelIntern, BeskjedIntern>> {
         val allRecords = mutableListOf<ConsumerRecord<NokkelIntern, BeskjedIntern>>()
         for (i in 0 until totalNumber) {
             val schemaRecord = AvroBeskjedInternObjectMother.createBeskjedInternWithEksternVarsling(withEksternVarsling)

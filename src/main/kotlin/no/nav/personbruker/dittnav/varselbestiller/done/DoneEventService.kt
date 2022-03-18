@@ -8,6 +8,8 @@ import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.Untransform
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppTransformer
+import no.nav.personbruker.dittnav.varselbestiller.done.earlycancellation.EarlyCancellation
+import no.nav.personbruker.dittnav.varselbestiller.done.earlycancellation.EarlyCancellationRepository
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.metrics.Producer
@@ -19,6 +21,7 @@ import org.slf4j.LoggerFactory
 class DoneEventService(
         private val doknotifikasjonStoppProducer: DoknotifikasjonStoppProducer,
         private val varselbestillingRepository: VarselbestillingRepository,
+        private val earlyCancellationRepository: EarlyCancellationRepository,
         private val metricsCollector: MetricsCollector
 ) : EventBatchProcessorService<NokkelIntern, DoneIntern> {
 
@@ -27,35 +30,43 @@ class DoneEventService(
     override suspend fun processEvents(events: ConsumerRecords<NokkelIntern, DoneIntern>) {
         val doknotifikasjonStopp = mutableMapOf<String, DoknotifikasjonStopp>()
         val problematicEvents = mutableMapOf<NokkelIntern, DoneIntern>()
+        val unmatchedEvents = mutableMapOf<NokkelIntern, DoneIntern>()
         metricsCollector.recordMetrics(eventType = Eventtype.DONE_INTERN) {
             val doneEvents = getDoneEventsMap(this, events)
             if(doneEvents.isNotEmpty()) {
                 val varselbestillingerForEventIds = varselbestillingRepository.fetchVarselbestillingerForEventIds(doneEvents.keys.map { it.getEventId() })
-                if (varselbestillingerForEventIds.isNotEmpty()) {
-                    doneEvents.forEach { (nokkel, event) ->
-                        try {
-                            val varselbestilling = varselbestillingerForEventIds.firstOrNull{ it.eventId == nokkel.getEventId() && it.appnavn == nokkel.getAppnavn() && it.fodselsnummer == nokkel.getFodselsnummer() }
-                            if(varselbestilling != null) {
-                                if(varselbestilling.avbestilt) {
-                                    log.info("Varsel med bestillingsid ${varselbestilling.bestillingsId} allerede avbestilt, avbestiller ikke på nytt.")
-                                    countDuplicateVarselbestillingForProducer(Producer(varselbestilling.namespace, varselbestilling.appnavn))
-                                } else {
-                                    doknotifikasjonStopp[varselbestilling.bestillingsId] = DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(varselbestilling)
-                                    countSuccessfulEksternVarslingForProducer(Producer(varselbestilling.namespace, varselbestilling.appnavn))
-                                }
+
+                // todo: q1: skal hele batch re-proseseres om det er en problematic event? double-cancellation
+                doneEvents.forEach { (nokkel, event) ->
+                    try {
+                        // TODO: verifisere at vi trenger alle disse felter for å finne match
+                        val varselbestilling = varselbestillingerForEventIds.firstOrNull{ it.eventId == nokkel.getEventId() && it.appnavn == nokkel.getAppnavn() && it.fodselsnummer == nokkel.getFodselsnummer() }
+                        if(varselbestilling != null) {
+                            if(varselbestilling.avbestilt) {
+                                log.info("Varsel med bestillingsid ${varselbestilling.bestillingsId} allerede avbestilt, avbestiller ikke på nytt.")
+                                countDuplicateVarselbestillingForProducer(Producer(varselbestilling.namespace, varselbestilling.appnavn))
+                            } else {
+                                doknotifikasjonStopp[varselbestilling.bestillingsId] = DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(varselbestilling)
+                                countSuccessfulEksternVarslingForProducer(Producer(varselbestilling.namespace, varselbestilling.appnavn))
                             }
-                        } catch (e: Exception) {
-                            countFailedEksternVarslingForProducer(Producer(nokkel.getNamespace(), nokkel.getAppnavn()))
-                            problematicEvents[nokkel] = event
-                            log.warn("Eventet kan ikke brukes pga en ukjent feil, done-eventet vil bli forkastet. EventId: ${nokkel.getEventId()}", e)
+                        } else {
+                            unmatchedEvents[nokkel] = event
+                            log.info("Ingen varsel fant for done-eventet. EventId: ${nokkel.getEventId()}")
                         }
+                    } catch (e: Exception) {
+                        countFailedEksternVarslingForProducer(Producer(nokkel.getNamespace(), nokkel.getAppnavn()))
+                        problematicEvents[nokkel] = event
+                        log.warn("Eventet kan ikke brukes pga en ukjent feil, done-eventet vil bli forkastet. EventId: ${nokkel.getEventId()}", e)
                     }
-                    if (doknotifikasjonStopp.isNotEmpty()) {
-                        produceDoknotifikasjonStoppAndPersistToDB(doknotifikasjonStopp)
-                    }
-                    if(problematicEvents.isNotEmpty()) {
-                        throwExceptionIfFailedValidation(problematicEvents)
-                    }
+                }
+                if (doknotifikasjonStopp.isNotEmpty()) {
+                    produceDoknotifikasjonStoppAndPersistToDB(doknotifikasjonStopp)
+                }
+                if (unmatchedEvents.isNotEmpty()) {
+                    persistEarlyCancellationsToDB(unmatchedEvents)
+                }
+                if(problematicEvents.isNotEmpty()) {
+                    throwExceptionIfFailedValidation(problematicEvents)
                 }
             }
         }
@@ -75,6 +86,12 @@ class DoneEventService(
             }
         }
         return doneEvents
+    }
+
+    private suspend fun persistEarlyCancellationsToDB(unmatchedEvents: MutableMap<NokkelIntern, DoneIntern>) {
+        val earlyCancellations = unmatchedEvents.map { EarlyCancellation.fromEventEntryMap(it) }
+
+        earlyCancellationRepository.persistInBatch(earlyCancellations)
     }
 
     private suspend fun produceDoknotifikasjonStoppAndPersistToDB(successfullyValidatedEvents: Map<String, DoknotifikasjonStopp>) {
