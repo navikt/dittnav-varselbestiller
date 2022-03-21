@@ -25,6 +25,7 @@ import org.amshove.kluent.*
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.time.LocalDateTime
 import java.util.*
 
 class BeskjedEventServiceTest {
@@ -210,12 +211,14 @@ class BeskjedEventServiceTest {
         val consumerRecords = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(records)
 
         coEvery { earlyCancellationRepository.findByEventIds(any()) } returns listOf(
-            EarlyCancellation(eventIdForEventWitheEarlyCancellation, "app")
+            EarlyCancellation(eventIdForEventWitheEarlyCancellation, "app", "ns", "1234", "sbruker", LocalDateTime.now())
         )
         val slot = slot<suspend EventMetricsSession.() -> Unit>()
         coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers { slot.captured.invoke(metricsSession) }
         val capturedVarsler = slot<List<Varselbestilling>>()
         coEvery { doknotifikasjonProducer.sendAndPersistEvents(any(), capture(capturedVarsler)) } returns ListPersistActionResult.emptyInstance()
+        val capturedEarlyCancellationForDeletion = slot<List<String>>()
+        coEvery { earlyCancellationRepository.deleteByEventIds(capture(capturedEarlyCancellationForDeletion)) } returns Unit
 
         runBlocking {
             eventService.processEvents(consumerRecords)
@@ -224,5 +227,8 @@ class BeskjedEventServiceTest {
         coVerify(exactly = 1) { doknotifikasjonProducer.sendAndPersistEvents(any(), any()) }
         capturedVarsler.captured.size `should be equal to` 3
         capturedVarsler.captured.map { it.eventId } shouldNotContain eventIdForEventWitheEarlyCancellation
+        coVerify(exactly = 1) { earlyCancellationRepository.deleteByEventIds(any()) }
+        capturedEarlyCancellationForDeletion.captured.size `should be equal to` 1
+        capturedEarlyCancellationForDeletion.captured `should contain` eventIdForEventWitheEarlyCancellation
     }
 }

@@ -9,6 +9,7 @@ import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.Untransform
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
+import no.nav.personbruker.dittnav.varselbestiller.done.earlycancellation.EarlyCancellation
 import no.nav.personbruker.dittnav.varselbestiller.done.earlycancellation.EarlyCancellationRepository
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
@@ -34,16 +35,17 @@ class BeskjedEventService(
         val successfullyTransformedEvents = mutableMapOf<String, Doknotifikasjon>()
         val problematicEvents = mutableListOf<ConsumerRecord<NokkelIntern, BeskjedIntern>>()
         val varselbestillinger = mutableListOf<Varselbestilling>()
+        val usedEarlyCancellations = mutableListOf<EarlyCancellation>()
 
         metricsCollector.recordMetrics(eventType = Eventtype.BESKJED_INTERN) {
             val eventIds = events.mapNotNull { it.eventId }
             val earlyCancellations = earlyCancellationRepository.findByEventIds(eventIds)
             events.forEach { event ->
                 try {
-                    // TODO: Sjekke om det finnes en done event i unmatched tabel, ignorer? lage en metrik for dette?
                     val earlyCancellation = earlyCancellations.firstOrNull { it.eventId == event.eventId }
                     if (earlyCancellation != null) {
-                        log.info("Beskjed-eventet var tid")
+                        log.info("Beskjed-eventet var tidligere kansellert av ${earlyCancellation.appnavn} den ${earlyCancellation.tidspunkt}")
+                        usedEarlyCancellations.add(earlyCancellation)
                         return@forEach
                     }
 
@@ -66,6 +68,9 @@ class BeskjedEventService(
             }
             if (successfullyTransformedEvents.isNotEmpty()) {
                 produceDoknotifikasjonerAndPersistToDB(this, successfullyTransformedEvents, varselbestillinger)
+            }
+            if (usedEarlyCancellations.isNotEmpty()) {
+                earlyCancellationRepository.deleteByEventIds(usedEarlyCancellations.map { it.eventId })
             }
             if (problematicEvents.isNotEmpty()) {
                 throwExceptionForProblematicEvents(problematicEvents)

@@ -3,7 +3,7 @@ package no.nav.personbruker.dittnav.varselbestiller.done.earlycancellation
 import no.nav.personbruker.dittnav.varselbestiller.common.database.*
 import java.sql.Connection
 import java.sql.ResultSet
-
+import java.sql.Types
 
 class EarlyCancellationRepository(private val database: Database) {
 
@@ -18,6 +18,12 @@ class EarlyCancellationRepository(private val database: Database) {
             getEarlyCancellationsByEventIds(eventIds)
         }
     }
+
+    suspend fun deleteByEventIds(eventIds: List<String>) {
+        database.queryWithExceptionTranslation {
+            deleteByEventIds(eventIds)
+        }
+    }
 }
 
 private fun Connection.getEarlyCancellationsByEventIds(eventIds: List<String>): List<EarlyCancellation> {
@@ -29,17 +35,30 @@ private fun Connection.getEarlyCancellationsByEventIds(eventIds: List<String>): 
 
 }
 
+private fun Connection.deleteByEventIds(eventIds: List<String>) {
+    prepareStatement("""DELETE FROM early_cancellation WHERE eventid = ANY(?) """)
+        .use {
+            it.setArray(1, toVarcharArray(eventIds))
+            it.executeQuery()
+        }
+
+}
+
 private fun Connection.idempotentlyPersistEntities(entities: List<EarlyCancellation>): ListPersistActionResult<EarlyCancellation> {
     return executeBatchPersistQuery(
         """
-            INSERT INTO early_cancellation (eventid, appnavn) 
-            VALUES (?, ?)
+            INSERT INTO early_cancellation (eventid, appnavn, namespace, fodselsnummer, systembruker, tidspunkt) 
+            VALUES (?, ?, ?, ?, ?, ?)
         """.trimIndent(),
         skipConflicting = true
     ) {
         entities.forEach { entity ->
             setString(1, entity.eventId)
             setString(2, entity.appnavn)
+            setString(3, entity.namespace)
+            setString(4, entity.fodselsnummer)
+            setString(5, entity.systembruker)
+            setObject(6, entity.tidspunkt, Types.TIMESTAMP)
             addBatch()
         }
     }.toBatchPersistResult(entities)
@@ -48,6 +67,10 @@ private fun Connection.idempotentlyPersistEntities(entities: List<EarlyCancellat
 private fun ResultSet.toEarlyCancellation(): EarlyCancellation {
     return EarlyCancellation(
         eventId = getString("eventid"),
-        appnavn = getString("appnavn")
+        appnavn = getString("appnavn"),
+        namespace = getString("namespace"),
+        fodselsnummer = getString("fodselsnummer"),
+        systembruker = getString("systembruker"),
+        tidspunkt = getUtcDateTime("tidspunkt")
     )
 }
