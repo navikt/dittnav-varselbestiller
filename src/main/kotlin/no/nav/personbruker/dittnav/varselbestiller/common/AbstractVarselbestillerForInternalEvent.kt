@@ -19,7 +19,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-abstract class AbstractInternalEventBatchProcessor<V>(
+abstract class AbstractVarselbestillerForInternalEvent<V>(
     private val doknotifikasjonProducer: DoknotifikasjonProducer,
     private val varselbestillingRepository: VarselbestillingRepository,
     private val earlyCancellationRepository: EarlyCancellationRepository,
@@ -27,7 +27,7 @@ abstract class AbstractInternalEventBatchProcessor<V>(
     private val eventType: Eventtype
 ): EventBatchProcessorService<NokkelIntern, V>{
 
-    private val log: Logger = LoggerFactory.getLogger(AbstractInternalEventBatchProcessor::class.java)
+    private val log: Logger = LoggerFactory.getLogger(AbstractVarselbestillerForInternalEvent::class.java)
 
     override suspend fun processEvents(events: ConsumerRecords<NokkelIntern, V>) {
         val successfullyTransformedEvents = mutableMapOf<String, Doknotifikasjon>()

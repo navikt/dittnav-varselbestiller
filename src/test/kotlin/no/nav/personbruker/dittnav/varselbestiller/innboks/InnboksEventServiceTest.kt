@@ -12,6 +12,7 @@ import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.successfu
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.AvroDoknotifikasjonObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
+import no.nav.personbruker.dittnav.varselbestiller.done.earlycancellation.EarlyCancellationRepository
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother
@@ -28,9 +29,10 @@ class InnboksEventServiceTest {
 
     private val doknotifikasjonProducer = mockk<DoknotifikasjonProducer>(relaxed = true)
     private val varselbestillingRepository = mockk<VarselbestillingRepository>(relaxed = true)
+    private val earlyCancellationRepository = mockk<EarlyCancellationRepository>(relaxed = true)
     private val metricsCollector = mockk<MetricsCollector>(relaxed = true)
     private val metricsSession = mockk<EventMetricsSession>(relaxed = true)
-    private val eventService = InnboksEventService(doknotifikasjonProducer, varselbestillingRepository, metricsCollector)
+    private val eventService = InnboksEventService(doknotifikasjonProducer, varselbestillingRepository, earlyCancellationRepository, metricsCollector)
 
     @BeforeEach
     private fun resetMocks() {
@@ -40,6 +42,7 @@ class InnboksEventServiceTest {
         clearMocks(metricsCollector)
         clearMocks(metricsSession)
         coEvery { varselbestillingRepository.fetchVarselbestillingerForEventIds(allAny()) } returns Collections.emptyList()
+        coEvery { metricsCollector.createSession(any()) } returns metricsSession
     }
 
     @AfterAll
@@ -55,11 +58,6 @@ class InnboksEventServiceTest {
 
         val persistResult = successfulEvents(VarselbestillingObjectMother.giveMeANumberOfVarselbestilling(numberOfEvents = 4))
         coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns Collections.emptyList()
-
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
-        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
-        }
 
         coEvery { doknotifikasjonProducer.sendAndPersistEvents(capture(capturedListOfEntities), any()) } returns persistResult
         runBlocking {
@@ -84,11 +82,6 @@ class InnboksEventServiceTest {
         val persistResult = successfulEvents(VarselbestillingObjectMother.giveMeANumberOfVarselbestilling(numberOfEvents = 5))
         coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns listOf(
             VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "I-dummyAppnavn-1", eventId = "1"))
-
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
-        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
-        }
         coEvery { doknotifikasjonProducer.sendAndPersistEvents(capture(capturedListOfEntities), any()) } returns persistResult
 
         runBlocking {
@@ -109,11 +102,6 @@ class InnboksEventServiceTest {
         val innboksWithEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfInnboksRecords(numberOfRecords = 4, topicName = "innboksTopic", withEksternVarsling = true)
         val innboksWithoutEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfInnboksRecords(numberOfRecords = 6, topicName = "innboksTopic", withEksternVarsling = false)
         val capturedListOfEntities = slot<Map<String, Doknotifikasjon>>()
-
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
-        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
-        }
 
         coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns Collections.emptyList()
         coEvery { doknotifikasjonProducer.sendAndPersistEvents(capture(capturedListOfEntities), any()) } returns ListPersistActionResult.emptyInstance()
@@ -149,11 +137,6 @@ class InnboksEventServiceTest {
 
         coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns emptyList()
 
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
-        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
-        }
-
         invoking {
             runBlocking {
                 eventService.processEvents(innboksRecords)
@@ -175,15 +158,10 @@ class InnboksEventServiceTest {
         val numberOfRecords = 5
 
         val innboksWithEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfInnboksRecords(numberOfRecords, topicName = "innboksTopic", withEksternVarsling = true)
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
 
         val persistResult = successfulEvents(VarselbestillingObjectMother.giveMeANumberOfVarselbestilling(numberOfRecords))
         coEvery { doknotifikasjonProducer.sendAndPersistEvents(any(), any()) } returns persistResult
         coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns emptyList()
-
-        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
-        }
 
         runBlocking {
             eventService.processEvents(innboksWithEksternVarslingRecords)

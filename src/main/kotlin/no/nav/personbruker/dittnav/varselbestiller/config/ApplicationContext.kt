@@ -59,13 +59,13 @@ class ApplicationContext {
 
     private fun initializeOppgaveConsumer(): Consumer<NokkelIntern, OppgaveIntern> {
         val oppgaveKafkaProps = Kafka.consumerProps(environment, Eventtype.OPPGAVE_INTERN)
-        val oppgaveEventService = OppgaveEventService(doknotifikasjonOppgaveProducer, doknotifikasjonRepository, metricsCollector)
+        val oppgaveEventService = OppgaveEventService(doknotifikasjonOppgaveProducer, doknotifikasjonRepository, earlyCancellationRepository, metricsCollector)
         return KafkaConsumerSetup.setupKafkaConsumer(environment.oppgaveTopicName, oppgaveKafkaProps, oppgaveEventService)
     }
 
     private fun initializeInnboksConsumer(): Consumer<NokkelIntern, InnboksIntern> {
         val innboksKafkaProps = Kafka.consumerProps(environment, Eventtype.INNBOKS_INTERN)
-        val innboksEventService = InnboksEventService(doknotifikasjonInnboksProducer, doknotifikasjonRepository, metricsCollector)
+        val innboksEventService = InnboksEventService(doknotifikasjonInnboksProducer, doknotifikasjonRepository, earlyCancellationRepository, metricsCollector)
         return KafkaConsumerSetup.setupKafkaConsumer(environment.innboksTopicName, innboksKafkaProps, innboksEventService)
     }
 

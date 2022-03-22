@@ -3,7 +3,7 @@ package no.nav.personbruker.dittnav.varselbestiller.beskjed
 import no.nav.brukernotifikasjon.schemas.internal.BeskjedIntern
 import no.nav.brukernotifikasjon.schemas.internal.NokkelIntern
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
-import no.nav.personbruker.dittnav.varselbestiller.common.AbstractInternalEventBatchProcessor
+import no.nav.personbruker.dittnav.varselbestiller.common.AbstractVarselbestillerForInternalEvent
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
@@ -17,7 +17,7 @@ class BeskjedEventService(
     varselbestillingRepository: VarselbestillingRepository,
     earlyCancellationRepository: EarlyCancellationRepository,
     metricsCollector: MetricsCollector
-) : AbstractInternalEventBatchProcessor<BeskjedIntern>(
+) : AbstractVarselbestillerForInternalEvent<BeskjedIntern>(
     doknotifikasjonProducer,
     varselbestillingRepository,
     earlyCancellationRepository,

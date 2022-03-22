@@ -12,6 +12,7 @@ import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.successfu
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.AvroDoknotifikasjonObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
+import no.nav.personbruker.dittnav.varselbestiller.done.earlycancellation.EarlyCancellationRepository
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother
@@ -31,7 +32,8 @@ class OppgaveEventServiceTest {
     private val metricsSession = mockk<EventMetricsSession>(relaxed = true)
     private val doknotifikasjonProducer = mockk<DoknotifikasjonProducer>(relaxed = true)
     private val varselbestillingRepository = mockk<VarselbestillingRepository>(relaxed = true)
-    private val eventService = OppgaveEventService(doknotifikasjonProducer, varselbestillingRepository, metricsCollector)
+    private val earlyCancellationRepository = mockk<EarlyCancellationRepository>(relaxed = true)
+    private val eventService = OppgaveEventService(doknotifikasjonProducer, varselbestillingRepository, earlyCancellationRepository, metricsCollector)
 
     @BeforeEach
     private fun resetMocks() {
@@ -41,6 +43,7 @@ class OppgaveEventServiceTest {
         clearMocks(metricsCollector)
         clearMocks(metricsSession)
         coEvery { varselbestillingRepository.fetchVarselbestillingerForEventIds(allAny()) } returns Collections.emptyList()
+        coEvery { metricsCollector.createSession(any()) } returns metricsSession
     }
 
     @AfterAll
@@ -57,11 +60,6 @@ class OppgaveEventServiceTest {
 
         val persistResult = successfulEvents(giveMeANumberOfVarselbestilling(numberOfEvents = 4))
         coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns Collections.emptyList()
-
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
-        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
-        }
 
         coEvery { doknotifikasjonProducer.sendAndPersistEvents(capture(capturedListOfEntities), any()) } returns persistResult
         runBlocking {
@@ -85,11 +83,6 @@ class OppgaveEventServiceTest {
 
         val persistResult = successfulEvents(giveMeANumberOfVarselbestilling(numberOfEvents = 5))
         coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns listOf(VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "O-dummyAppnavn-1", eventId = "1"))
-
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
-        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
-        }
         coEvery { doknotifikasjonProducer.sendAndPersistEvents(capture(capturedListOfEntities), any()) } returns persistResult
 
         runBlocking {
@@ -110,11 +103,6 @@ class OppgaveEventServiceTest {
         val oppgaveWithEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfOppgaveRecords(numberOfRecords = 4, topicName = "dummyTopic", withEksternVarsling = true)
         val oppgaveWithoutEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfOppgaveRecords(numberOfRecords = 6, topicName = "dummyTopic", withEksternVarsling = false)
         val capturedListOfEntities = slot<Map<String, Doknotifikasjon>>()
-
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
-        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
-        }
 
         coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns Collections.emptyList()
         coEvery { doknotifikasjonProducer.sendAndPersistEvents(capture(capturedListOfEntities), any()) } returns ListPersistActionResult.emptyInstance()
@@ -145,11 +133,6 @@ class OppgaveEventServiceTest {
 
         coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns emptyList()
 
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
-        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
-        }
-
         invoking {
             runBlocking {
                 eventService.processEvents(oppgaveRecords)
@@ -175,10 +158,6 @@ class OppgaveEventServiceTest {
         val persistResult = successfulEvents(giveMeANumberOfVarselbestilling(numberOfRecords))
         coEvery { doknotifikasjonProducer.sendAndPersistEvents(any(), any()) } returns persistResult
         coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns emptyList()
-
-        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
-        }
 
         runBlocking {
             eventService.processEvents(oppgaveWithEksternVarslingRecords)
