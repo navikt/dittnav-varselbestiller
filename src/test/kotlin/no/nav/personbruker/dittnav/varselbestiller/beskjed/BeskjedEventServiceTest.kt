@@ -46,6 +46,7 @@ class BeskjedEventServiceTest {
         clearMocks(metricsCollector)
         clearMocks(metricsSession)
         coEvery { varselbestillingRepository.fetchVarselbestillingerForEventIds(allAny()) } returns Collections.emptyList()
+        coEvery { metricsCollector.createSession(any()) } returns metricsSession
     }
 
     @AfterAll
@@ -58,17 +59,12 @@ class BeskjedEventServiceTest {
     fun `Skal opprette Doknotifikasjon for alle eventer som har ekstern varsling`() {
         val beskjedWithEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords = 4, topicName = "dummyTopic", withEksternVarsling = true)
         val beskjedWithoutEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords = 6, topicName = "dummyTopic", withEksternVarsling = false)
-        val capturedListOfEntities = slot<Map<String, Doknotifikasjon>>()
-
         val persistResult = successfulEvents(giveMeANumberOfVarselbestilling(numberOfEvents = 4))
+
+        val capturedListOfEntities = slot<Map<String, Doknotifikasjon>>()
         coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns Collections.emptyList()
-
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
-        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
-        }
-
         coEvery { doknotifikasjonProducer.sendAndPersistEvents(capture(capturedListOfEntities), any()) } returns persistResult
+
         runBlocking {
             eventService.processEvents(beskjedWithEksternVarslingRecords)
             eventService.processEvents(beskjedWithoutEksternVarslingRecords)
@@ -86,15 +82,10 @@ class BeskjedEventServiceTest {
     @Test
     fun `Skal ikke opprette Doknotifikasjon for eventer som har tidligere bestilt ekstern varsling`() {
         val beskjedRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords = 5, topicName = "dummyTopic", withEksternVarsling = true)
-        val capturedListOfEntities = slot<Map<String, Doknotifikasjon>>()
-
         val persistResult = successfulEvents(giveMeANumberOfVarselbestilling(numberOfEvents = 5))
-        coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns listOf(VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-dummyAppnavn-1", eventId = "1"))
 
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
-        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
-        }
+        val capturedListOfEntities = slot<Map<String, Doknotifikasjon>>()
+        coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns listOf(VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-dummyAppnavn-1", eventId = "1"))
         coEvery { doknotifikasjonProducer.sendAndPersistEvents(capture(capturedListOfEntities), any()) } returns persistResult
 
         runBlocking {
@@ -114,13 +105,8 @@ class BeskjedEventServiceTest {
     fun `Skal skrive Doknotifikasjon til database for Beskjeder som har ekstern varsling`() {
         val beskjedWithEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords = 4, topicName = "dummyTopic", withEksternVarsling = true)
         val beskjedWithoutEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfBeskjedRecords(numberOfRecords = 6, topicName = "dummyTopic", withEksternVarsling = false)
+
         val capturedListOfEntities = slot<Map<String, Doknotifikasjon>>()
-
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
-        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
-        }
-
         coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns Collections.emptyList()
         coEvery { doknotifikasjonProducer.sendAndPersistEvents(capture(capturedListOfEntities), any()) } returns ListPersistActionResult.emptyInstance()
 
@@ -151,11 +137,6 @@ class BeskjedEventServiceTest {
 
         coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns emptyList()
 
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
-        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
-        }
-
         invoking {
             runBlocking {
                 eventService.processEvents(beskjedRecords)
@@ -181,10 +162,6 @@ class BeskjedEventServiceTest {
         val persistResult = successfulEvents(giveMeANumberOfVarselbestilling(numberOfRecords))
         coEvery { doknotifikasjonProducer.sendAndPersistEvents(any(), any()) } returns persistResult
         coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns emptyList()
-
-        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
-            slot.captured.invoke(metricsSession)
-        }
 
         runBlocking {
             eventService.processEvents(beskjedWithEksternVarslingRecords)
@@ -213,8 +190,6 @@ class BeskjedEventServiceTest {
         coEvery { earlyCancellationRepository.findByEventIds(any()) } returns listOf(
             EarlyCancellation(eventIdForEventWitheEarlyCancellation, "app", "ns", "1234", "sbruker", LocalDateTime.now())
         )
-        val slot = slot<suspend EventMetricsSession.() -> Unit>()
-        coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers { slot.captured.invoke(metricsSession) }
         val capturedVarsler = slot<List<Varselbestilling>>()
         coEvery { doknotifikasjonProducer.sendAndPersistEvents(any(), capture(capturedVarsler)) } returns ListPersistActionResult.emptyInstance()
         val capturedEarlyCancellationForDeletion = slot<List<String>>()
