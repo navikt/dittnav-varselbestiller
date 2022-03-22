@@ -9,14 +9,15 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 
 class EarlyCancellationRepositoryTest {
     private val database = LocalPostgresDatabase()
     private val earlyCancellationRepository = EarlyCancellationRepository(database)
 
-    private val earlyCancellation1 = EarlyCancellation(eventId = "1", appnavn = "app1", namespace = "ns", fodselsnummer = "1234", systembruker = "s-bruker", tidspunkt = LocalDateTime.now())
-    private val earlyCancellation2 = EarlyCancellation(eventId = "2", appnavn = "app2", namespace = "ns", fodselsnummer = "1234", systembruker = "s-bruker", tidspunkt = LocalDateTime.now())
-    private val earlyCancellation3 = EarlyCancellation(eventId = "1", appnavn = "app3", namespace = "ns", fodselsnummer = "1234", systembruker = "s-bruker", tidspunkt = LocalDateTime.now())
+    private val earlyCancellation1 = EarlyCancellation(eventId = "1", appnavn = "app1", namespace = "ns", fodselsnummer = "1234", systembruker = "s-bruker", tidspunkt = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS))
+    private val earlyCancellation2 = EarlyCancellation(eventId = "2", appnavn = "app2", namespace = "ns", fodselsnummer = "1234", systembruker = "s-bruker", tidspunkt = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS))
+    private val earlyCancellation3 = EarlyCancellation(eventId = "1", appnavn = "app3", namespace = "ns", fodselsnummer = "1234", systembruker = "s-bruker", tidspunkt = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS))
 
     @BeforeAll
     fun setup() {
