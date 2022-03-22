@@ -3,6 +3,7 @@ package no.nav.personbruker.dittnav.varselbestiller.done.earlycancellation
 import no.nav.brukernotifikasjon.schemas.internal.DoneIntern
 import no.nav.brukernotifikasjon.schemas.internal.NokkelIntern
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 
 data class EarlyCancellation(
     val eventId: String,
@@ -20,8 +21,19 @@ data class EarlyCancellation(
                 entry.key.getNamespace(),
                 entry.key.getFodselsnummer(),
                 entry.key.getSystembruker(),
-                LocalDateTime.now()
+                LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS)
             )
         }
+    }
+
+    override fun toString(): String {
+        return """EarlyCancellation(
+            |eventId=$eventId, 
+            |appnavn=$appnavn, 
+            |namespace=$namespace, 
+            |fodselsnummer=****, 
+            |systembruker=$systembruker, 
+            |tidspunkt=$tidspunkt
+            |)""".trimMargin()
     }
 }
