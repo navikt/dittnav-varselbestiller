@@ -8,8 +8,8 @@ import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.Untransform
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppTransformer
-import no.nav.personbruker.dittnav.varselbestiller.done.earlycancellation.EarlyCancellation
-import no.nav.personbruker.dittnav.varselbestiller.done.earlycancellation.EarlyCancellationRepository
+import no.nav.personbruker.dittnav.varselbestiller.done.earlydone.EarlyDoneEvent
+import no.nav.personbruker.dittnav.varselbestiller.done.earlydone.EarlyDoneEventRepository
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.metrics.Producer
@@ -19,10 +19,10 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class DoneEventService(
-        private val doknotifikasjonStoppProducer: DoknotifikasjonStoppProducer,
-        private val varselbestillingRepository: VarselbestillingRepository,
-        private val earlyCancellationRepository: EarlyCancellationRepository,
-        private val metricsCollector: MetricsCollector
+    private val doknotifikasjonStoppProducer: DoknotifikasjonStoppProducer,
+    private val varselbestillingRepository: VarselbestillingRepository,
+    private val earlyDoneEventRepository: EarlyDoneEventRepository,
+    private val metricsCollector: MetricsCollector
 ) : EventBatchProcessorService<NokkelIntern, DoneIntern> {
 
     private val log: Logger = LoggerFactory.getLogger(DoneEventService::class.java)
@@ -89,9 +89,9 @@ class DoneEventService(
     }
 
     private suspend fun persistEarlyCancellationsToDB(unmatchedEvents: MutableMap<NokkelIntern, DoneIntern>) {
-        val earlyCancellations = unmatchedEvents.map { EarlyCancellation.fromEventEntryMap(it) }
+        val earlyDoneEvents = unmatchedEvents.map { EarlyDoneEvent.fromEventEntryMap(it) }
 
-        earlyCancellationRepository.persistInBatch(earlyCancellations)
+        earlyDoneEventRepository.persistInBatch(earlyDoneEvents)
     }
 
     private suspend fun produceDoknotifikasjonStoppAndPersistToDB(successfullyValidatedEvents: Map<String, DoknotifikasjonStopp>) {

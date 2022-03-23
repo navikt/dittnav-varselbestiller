@@ -12,7 +12,7 @@ import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.successfu
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.AvroDoknotifikasjonObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
-import no.nav.personbruker.dittnav.varselbestiller.done.earlycancellation.EarlyCancellationRepository
+import no.nav.personbruker.dittnav.varselbestiller.done.earlydone.EarlyDoneEventRepository
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother
@@ -32,8 +32,8 @@ class OppgaveEventServiceTest {
     private val metricsSession = mockk<EventMetricsSession>(relaxed = true)
     private val doknotifikasjonProducer = mockk<DoknotifikasjonProducer>(relaxed = true)
     private val varselbestillingRepository = mockk<VarselbestillingRepository>(relaxed = true)
-    private val earlyCancellationRepository = mockk<EarlyCancellationRepository>(relaxed = true)
-    private val eventService = OppgaveEventService(doknotifikasjonProducer, varselbestillingRepository, earlyCancellationRepository, metricsCollector)
+    private val earlyDoneEventRepository = mockk<EarlyDoneEventRepository>(relaxed = true)
+    private val eventService = OppgaveEventService(doknotifikasjonProducer, varselbestillingRepository, earlyDoneEventRepository, metricsCollector)
 
     @BeforeEach
     private fun resetMocks() {

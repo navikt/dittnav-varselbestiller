@@ -1,5 +1,5 @@
 
-CREATE TABLE IF NOT EXISTS early_cancellation(
+CREATE TABLE IF NOT EXISTS early_done_event(
    eventid character varying(50) primary key,
    appnavn character varying(100),
    namespace character varying(100),

@@ -7,7 +7,7 @@ import no.nav.personbruker.dittnav.varselbestiller.common.AbstractVarselbestille
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
-import no.nav.personbruker.dittnav.varselbestiller.done.earlycancellation.EarlyCancellationRepository
+import no.nav.personbruker.dittnav.varselbestiller.done.earlydone.EarlyDoneEventRepository
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingTransformer
@@ -15,12 +15,12 @@ import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestil
 class BeskjedEventService(
     doknotifikasjonProducer: DoknotifikasjonProducer,
     varselbestillingRepository: VarselbestillingRepository,
-    earlyCancellationRepository: EarlyCancellationRepository,
+    earlyDoneEventRepository: EarlyDoneEventRepository,
     metricsCollector: MetricsCollector
 ) : AbstractVarselbestillerForInternalEvent<BeskjedIntern>(
     doknotifikasjonProducer,
     varselbestillingRepository,
-    earlyCancellationRepository,
+    earlyDoneEventRepository,
     metricsCollector,
     Eventtype.BESKJED_INTERN
 ) {

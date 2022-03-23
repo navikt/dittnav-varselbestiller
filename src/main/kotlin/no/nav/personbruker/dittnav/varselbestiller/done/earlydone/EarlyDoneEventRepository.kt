@@ -1,21 +1,21 @@
-package no.nav.personbruker.dittnav.varselbestiller.done.earlycancellation
+package no.nav.personbruker.dittnav.varselbestiller.done.earlydone
 
 import no.nav.personbruker.dittnav.varselbestiller.common.database.*
 import java.sql.Connection
 import java.sql.ResultSet
 import java.sql.Types
 
-class EarlyCancellationRepository(private val database: Database) {
+class EarlyDoneEventRepository(private val database: Database) {
 
-    suspend fun persistInBatch(entities: List<EarlyCancellation>): ListPersistActionResult<EarlyCancellation> {
+    suspend fun persistInBatch(entities: List<EarlyDoneEvent>): ListPersistActionResult<EarlyDoneEvent> {
         return database.queryWithExceptionTranslation {
             idempotentlyPersistEntities(entities)
         }
     }
 
-    suspend fun findByEventIds(eventIds: List<String>): List<EarlyCancellation> {
+    suspend fun findByEventIds(eventIds: List<String>): List<EarlyDoneEvent> {
         return database.queryWithExceptionTranslation {
-            getEarlyCancellationsByEventIds(eventIds)
+            getEarlyDoneByEventIds(eventIds)
         }
     }
 
@@ -26,17 +26,17 @@ class EarlyCancellationRepository(private val database: Database) {
     }
 }
 
-private fun Connection.getEarlyCancellationsByEventIds(eventIds: List<String>): List<EarlyCancellation> {
-    return prepareStatement("""SELECT * FROM early_cancellation WHERE eventid = ANY(?) """)
+private fun Connection.getEarlyDoneByEventIds(eventIds: List<String>): List<EarlyDoneEvent> {
+    return prepareStatement("""SELECT * FROM early_done_event WHERE eventid = ANY(?) """)
         .use {
             it.setArray(1, toVarcharArray(eventIds))
-            it.executeQuery().mapList { toEarlyCancellation() }
+            it.executeQuery().mapList { toEarlyDoneEvent() }
         }
 
 }
 
 private fun Connection.deleteByEventIds(eventIds: List<String>) {
-    prepareStatement("""DELETE FROM early_cancellation WHERE eventid = ANY(?) """)
+    prepareStatement("""DELETE FROM early_done_event WHERE eventid = ANY(?) """)
         .use {
             it.setArray(1, toVarcharArray(eventIds))
             it.executeQuery()
@@ -44,10 +44,10 @@ private fun Connection.deleteByEventIds(eventIds: List<String>) {
 
 }
 
-private fun Connection.idempotentlyPersistEntities(entities: List<EarlyCancellation>): ListPersistActionResult<EarlyCancellation> {
+private fun Connection.idempotentlyPersistEntities(entities: List<EarlyDoneEvent>): ListPersistActionResult<EarlyDoneEvent> {
     return executeBatchPersistQuery(
         """
-            INSERT INTO early_cancellation (eventid, appnavn, namespace, fodselsnummer, systembruker, tidspunkt) 
+            INSERT INTO early_done_event (eventid, appnavn, namespace, fodselsnummer, systembruker, tidspunkt) 
             VALUES (?, ?, ?, ?, ?, ?)
         """.trimIndent(),
         skipConflicting = true
@@ -64,8 +64,8 @@ private fun Connection.idempotentlyPersistEntities(entities: List<EarlyCancellat
     }.toBatchPersistResult(entities)
 }
 
-private fun ResultSet.toEarlyCancellation(): EarlyCancellation {
-    return EarlyCancellation(
+private fun ResultSet.toEarlyDoneEvent(): EarlyDoneEvent {
+    return EarlyDoneEvent(
         eventId = getString("eventid"),
         appnavn = getString("appnavn"),
         namespace = getString("namespace"),

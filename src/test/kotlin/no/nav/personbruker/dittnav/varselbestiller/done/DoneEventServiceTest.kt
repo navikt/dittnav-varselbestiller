@@ -9,8 +9,8 @@ import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.successfu
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.AvroDoknotifikasjonStoppObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppTransformer
-import no.nav.personbruker.dittnav.varselbestiller.done.earlycancellation.EarlyCancellation
-import no.nav.personbruker.dittnav.varselbestiller.done.earlycancellation.EarlyCancellationRepository
+import no.nav.personbruker.dittnav.varselbestiller.done.earlydone.EarlyDoneEvent
+import no.nav.personbruker.dittnav.varselbestiller.done.earlydone.EarlyDoneEventRepository
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelInternObjectMother
@@ -29,10 +29,10 @@ class DoneEventServiceTest {
 
     private val doknotifikasjonStoppProducer = mockk<DoknotifikasjonStoppProducer>(relaxed = true)
     private val varselbestillingRepository = mockk<VarselbestillingRepository>(relaxed = true)
-    private val earlyCancellationRepository = mockk<EarlyCancellationRepository>(relaxed = true)
+    private val earlyDoneEventRepository = mockk<EarlyDoneEventRepository>(relaxed = true)
     private val metricsCollector = mockk<MetricsCollector>(relaxed = true)
     private val metricsSession = mockk<EventMetricsSession>(relaxed = true)
-    private val eventService = DoneEventService(doknotifikasjonStoppProducer, varselbestillingRepository, earlyCancellationRepository, metricsCollector)
+    private val eventService = DoneEventService(doknotifikasjonStoppProducer, varselbestillingRepository, earlyDoneEventRepository, metricsCollector)
 
     @BeforeEach
     private fun resetMocks() {
@@ -124,8 +124,8 @@ class DoneEventServiceTest {
             slot.captured.invoke(metricsSession)
         }
         coEvery { varselbestillingRepository.fetchVarselbestillingerForEventIds(listOf(doneEventId)) } returns listOf()
-        val capturedListOfEntities = slot<List<EarlyCancellation>>()
-        coEvery { earlyCancellationRepository.persistInBatch(capture(capturedListOfEntities)) } returns successfulEvents(listOf())
+        val capturedListOfEntities = slot<List<EarlyDoneEvent>>()
+        coEvery { earlyDoneEventRepository.persistInBatch(capture(capturedListOfEntities)) } returns successfulEvents(listOf())
 
         runBlocking {
             eventService.processEvents(records)

@@ -7,8 +7,8 @@ import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.Untransform
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
-import no.nav.personbruker.dittnav.varselbestiller.done.earlycancellation.EarlyCancellation
-import no.nav.personbruker.dittnav.varselbestiller.done.earlycancellation.EarlyCancellationRepository
+import no.nav.personbruker.dittnav.varselbestiller.done.earlydone.EarlyDoneEvent
+import no.nav.personbruker.dittnav.varselbestiller.done.earlydone.EarlyDoneEventRepository
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.metrics.Producer
@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory
 abstract class AbstractVarselbestillerForInternalEvent<V>(
     private val doknotifikasjonProducer: DoknotifikasjonProducer,
     private val varselbestillingRepository: VarselbestillingRepository,
-    private val earlyCancellationRepository: EarlyCancellationRepository,
+    private val earlyDoneEventRepository: EarlyDoneEventRepository,
     private val metricsCollector: MetricsCollector,
     private val eventType: Eventtype
 ): EventBatchProcessorService<NokkelIntern, V>{
@@ -33,12 +33,12 @@ abstract class AbstractVarselbestillerForInternalEvent<V>(
         val successfullyTransformedEvents = mutableMapOf<String, Doknotifikasjon>()
         val problematicEvents = mutableListOf<ConsumerRecord<NokkelIntern, V>>()
         val varselbestillinger = mutableListOf<Varselbestilling>()
-        val usedEarlyCancellations = mutableListOf<EarlyCancellation>()
+        val matchedEarlyDoneEvents = mutableListOf<EarlyDoneEvent>()
 
         val metricsSession = metricsCollector.createSession(eventType)
 
         val eventIds = events.mapNotNull { it.eventId }
-        val earlyCancellations = earlyCancellationRepository.findByEventIds(eventIds)
+        val earlyDoneEvents = earlyDoneEventRepository.findByEventIds(eventIds)
         events.forEach { record ->
             try {
                 val key = record.key()
@@ -46,10 +46,10 @@ abstract class AbstractVarselbestillerForInternalEvent<V>(
                 val producer = Producer(record.namespace, record.appnavn)
                 metricsSession.countAllEventsFromKafkaForProducer(producer)
                 if(hasEksternVarsling(event)) {
-                    val earlyCancellation = earlyCancellations.firstOrNull { it.eventId == record.eventId }
-                    if (earlyCancellation != null) {
-                        log.info("${eventType.eventtype}-eventet var tidligere kansellert av ${earlyCancellation.appnavn} den ${earlyCancellation.tidspunkt}")
-                        usedEarlyCancellations.add(earlyCancellation)
+                    val earlyDoneEvent = earlyDoneEvents.firstOrNull { it.eventId == record.eventId }
+                    if (earlyDoneEvent != null) {
+                        log.info("${eventType.eventtype}-eventet var tidligere kansellert av ${earlyDoneEvent.appnavn} den ${earlyDoneEvent.tidspunkt}")
+                        matchedEarlyDoneEvents.add(earlyDoneEvent)
                         return@forEach
                     }
 
@@ -68,8 +68,8 @@ abstract class AbstractVarselbestillerForInternalEvent<V>(
         if (successfullyTransformedEvents.isNotEmpty()) {
             produceDoknotifikasjonerAndPersistToDB(metricsSession, successfullyTransformedEvents, varselbestillinger)
         }
-        if (usedEarlyCancellations.isNotEmpty()) {
-            earlyCancellationRepository.deleteByEventIds(usedEarlyCancellations.map { it.eventId })
+        if (matchedEarlyDoneEvents.isNotEmpty()) {
+            earlyDoneEventRepository.deleteByEventIds(matchedEarlyDoneEvents.map { it.eventId })
         }
         if (problematicEvents.isNotEmpty()) {
             throwExceptionForProblematicEvents(problematicEvents)

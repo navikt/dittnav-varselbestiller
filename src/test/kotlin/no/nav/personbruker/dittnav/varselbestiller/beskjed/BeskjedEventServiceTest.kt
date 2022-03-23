@@ -12,8 +12,8 @@ import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.successfu
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.AvroDoknotifikasjonObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
-import no.nav.personbruker.dittnav.varselbestiller.done.earlycancellation.EarlyCancellation
-import no.nav.personbruker.dittnav.varselbestiller.done.earlycancellation.EarlyCancellationRepository
+import no.nav.personbruker.dittnav.varselbestiller.done.earlydone.EarlyDoneEvent
+import no.nav.personbruker.dittnav.varselbestiller.done.earlydone.EarlyDoneEventRepository
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelInternObjectMother
@@ -32,17 +32,17 @@ class BeskjedEventServiceTest {
 
     private val doknotifikasjonProducer = mockk<DoknotifikasjonProducer>(relaxed = true)
     private val varselbestillingRepository = mockk<VarselbestillingRepository>(relaxed = true)
-    private val earlyCancellationRepository = mockk<EarlyCancellationRepository>(relaxed = true)
+    private val earlyDoneEventRepository = mockk<EarlyDoneEventRepository>(relaxed = true)
     private val metricsCollector = mockk<MetricsCollector>(relaxed = true)
     private val metricsSession = mockk<EventMetricsSession>(relaxed = true)
-    private val eventService = BeskjedEventService(doknotifikasjonProducer, varselbestillingRepository, earlyCancellationRepository, metricsCollector)
+    private val eventService = BeskjedEventService(doknotifikasjonProducer, varselbestillingRepository, earlyDoneEventRepository, metricsCollector)
 
     @BeforeEach
     private fun resetMocks() {
         mockkObject(DoknotifikasjonCreator)
         clearMocks(doknotifikasjonProducer)
         clearMocks(varselbestillingRepository)
-        clearMocks(earlyCancellationRepository)
+        clearMocks(earlyDoneEventRepository)
         clearMocks(metricsCollector)
         clearMocks(metricsSession)
         coEvery { varselbestillingRepository.fetchVarselbestillingerForEventIds(allAny()) } returns Collections.emptyList()
@@ -187,13 +187,13 @@ class BeskjedEventServiceTest {
         records.add(recordWithEarlyCancellation)
         val consumerRecords = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(records)
 
-        coEvery { earlyCancellationRepository.findByEventIds(any()) } returns listOf(
-            EarlyCancellation(eventIdForEventWitheEarlyCancellation, "app", "ns", "1234", "sbruker", LocalDateTime.now())
+        coEvery { earlyDoneEventRepository.findByEventIds(any()) } returns listOf(
+            EarlyDoneEvent(eventIdForEventWitheEarlyCancellation, "app", "ns", "1234", "sbruker", LocalDateTime.now())
         )
         val capturedVarsler = slot<List<Varselbestilling>>()
         coEvery { doknotifikasjonProducer.sendAndPersistEvents(any(), capture(capturedVarsler)) } returns ListPersistActionResult.emptyInstance()
         val capturedEarlyCancellationForDeletion = slot<List<String>>()
-        coEvery { earlyCancellationRepository.deleteByEventIds(capture(capturedEarlyCancellationForDeletion)) } returns Unit
+        coEvery { earlyDoneEventRepository.deleteByEventIds(capture(capturedEarlyCancellationForDeletion)) } returns Unit
 
         runBlocking {
             eventService.processEvents(consumerRecords)
@@ -202,7 +202,7 @@ class BeskjedEventServiceTest {
         coVerify(exactly = 1) { doknotifikasjonProducer.sendAndPersistEvents(any(), any()) }
         capturedVarsler.captured.size `should be equal to` 3
         capturedVarsler.captured.map { it.eventId } shouldNotContain eventIdForEventWitheEarlyCancellation
-        coVerify(exactly = 1) { earlyCancellationRepository.deleteByEventIds(any()) }
+        coVerify(exactly = 1) { earlyDoneEventRepository.deleteByEventIds(any()) }
         capturedEarlyCancellationForDeletion.captured.size `should be equal to` 1
         capturedEarlyCancellationForDeletion.captured `should contain` eventIdForEventWitheEarlyCancellation
     }

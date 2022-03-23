@@ -1,11 +1,11 @@
-package no.nav.personbruker.dittnav.varselbestiller.done.earlycancellation
+package no.nav.personbruker.dittnav.varselbestiller.done.earlydone
 
 import no.nav.brukernotifikasjon.schemas.internal.DoneIntern
 import no.nav.brukernotifikasjon.schemas.internal.NokkelIntern
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
-data class EarlyCancellation(
+data class EarlyDoneEvent(
     val eventId: String,
     val appnavn: String,
     val namespace: String,
@@ -14,8 +14,8 @@ data class EarlyCancellation(
     val tidspunkt: LocalDateTime,
 ) {
     companion object {
-        fun fromEventEntryMap(entry: Map.Entry<NokkelIntern, DoneIntern>): EarlyCancellation {
-            return EarlyCancellation(
+        fun fromEventEntryMap(entry: Map.Entry<NokkelIntern, DoneIntern>): EarlyDoneEvent {
+            return EarlyDoneEvent(
                 entry.key.getEventId(),
                 entry.key.getAppnavn(),
                 entry.key.getNamespace(),
@@ -27,7 +27,7 @@ data class EarlyCancellation(
     }
 
     override fun toString(): String {
-        return """EarlyCancellation(
+        return """EarlyDoneEvent(
             |eventId=$eventId, 
             |appnavn=$appnavn, 
             |namespace=$namespace, 
