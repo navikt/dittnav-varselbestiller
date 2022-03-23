@@ -178,17 +178,18 @@ class BeskjedEventServiceTest {
             totalNumber = 3,
             withEksternVarsling = true
         ).toMutableList()
-        val eventIdForEventWitheEarlyCancellation = "event-with-early-cancellation-id"
+        val eventIdForEventWitheEarlyDone = "event-with-early-cancellation-id"
+        val fodselsnummer = "1234"
         val recordWithEarlyCancellation = ConsumerRecordsObjectMother.createConsumerRecordWithKey(
             "dummyTopic",
-            AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventIdForEventWitheEarlyCancellation),
+            AvroNokkelInternObjectMother.createNokkelIntern(eventId = eventIdForEventWitheEarlyDone, fodselsnummer = fodselsnummer),
             AvroBeskjedInternObjectMother.createBeskjedIntern(eksternVarsling = true)
         )
         records.add(recordWithEarlyCancellation)
         val consumerRecords = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(records)
 
         coEvery { earlyDoneEventRepository.findByEventIds(any()) } returns listOf(
-            EarlyDoneEvent(eventIdForEventWitheEarlyCancellation, "app", "ns", "1234", "sbruker", LocalDateTime.now())
+            EarlyDoneEvent(eventIdForEventWitheEarlyDone, "app", "ns", fodselsnummer, "sbruker", LocalDateTime.now())
         )
         val capturedVarsler = slot<List<Varselbestilling>>()
         coEvery { doknotifikasjonProducer.sendAndPersistEvents(any(), capture(capturedVarsler)) } returns ListPersistActionResult.emptyInstance()
@@ -201,9 +202,9 @@ class BeskjedEventServiceTest {
 
         coVerify(exactly = 1) { doknotifikasjonProducer.sendAndPersistEvents(any(), any()) }
         capturedVarsler.captured.size `should be equal to` 3
-        capturedVarsler.captured.map { it.eventId } shouldNotContain eventIdForEventWitheEarlyCancellation
+        capturedVarsler.captured.map { it.eventId } shouldNotContain eventIdForEventWitheEarlyDone
         coVerify(exactly = 1) { earlyDoneEventRepository.deleteByEventIds(any()) }
         capturedEarlyCancellationForDeletion.captured.size `should be equal to` 1
-        capturedEarlyCancellationForDeletion.captured `should contain` eventIdForEventWitheEarlyCancellation
+        capturedEarlyCancellationForDeletion.captured `should contain` eventIdForEventWitheEarlyDone
     }
 }

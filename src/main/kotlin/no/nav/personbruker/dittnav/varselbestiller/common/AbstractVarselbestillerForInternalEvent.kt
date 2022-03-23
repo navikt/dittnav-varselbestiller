@@ -46,7 +46,7 @@ abstract class AbstractVarselbestillerForInternalEvent<V>(
                 val producer = Producer(record.namespace, record.appnavn)
                 metricsSession.countAllEventsFromKafkaForProducer(producer)
                 if(hasEksternVarsling(event)) {
-                    val earlyDoneEvent = earlyDoneEvents.firstOrNull { it.eventId == record.eventId }
+                    val earlyDoneEvent = earlyDoneEvents.firstOrNull { it.eventId == record.eventId && it.fodselsnummer == key.getFodselsnummer() }
                     if (earlyDoneEvent != null) {
                         log.info("${eventType.eventtype}-eventet var tidligere kansellert av ${earlyDoneEvent.appnavn} den ${earlyDoneEvent.tidspunkt}")
                         matchedEarlyDoneEvents.add(earlyDoneEvent)

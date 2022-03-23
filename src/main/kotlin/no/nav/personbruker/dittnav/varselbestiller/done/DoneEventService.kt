@@ -36,11 +36,9 @@ class DoneEventService(
             if(doneEvents.isNotEmpty()) {
                 val varselbestillingerForEventIds = varselbestillingRepository.fetchVarselbestillingerForEventIds(doneEvents.keys.map { it.getEventId() })
 
-                // todo: q1: skal hele batch re-proseseres om det er en problematic event? double-cancellation
                 doneEvents.forEach { (nokkel, event) ->
                     try {
-                        // TODO: verifisere at vi trenger alle disse felter for å finne match
-                        val varselbestilling = varselbestillingerForEventIds.firstOrNull{ it.eventId == nokkel.getEventId() && it.appnavn == nokkel.getAppnavn() && it.fodselsnummer == nokkel.getFodselsnummer() }
+                        val varselbestilling = varselbestillingerForEventIds.firstOrNull{ it.eventId == nokkel.getEventId() && it.fodselsnummer == nokkel.getFodselsnummer() }
                         if(varselbestilling != null) {
                             if(varselbestilling.avbestilt) {
                                 log.info("Varsel med bestillingsid ${varselbestilling.bestillingsId} allerede avbestilt, avbestiller ikke på nytt.")
