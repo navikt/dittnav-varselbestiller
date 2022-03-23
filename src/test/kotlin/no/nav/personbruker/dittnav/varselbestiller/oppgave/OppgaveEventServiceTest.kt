@@ -12,18 +12,20 @@ import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.successfu
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.AvroDoknotifikasjonObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
+import no.nav.personbruker.dittnav.varselbestiller.done.earlydone.EarlyDoneEvent
 import no.nav.personbruker.dittnav.varselbestiller.done.earlydone.EarlyDoneEventRepository
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
+import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelInternObjectMother
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother.giveMeANumberOfVarselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
-import org.amshove.kluent.`should be`
-import org.amshove.kluent.`should throw`
-import org.amshove.kluent.invoking
+import org.amshove.kluent.*
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.time.LocalDateTime
 import java.util.*
 
 class OppgaveEventServiceTest {
@@ -50,7 +52,6 @@ class OppgaveEventServiceTest {
     private fun cleanUp() {
         unmockkAll()
     }
-
 
     @Test
     fun `Skal opprette Doknotifikasjon for alle eventer som har ekstern varsling`() {
@@ -165,5 +166,42 @@ class OppgaveEventServiceTest {
 
         coVerify (exactly = numberOfRecords) { metricsSession.countSuccessfulEksternVarslingForProducer(any()) }
         coVerify (exactly = numberOfRecords) { metricsSession.countAllEventsFromKafkaForProducer(any()) }
+    }
+
+    @Test
+    fun `Skal ikke bestille varsler for eventer som var tidligere kansellert`() {
+        val records = ConsumerRecordsObjectMother.createOppgaveRecords(
+            topicName = "dummyTopic",
+            totalNumber = 3,
+            withEksternVarsling = true
+        ).toMutableList()
+        val eventIdForEventWitheEarlyDone = "event-with-early-cancellation-id"
+        val fodselsnummer = "1234"
+        val recordWithEarlyCancellation = ConsumerRecordsObjectMother.createConsumerRecordWithKey(
+            "dummyTopic",
+            AvroNokkelInternObjectMother.createNokkelIntern(eventId = eventIdForEventWitheEarlyDone, fodselsnummer = fodselsnummer),
+            AvroOppgaveInternObjectMother.createOppgaveIntern(eksternVarsling = true)
+        )
+        records.add(recordWithEarlyCancellation)
+        val consumerRecords = ConsumerRecordsObjectMother.giveMeConsumerRecordsWithThisConsumerRecord(records)
+
+        coEvery { earlyDoneEventRepository.findByEventIds(any()) } returns listOf(
+            EarlyDoneEvent(eventIdForEventWitheEarlyDone, "app", "ns", fodselsnummer, "sbruker", LocalDateTime.now())
+        )
+        val capturedVarsler = slot<List<Varselbestilling>>()
+        coEvery { doknotifikasjonProducer.sendAndPersistEvents(any(), capture(capturedVarsler)) } returns ListPersistActionResult.emptyInstance()
+        val capturedEarlyCancellationForDeletion = slot<List<String>>()
+        coEvery { earlyDoneEventRepository.deleteByEventIds(capture(capturedEarlyCancellationForDeletion)) } returns Unit
+
+        runBlocking {
+            eventService.processEvents(consumerRecords)
+        }
+
+        coVerify(exactly = 1) { doknotifikasjonProducer.sendAndPersistEvents(any(), any()) }
+        capturedVarsler.captured.size `should be equal to` 3
+        capturedVarsler.captured.map { it.eventId } shouldNotContain eventIdForEventWitheEarlyDone
+        coVerify(exactly = 1) { earlyDoneEventRepository.deleteByEventIds(any()) }
+        capturedEarlyCancellationForDeletion.captured.size `should be equal to` 1
+        capturedEarlyCancellationForDeletion.captured `should contain` eventIdForEventWitheEarlyDone
     }
 }

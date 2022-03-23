@@ -61,7 +61,7 @@ object ConsumerRecordsObjectMother {
         return allRecords
     }
 
-    private fun createOppgaveRecords(topicName: String, totalNumber: Int, withEksternVarsling: Boolean): List<ConsumerRecord<NokkelIntern, OppgaveIntern>> {
+    fun createOppgaveRecords(topicName: String, totalNumber: Int, withEksternVarsling: Boolean): List<ConsumerRecord<NokkelIntern, OppgaveIntern>> {
         val allRecords = mutableListOf<ConsumerRecord<NokkelIntern, OppgaveIntern>>()
         for (i in 0 until totalNumber) {
             val schemaRecord = AvroOppgaveInternObjectMother.createOppgaveInternWithEksternVarsling(withEksternVarsling)
@@ -71,7 +71,7 @@ object ConsumerRecordsObjectMother {
         return allRecords
     }
 
-    private fun createInnboksRecords(topicName: String, totalNumber: Int, withEksternVarsling: Boolean): List<ConsumerRecord<NokkelIntern, InnboksIntern>> {
+    fun createInnboksRecords(topicName: String, totalNumber: Int, withEksternVarsling: Boolean): List<ConsumerRecord<NokkelIntern, InnboksIntern>> {
         val allRecords = mutableListOf<ConsumerRecord<NokkelIntern, InnboksIntern>>()
         for (i in 0 until totalNumber) {
             val schemaRecord = AvroInnboksInternObjectMother.createInnboksInternWithEksternVarsling(withEksternVarsling)
