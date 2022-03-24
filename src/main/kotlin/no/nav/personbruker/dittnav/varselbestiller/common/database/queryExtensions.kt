@@ -1,7 +1,6 @@
 package no.nav.personbruker.dittnav.varselbestiller.common.database
 
 import java.sql.*
-import java.sql.Array
 import java.time.LocalDateTime
 
 fun Connection.executeBatchPersistQuery(sql: String, skipConflicting: Boolean = true, paramInit: PreparedStatement.() -> Unit): IntArray {
@@ -15,10 +14,6 @@ fun Connection.executeBatchPersistQuery(sql: String, skipConflicting: Boolean = 
     }
     commit()
     return result
-}
-
-fun Connection.toVarcharArray(stringList: List<String>): Array {
-    return createArrayOf("VARCHAR", stringList.toTypedArray())
 }
 
 fun <T> IntArray.toBatchPersistResult(paramList: List<T>) = ListPersistActionResult.mapParamListToResultArray(paramList, this)

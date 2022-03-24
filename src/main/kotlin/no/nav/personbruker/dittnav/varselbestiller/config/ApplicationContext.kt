@@ -16,7 +16,6 @@ import no.nav.personbruker.dittnav.varselbestiller.common.kafka.polling.Periodic
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.done.DoneEventService
-import no.nav.personbruker.dittnav.varselbestiller.done.earlydone.EarlyDoneEventRepository
 import no.nav.personbruker.dittnav.varselbestiller.health.HealthService
 import no.nav.personbruker.dittnav.varselbestiller.innboks.InnboksEventService
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
@@ -33,7 +32,6 @@ class ApplicationContext {
 
     val metricsReporter = resolveMetricsReporter(environment)
     val metricsCollector = MetricsCollector(metricsReporter)
-    val earlyDoneEventRepository = EarlyDoneEventRepository(database)
 
     val doknotifikasjonRepository = VarselbestillingRepository(database)
     val doknotifikasjonBeskjedProducer = initializeDoknotifikasjonProducer(Eventtype.BESKJED_INTERN)
@@ -53,25 +51,25 @@ class ApplicationContext {
 
     private fun initializeBeskjedConsumer(): Consumer<NokkelIntern, BeskjedIntern> {
         val beskjedKafkaProps = Kafka.consumerProps(environment, Eventtype.BESKJED_INTERN)
-        val beskjedEventService = BeskjedEventService(doknotifikasjonBeskjedProducer, doknotifikasjonRepository, earlyDoneEventRepository, metricsCollector)
+        val beskjedEventService = BeskjedEventService(doknotifikasjonBeskjedProducer, doknotifikasjonRepository, metricsCollector)
         return KafkaConsumerSetup.setupKafkaConsumer(environment.beskjedTopicName, beskjedKafkaProps, beskjedEventService)
     }
 
     private fun initializeOppgaveConsumer(): Consumer<NokkelIntern, OppgaveIntern> {
         val oppgaveKafkaProps = Kafka.consumerProps(environment, Eventtype.OPPGAVE_INTERN)
-        val oppgaveEventService = OppgaveEventService(doknotifikasjonOppgaveProducer, doknotifikasjonRepository, earlyDoneEventRepository, metricsCollector)
+        val oppgaveEventService = OppgaveEventService(doknotifikasjonOppgaveProducer, doknotifikasjonRepository, metricsCollector)
         return KafkaConsumerSetup.setupKafkaConsumer(environment.oppgaveTopicName, oppgaveKafkaProps, oppgaveEventService)
     }
 
     private fun initializeInnboksConsumer(): Consumer<NokkelIntern, InnboksIntern> {
         val innboksKafkaProps = Kafka.consumerProps(environment, Eventtype.INNBOKS_INTERN)
-        val innboksEventService = InnboksEventService(doknotifikasjonInnboksProducer, doknotifikasjonRepository, earlyDoneEventRepository, metricsCollector)
+        val innboksEventService = InnboksEventService(doknotifikasjonInnboksProducer, doknotifikasjonRepository, metricsCollector)
         return KafkaConsumerSetup.setupKafkaConsumer(environment.innboksTopicName, innboksKafkaProps, innboksEventService)
     }
 
     private fun initializeDoneConsumer(): Consumer<NokkelIntern, DoneIntern> {
         val doneKafkaProps = Kafka.consumerProps(environment, Eventtype.DONE_INTERN)
-        val doneEventService = DoneEventService(doknotifikasjonStopProducer, doknotifikasjonRepository, earlyDoneEventRepository, metricsCollector)
+        val doneEventService = DoneEventService(doknotifikasjonStopProducer, doknotifikasjonRepository, metricsCollector)
         return KafkaConsumerSetup.setupKafkaConsumer(environment.doneTopicName, doneKafkaProps, doneEventService)
     }
 

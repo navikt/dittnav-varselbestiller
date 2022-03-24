@@ -64,6 +64,10 @@ private fun PreparedStatement.buildStatementForSingleRow(varselbestilling: Varse
         setString(9, varselbestilling.appnavn)
 }
 
+private fun Connection.toVarcharArray(stringList: List<String>): Array {
+    return createArrayOf("VARCHAR", stringList.toTypedArray())
+}
+
 
 
 

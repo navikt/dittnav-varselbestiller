@@ -8,7 +8,6 @@ import no.nav.personbruker.dittnav.common.metrics.StubMetricsReporter
 import no.nav.personbruker.dittnav.varselbestiller.common.database.LocalPostgresDatabase
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.*
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
-import no.nav.personbruker.dittnav.varselbestiller.done.earlydone.EarlyDoneEventRepository
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import org.amshove.kluent.shouldBe
@@ -40,9 +39,8 @@ class BeskjedTest {
         KafkaProducerWrapper(KafkaTestTopics.doknotifikasjonTopicName, doknotifikasjonProducerMock)
 
     private val doknotifikasjonRepository = VarselbestillingRepository(database)
-    private val earlyDoneEventRepository = EarlyDoneEventRepository(database)
     private val doknotifikasjonProducer = DoknotifikasjonProducer(kafkaProducerWrapper, doknotifikasjonRepository)
-    private val eventService = BeskjedEventService(doknotifikasjonProducer, doknotifikasjonRepository, earlyDoneEventRepository, metricsCollector)
+    private val eventService = BeskjedEventService(doknotifikasjonProducer, doknotifikasjonRepository, metricsCollector)
     private val consumer = Consumer(KafkaTestTopics.beskjedTopicName, beskjedConsumerMock, eventService)
 
     @Test
