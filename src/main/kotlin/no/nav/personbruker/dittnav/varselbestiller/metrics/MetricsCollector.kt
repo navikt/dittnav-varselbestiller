@@ -10,6 +10,14 @@ class MetricsCollector(private val metricsReporter: MetricsReporter) {
     suspend fun recordMetrics(eventType: Eventtype, block: suspend EventMetricsSession.() -> Unit) {
         val session = EventMetricsSession(eventType)
         block.invoke(session)
+        processSession(session)
+    }
+
+    fun createSession(eventType: Eventtype): EventMetricsSession {
+        return EventMetricsSession(eventType)
+    }
+
+    suspend fun processSession(session: EventMetricsSession) {
         val processingTime = session.timeElapsedSinceSessionStartNanos()
         handleAllEventsFromKafka(session)
 

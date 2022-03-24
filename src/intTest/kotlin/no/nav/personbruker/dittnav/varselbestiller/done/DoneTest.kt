@@ -11,6 +11,7 @@ import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaProducerWra
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaTestTopics
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.delayUntilCommittedOffset
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
+import no.nav.personbruker.dittnav.varselbestiller.done.earlydone.EarlyDoneEventRepository
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelInternObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother
@@ -46,8 +47,9 @@ class DoneTest {
         KafkaProducerWrapper(KafkaTestTopics.doknotifikasjonStopTopicName, doknotifikasjonStopProducerMock)
 
     private val doknotifikasjonRepository = VarselbestillingRepository(database)
+    private val earlyDoneEventRepository = EarlyDoneEventRepository(database)
     private val doknotifikasjonStopProducer = DoknotifikasjonStoppProducer(kafkaProducerWrapper, doknotifikasjonRepository)
-    private val eventService = DoneEventService(doknotifikasjonStopProducer, doknotifikasjonRepository, metricsCollector)
+    private val eventService = DoneEventService(doknotifikasjonStopProducer, doknotifikasjonRepository, earlyDoneEventRepository, metricsCollector)
     private val consumer = Consumer(KafkaTestTopics.doneTopicName, doneConsumerMock, eventService)
 
     private val varselbestillinger = listOf(
