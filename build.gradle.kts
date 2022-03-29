@@ -51,7 +51,6 @@ dependencies {
     implementation(Ktor.serverNetty)
     implementation(Logback.classic)
     implementation(Logstash.logbackEncoder)
-    implementation(NAV.vaultJdbc)
     implementation(Postgresql.postgresql)
     implementation(Prometheus.common)
     implementation(Prometheus.hotspot)
