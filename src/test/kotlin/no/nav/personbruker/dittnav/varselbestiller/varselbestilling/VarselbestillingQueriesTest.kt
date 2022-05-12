@@ -6,7 +6,7 @@ import org.amshove.kluent.*
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Test
 
-class varselbestillingQueriesTest {
+class VarselbestillingQueriesTest {
 
     private val database = LocalPostgresDatabase()
 

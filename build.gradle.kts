@@ -32,11 +32,6 @@ sourceSets {
     }
 }
 
-val intTestImplementation by configurations.getting {
-    extendsFrom(configurations.testImplementation.get())
-}
-configurations["intTestRuntimeOnly"].extendsFrom(configurations.testRuntimeOnly.get())
-
 dependencies {
     implementation("com.github.navikt:brukernotifikasjon-schemas-internal:1.2022.01.20-12.20-9c37cb170dc9")
     implementation(DittNAV.Common.influxdb)
@@ -67,8 +62,6 @@ dependencies {
     testImplementation(Mockk.mockk)
     testImplementation(NAV.kafkaEmbedded)
     testImplementation(TestContainers.postgresql)
-
-    intTestImplementation(Junit.engine)
 }
 
 application {
@@ -100,17 +93,6 @@ tasks {
         classpath = sourceSets["main"].runtimeClasspath
     }
 }
-
-val integrationTest = task<Test>("integrationTest") {
-    description = "Runs integration tests."
-    group = "verification"
-
-    testClassesDirs = sourceSets["intTest"].output.classesDirs
-    classpath = sourceSets["intTest"].runtimeClasspath
-    shouldRunAfter("test")
-}
-
-tasks.check { dependsOn(integrationTest) }
 
 // TODO: Fjern følgende work around i ny versjon av Shadow-pluginet:
 // Skal være løst i denne: https://github.com/johnrengelman/shadow/pull/612
