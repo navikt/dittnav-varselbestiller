@@ -1,8 +1,9 @@
 package no.nav.personbruker.dittnav.varselbestiller.varselbestilling
 
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.runBlocking
 import no.nav.personbruker.dittnav.varselbestiller.common.database.LocalPostgresDatabase
-import org.amshove.kluent.*
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Test
 
@@ -38,8 +39,8 @@ class VarselbestillingQueriesTest {
     fun `Finner Varselbestillinger med bestillingsIds`() {
         runBlocking {
             val result = database.dbQuery { getVarselbestillingerForBestillingsIds(listOf(varselbestillingBeskjed.bestillingsId, varselbestillingOppgave.bestillingsId)) }
-            result.size `should be equal to` 2
-            result `should contain all` listOf(varselbestillingBeskjed, varselbestillingOppgave)
+            result.size shouldBe 2
+            result shouldBe listOf(varselbestillingBeskjed, varselbestillingOppgave)
         }
     }
 
@@ -47,7 +48,7 @@ class VarselbestillingQueriesTest {
     fun `Returnerer tom liste hvis Varselbestilling med bestillingsId ikke finnes`() {
         runBlocking {
             val result = database.dbQuery { getVarselbestillingerForBestillingsIds(listOf("idFinnesIkke")) }
-            result.`should be empty`()
+            result.shouldBeEmpty()
         }
     }
 
@@ -55,8 +56,8 @@ class VarselbestillingQueriesTest {
     fun `Finner Varselbestillinger med eventIds`() {
         runBlocking {
             val result = database.dbQuery { getVarselbestillingerForEventIds(listOf(varselbestillingBeskjed.eventId, varselbestillingOppgave.eventId)) }
-            result.size `should be equal to` 2
-            result `should contain all` listOf(varselbestillingBeskjed, varselbestillingOppgave)
+            result.size shouldBe 2
+            result shouldBe listOf(varselbestillingBeskjed, varselbestillingOppgave)
         }
     }
 
@@ -64,7 +65,7 @@ class VarselbestillingQueriesTest {
     fun `Returnerer tom liste hvis Varselbestilling med eventId ikke finnes`() {
         runBlocking {
             val result = database.dbQuery { getVarselbestillingerForEventIds(listOf("idFinnesIkke")) }
-            result.`should be empty`()
+            result.shouldBeEmpty()
         }
     }
 
@@ -74,8 +75,8 @@ class VarselbestillingQueriesTest {
             database.dbQuery {
                 setVarselbestillingAvbestiltFlag(listOf(varselbestillingBeskjed.bestillingsId), true)
                 val result = getVarselbestillingerForBestillingsIds(listOf(varselbestillingBeskjed.bestillingsId))
-                result.first().bestillingsId `should be equal to` varselbestillingBeskjed.bestillingsId
-                result.first().avbestilt `should be equal to` true
+                result.first().bestillingsId shouldBe varselbestillingBeskjed.bestillingsId
+                result.first().avbestilt shouldBe true
             }
         }
     }
@@ -86,7 +87,7 @@ class VarselbestillingQueriesTest {
             database.dbQuery {
                 val numberOfEntities = getAllVarselbestilling().size
                 createVarselbestillinger(listOf(varselbestillingBeskjed, varselbestillingOppgave))
-                getAllVarselbestilling().size `should be equal to` numberOfEntities
+                getAllVarselbestilling().size shouldBe numberOfEntities
             }
         }
     }
@@ -97,9 +98,9 @@ class VarselbestillingQueriesTest {
         runBlocking {
             database.dbQuery { createVarselbestillinger(listOf(varselbestilling)) }
             val result = database.dbQuery { getVarselbestillingerForBestillingsIds(listOf(varselbestilling.bestillingsId)) }
-            result.size `should be equal to` 1
-            result `should contain all` listOf(varselbestilling)
-            result[0].prefererteKanaler.`should be empty`()
+            result.size shouldBe 1
+            result shouldBe listOf(varselbestilling)
+            result[0].prefererteKanaler.shouldBeEmpty()
         }
     }
 }

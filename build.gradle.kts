@@ -56,12 +56,13 @@ dependencies {
     testImplementation(Kafka.Apache.kafka_2_12)
     testImplementation(Kafka.Apache.streams)
     testImplementation(Kafka.Confluent.schemaRegistry)
-    testImplementation(Kluent.kluent)
     testImplementation(Kotlinx.atomicfu)
     testImplementation(Ktor.clientMock)
     testImplementation(Mockk.mockk)
     testImplementation(NAV.kafkaEmbedded)
     testImplementation(TestContainers.postgresql)
+    testImplementation(Kotest.runnerJunit5)
+    testImplementation(Kotest.assertionsCore)
 }
 
 application {

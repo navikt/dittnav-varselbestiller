@@ -1,8 +1,8 @@
 package no.nav.personbruker.dittnav.varselbestiller.common.exceptions
 
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import no.nav.personbruker.dittnav.varselbestiller.common.database.exception.RetriableDatabaseException
-import org.amshove.kluent.`should contain`
-import org.amshove.kluent.`should not contain`
 import org.junit.jupiter.api.Test
 
 class AbstractPersonbrukerExceptionTest {
@@ -20,12 +20,12 @@ class AbstractPersonbrukerExceptionTest {
 
         val toStringForException = exception.toString()
 
-        toStringForException `should contain` "context:"
-        toStringForException `should contain` key1
-        toStringForException `should contain` key2
-        toStringForException `should contain` value1
-        toStringForException `should contain` value2
-        toStringForException `should contain` message
+        toStringForException shouldContain "context:"
+        toStringForException shouldContain key1
+        toStringForException shouldContain key2
+        toStringForException shouldContain value1
+        toStringForException shouldContain value2
+        toStringForException shouldContain message
     }
 
     @Test
@@ -33,7 +33,7 @@ class AbstractPersonbrukerExceptionTest {
         val message = "A message"
         val exception = RetriableDatabaseException(message)
 
-        exception.toString() `should not contain` "context:"
+        exception.toString() shouldNotContain "context:"
     }
 
 }

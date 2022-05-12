@@ -1,7 +1,7 @@
 package no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp
 
+import io.kotest.matchers.shouldBe
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother
-import org.amshove.kluent.`should be equal to`
 import org.junit.jupiter.api.Test
 
 class DoknotifikasjonStoppTransformerTest {
@@ -10,7 +10,7 @@ class DoknotifikasjonStoppTransformerTest {
     fun `Skal transformere fra Varselbestilling til DoknotifikasjonStopp`() {
         val varselbestilling = VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-test-001", eventId = "001")
         val doknotifikasjonStopp = DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(varselbestilling)
-        doknotifikasjonStopp.getBestillingsId() `should be equal to` varselbestilling.bestillingsId
-        doknotifikasjonStopp.getBestillerId() `should be equal to` varselbestilling.appnavn
+        doknotifikasjonStopp.getBestillingsId() shouldBe varselbestilling.bestillingsId
+        doknotifikasjonStopp.getBestillerId() shouldBe varselbestilling.appnavn
     }
 }

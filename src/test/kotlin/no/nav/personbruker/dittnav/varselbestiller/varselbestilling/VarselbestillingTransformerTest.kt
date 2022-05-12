@@ -1,12 +1,12 @@
 package no.nav.personbruker.dittnav.varselbestiller.varselbestilling
 
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
 import no.nav.personbruker.dittnav.varselbestiller.beskjed.AvroBeskjedInternObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.AvroDoknotifikasjonObjectMother
+import no.nav.personbruker.dittnav.varselbestiller.innboks.AvroInnboksInternObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelInternObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.oppgave.AvroOppgaveInternObjectMother
-import no.nav.personbruker.dittnav.varselbestiller.innboks.AvroInnboksInternObjectMother
-import org.amshove.kluent.`should be equal to`
-import org.amshove.kluent.`should not be null`
 import org.junit.jupiter.api.Test
 
 class VarselbestillingTransformerTest {
@@ -18,12 +18,12 @@ class VarselbestillingTransformerTest {
         val avroDoknotifikasjon = AvroDoknotifikasjonObjectMother.createDoknotifikasjon("B-test-001")
         val varselbestilling = VarselbestillingTransformer.fromBeskjed(avroNokkel, avroBeskjed, avroDoknotifikasjon)
 
-        varselbestilling.bestillingsId `should be equal to` avroDoknotifikasjon.getBestillingsId()
-        varselbestilling.eventId `should be equal to` avroNokkel.getEventId()
-        varselbestilling.fodselsnummer `should be equal to` avroNokkel.getFodselsnummer()
-        varselbestilling.systembruker `should be equal to` avroNokkel.getSystembruker()
-        varselbestilling.appnavn `should be equal to` avroNokkel.getAppnavn()
-        varselbestilling.bestillingstidspunkt.`should not be null`()
+        varselbestilling.bestillingsId shouldBe avroDoknotifikasjon.getBestillingsId()
+        varselbestilling.eventId shouldBe avroNokkel.getEventId()
+        varselbestilling.fodselsnummer shouldBe avroNokkel.getFodselsnummer()
+        varselbestilling.systembruker shouldBe avroNokkel.getSystembruker()
+        varselbestilling.appnavn shouldBe avroNokkel.getAppnavn()
+        varselbestilling.bestillingstidspunkt.shouldNotBeNull()
     }
 
     @Test
@@ -33,12 +33,12 @@ class VarselbestillingTransformerTest {
         val avroDoknotifikasjon = AvroDoknotifikasjonObjectMother.createDoknotifikasjon("O-test-001")
         val varselbestilling = VarselbestillingTransformer.fromOppgave(avroNokkel, avroOppgave, avroDoknotifikasjon)
 
-        varselbestilling.bestillingsId `should be equal to` avroDoknotifikasjon.getBestillingsId()
-        varselbestilling.eventId `should be equal to` avroNokkel.getEventId()
-        varselbestilling.fodselsnummer `should be equal to` avroNokkel.getFodselsnummer()
-        varselbestilling.systembruker `should be equal to` avroNokkel.getSystembruker()
-        varselbestilling.appnavn `should be equal to` avroNokkel.getAppnavn()
-        varselbestilling.bestillingstidspunkt.`should not be null`()
+        varselbestilling.bestillingsId shouldBe avroDoknotifikasjon.getBestillingsId()
+        varselbestilling.eventId shouldBe avroNokkel.getEventId()
+        varselbestilling.fodselsnummer shouldBe avroNokkel.getFodselsnummer()
+        varselbestilling.systembruker shouldBe avroNokkel.getSystembruker()
+        varselbestilling.appnavn shouldBe avroNokkel.getAppnavn()
+        varselbestilling.bestillingstidspunkt.shouldNotBeNull()
     }
 
     @Test
@@ -48,11 +48,11 @@ class VarselbestillingTransformerTest {
         val avroDoknotifikasjon = AvroDoknotifikasjonObjectMother.createDoknotifikasjon("I-test-001")
         val varselbestilling = VarselbestillingTransformer.fromInnboks(avroNokkel, avroInnboks, avroDoknotifikasjon)
 
-        varselbestilling.bestillingsId `should be equal to` avroDoknotifikasjon.getBestillingsId()
-        varselbestilling.eventId `should be equal to` avroNokkel.getEventId()
-        varselbestilling.fodselsnummer `should be equal to` avroNokkel.getFodselsnummer()
-        varselbestilling.systembruker `should be equal to` avroNokkel.getSystembruker()
-        varselbestilling.appnavn `should be equal to` avroNokkel.getAppnavn()
-        varselbestilling.bestillingstidspunkt.`should not be null`()
+        varselbestilling.bestillingsId shouldBe avroDoknotifikasjon.getBestillingsId()
+        varselbestilling.eventId shouldBe avroNokkel.getEventId()
+        varselbestilling.fodselsnummer shouldBe avroNokkel.getFodselsnummer()
+        varselbestilling.systembruker shouldBe avroNokkel.getSystembruker()
+        varselbestilling.appnavn shouldBe avroNokkel.getAppnavn()
+        varselbestilling.bestillingstidspunkt.shouldNotBeNull()
     }
 }

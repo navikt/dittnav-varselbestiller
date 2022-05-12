@@ -1,10 +1,10 @@
 package no.nav.personbruker.dittnav.varselbestiller.metrics
 
+import io.kotest.matchers.shouldBe
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.conflictingKeysEvents
 import no.nav.personbruker.dittnav.varselbestiller.common.objectmother.successfulEvents
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother.giveMeANumberOfVarselbestilling
-import org.amshove.kluent.`should be`
 import org.junit.jupiter.api.Test
 
 internal class EventMetricsSessionTest {
@@ -19,7 +19,7 @@ internal class EventMetricsSessionTest {
 
         session.countDuplicateKeyEksternvarslingByProducer(conflictingKeysResult)
 
-        session.getEksternvarslingDuplicateKeys(producer) `should be` numberOfDuplicates
+        session.getEksternvarslingDuplicateKeys(producer) shouldBe numberOfDuplicates
     }
 
     @Test
@@ -30,7 +30,7 @@ internal class EventMetricsSessionTest {
 
         session.countDuplicateKeyEksternvarslingByProducer(result)
 
-        session.getEksternvarslingDuplicateKeys(producer) `should be` 0
+        session.getEksternvarslingDuplicateKeys(producer) shouldBe 0
     }
 
     @Test
@@ -39,8 +39,8 @@ internal class EventMetricsSessionTest {
 
         session.countNokkelWasNull()
 
-        session.getAllEventsFromKafka() `should be` 1
-        session.getNokkelWasNull() `should be` 1
+        session.getAllEventsFromKafka() shouldBe 1
+        session.getNokkelWasNull() shouldBe 1
     }
 
     @Test
@@ -50,7 +50,7 @@ internal class EventMetricsSessionTest {
         session.countNokkelWasNull()
         session.countAllEventsFromKafkaForProducer(producer)
 
-        session.getAllEventsFromKafka() `should be` 2
-        session.getAllEventsFromKafka(producer) `should be` 1
+        session.getAllEventsFromKafka() shouldBe 2
+        session.getAllEventsFromKafka(producer) shouldBe 1
     }
 }
