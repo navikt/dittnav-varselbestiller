@@ -1,12 +1,23 @@
 package no.nav.personbruker.dittnav.varselbestiller.metrics
 
-import io.mockk.*
+import io.kotest.matchers.shouldBe
+import io.mockk.clearAllMocks
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.slot
+import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import no.nav.personbruker.dittnav.common.metrics.MetricsReporter
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
-import no.nav.personbruker.dittnav.varselbestiller.metrics.influx.*
+import no.nav.personbruker.dittnav.varselbestiller.metrics.influx.KAFKA_ALL_EVENTS
+import no.nav.personbruker.dittnav.varselbestiller.metrics.influx.KAFKA_EKSTERNVARSLING_EVENTS_FAILED
+import no.nav.personbruker.dittnav.varselbestiller.metrics.influx.KAFKA_EKSTERNVARSLING_EVENTS_PROCESSED
+import no.nav.personbruker.dittnav.varselbestiller.metrics.influx.KAFKA_EKSTERNVARSLING_EVENTS_SEEN
+import no.nav.personbruker.dittnav.varselbestiller.metrics.influx.KAFKA_EVENTS_PROCESSING_TIME
 import no.nav.personbruker.dittnav.varselbestiller.metrics.prometheus.PrometheusMetricsCollector
-import org.amshove.kluent.`should be equal to`
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -43,9 +54,9 @@ internal class MetricsCollectorTest {
         verify(exactly = 1) { PrometheusMetricsCollector.registerSeenEksternvarslingEvents(any(), any(), any()) }
         verify(exactly = 1) { PrometheusMetricsCollector.registerProcessedEksternvarslingEvents(any(), any(), any()) }
 
-        producerNameForPrometheus.captured `should be equal to` producer.appnavn
-        capturedTags.captured["producer"] `should be equal to` producer.appnavn
-        capturedTags.captured["producerNamespace"] `should be equal to` producer.namespace
+        producerNameForPrometheus.captured shouldBe producer.appnavn
+        capturedTags.captured["producer"] shouldBe producer.appnavn
+        capturedTags.captured["producerNamespace"] shouldBe producer.namespace
     }
 
     @Test
@@ -71,9 +82,9 @@ internal class MetricsCollectorTest {
         verify(exactly = 1) { PrometheusMetricsCollector.registerSeenEksternvarslingEvents(any(), any(), any()) }
         verify(exactly = 1) { PrometheusMetricsCollector.registerFailedEksternvarslingEvents(any(), any(), any()) }
 
-        producerNameForPrometheus.captured `should be equal to` producer.appnavn
-        capturedTags.captured["producer"] `should be equal to` producer.appnavn
-        capturedTags.captured["producerNamespace"] `should be equal to` producer.namespace
+        producerNameForPrometheus.captured shouldBe producer.appnavn
+        capturedTags.captured["producer"] shouldBe producer.appnavn
+        capturedTags.captured["producerNamespace"] shouldBe producer.namespace
     }
 
     @Test
@@ -107,10 +118,10 @@ internal class MetricsCollectorTest {
         verify(exactly = 1) { PrometheusMetricsCollector.registerFailedEksternvarslingEvents(1, any(), any()) }
         verify(exactly = 1) { PrometheusMetricsCollector.registerAllEventsFromKafka(1, any(), any()) }
 
-        capturedFieldsForSeen.captured["counter"] `should be equal to` 3
-        capturedFieldsForProcessed.captured["counter"] `should be equal to` 2
-        capturedFieldsForFailed.captured["counter"] `should be equal to` 1
-        capturedFieldsForAllEvents.captured["counter"] `should be equal to` 1
+        capturedFieldsForSeen.captured["counter"] shouldBe 3
+        capturedFieldsForProcessed.captured["counter"] shouldBe 2
+        capturedFieldsForFailed.captured["counter"] shouldBe 1
+        capturedFieldsForAllEvents.captured["counter"] shouldBe 1
     }
 
 }

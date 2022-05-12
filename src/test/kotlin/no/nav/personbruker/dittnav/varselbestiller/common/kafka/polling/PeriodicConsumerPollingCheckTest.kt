@@ -1,10 +1,21 @@
 package no.nav.personbruker.dittnav.varselbestiller.common.kafka.polling
 
-import io.mockk.*
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.shouldBe
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.confirmVerified
+import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
 import kotlinx.coroutines.runBlocking
-import no.nav.personbruker.dittnav.varselbestiller.config.*
-import org.amshove.kluent.`should be empty`
-import org.amshove.kluent.`should be equal to`
+import no.nav.personbruker.dittnav.varselbestiller.config.ApplicationContext
+import no.nav.personbruker.dittnav.varselbestiller.config.KafkaConsumerSetup
+import no.nav.personbruker.dittnav.varselbestiller.config.shouldPollBeskjedToDoknotifikasjon
+import no.nav.personbruker.dittnav.varselbestiller.config.shouldPollDoneToDoknotifikasjonStopp
+import no.nav.personbruker.dittnav.varselbestiller.config.shouldPollInnboksToDoknotifikasjon
+import no.nav.personbruker.dittnav.varselbestiller.config.shouldPollOppgaveToDoknotifikasjon
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -39,7 +50,7 @@ class PeriodicConsumerPollingCheckTest {
         createResponseShouldConsumerPollToDoknotifikasjon(shouldBeskjedPoll = true, shouldDonePoll = true, shouldOppgavePoll = true, shouldInnboksPoll = true)
 
         runBlocking {
-            periodicConsumerPollingCheck.getConsumersThatShouldBeRestarted().size `should be equal to` 2
+            periodicConsumerPollingCheck.getConsumersThatShouldBeRestarted().size shouldBe 2
         }
     }
 
@@ -50,7 +61,7 @@ class PeriodicConsumerPollingCheckTest {
 
 
         runBlocking {
-            periodicConsumerPollingCheck.getConsumersThatShouldBeRestarted().`should be empty`()
+            periodicConsumerPollingCheck.getConsumersThatShouldBeRestarted().shouldBeEmpty()
         }
     }
 
@@ -87,7 +98,7 @@ class PeriodicConsumerPollingCheckTest {
         createResponseShouldConsumerPollToDoknotifikasjon(shouldBeskjedPoll = true, shouldDonePoll = false, shouldOppgavePoll = false, shouldInnboksPoll = false)
 
         runBlocking {
-            periodicConsumerPollingCheck.getConsumersThatShouldBeRestarted().size `should be equal to` 1
+            periodicConsumerPollingCheck.getConsumersThatShouldBeRestarted().size shouldBe 1
         }
     }
 
@@ -97,7 +108,7 @@ class PeriodicConsumerPollingCheckTest {
         createResponseShouldConsumerPollToDoknotifikasjon(shouldBeskjedPoll = false, shouldDonePoll = true, shouldOppgavePoll = false, shouldInnboksPoll = false)
 
         runBlocking {
-            periodicConsumerPollingCheck.getConsumersThatShouldBeRestarted().size `should be equal to` 1
+            periodicConsumerPollingCheck.getConsumersThatShouldBeRestarted().size shouldBe 1
         }
     }
 
@@ -107,7 +118,7 @@ class PeriodicConsumerPollingCheckTest {
         createResponseShouldConsumerPollToDoknotifikasjon(shouldBeskjedPoll = false, shouldDonePoll = false, shouldOppgavePoll = true, shouldInnboksPoll = false)
 
         runBlocking {
-            periodicConsumerPollingCheck.getConsumersThatShouldBeRestarted().size `should be equal to` 1
+            periodicConsumerPollingCheck.getConsumersThatShouldBeRestarted().size shouldBe 1
         }
     }
 
@@ -117,7 +128,7 @@ class PeriodicConsumerPollingCheckTest {
         createResponseShouldConsumerPollToDoknotifikasjon(shouldBeskjedPoll = false, shouldDonePoll = false, shouldOppgavePoll = false, shouldInnboksPoll = true)
 
         runBlocking {
-            periodicConsumerPollingCheck.getConsumersThatShouldBeRestarted().size `should be equal to` 1
+            periodicConsumerPollingCheck.getConsumersThatShouldBeRestarted().size shouldBe 1
         }
     }
 

@@ -1,8 +1,8 @@
 package no.nav.personbruker.dittnav.varselbestiller.varselbestilling
 
+import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.runBlocking
 import no.nav.personbruker.dittnav.varselbestiller.common.database.LocalPostgresDatabase
-import org.amshove.kluent.`should contain same`
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -39,7 +39,7 @@ class VarselbestillingRepositoryTest {
         runBlocking {
             val toPersist = listOf(varselbestilling1, varselbestilling2, varselbestilling3)
             val result = varselbestillingRepository.persistInOneBatch(toPersist)
-            result.getPersistedEntitites() `should contain same` toPersist
+            result.getPersistedEntitites() shouldBe toPersist
         }
     }
 
@@ -51,8 +51,8 @@ class VarselbestillingRepositoryTest {
             val expectedPersistResult = toPersist - alreadyPersisted
             varselbestillingRepository.persistInOneBatch(alreadyPersisted)
             val result = varselbestillingRepository.persistInOneBatch(toPersist)
-            result.getPersistedEntitites() `should contain same` expectedPersistResult
-            result.getConflictingEntities() `should contain same` alreadyPersisted
+            result.getPersistedEntitites() shouldBe expectedPersistResult
+            result.getConflictingEntities() shouldBe alreadyPersisted
         }
     }
 }

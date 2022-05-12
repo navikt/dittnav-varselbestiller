@@ -1,14 +1,18 @@
 package no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp
 
-import io.mockk.*
+import io.kotest.assertions.throwables.shouldThrow
+import io.mockk.clearMocks
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
 import no.nav.personbruker.dittnav.varselbestiller.common.database.exception.RetriableDatabaseException
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaProducerWrapper
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.exception.RetriableKafkaException
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
-import org.amshove.kluent.`should throw`
-import org.amshove.kluent.invoking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 
@@ -49,11 +53,11 @@ internal class DoknotifikasjonStoppProducerTest {
         coEvery { repository.cancelVarselbestilling(any()) } throws RetriableDatabaseException("")
         every { producerWrapper.abortCurrentTransaction() } returns Unit
 
-        invoking {
+        shouldThrow<RetriableDatabaseException> {
             runBlocking {
                 producer.sendEventsAndPersistCancellation(events)
             }
-        } `should throw` RetriableDatabaseException::class
+        }
 
         verify(exactly = 1) { producerWrapper.sendEventsAndLeaveTransactionOpen(any()) }
         coVerify(exactly = 1) { repository.cancelVarselbestilling(any()) }
@@ -67,11 +71,11 @@ internal class DoknotifikasjonStoppProducerTest {
         coEvery { repository.cancelVarselbestilling(any()) } returns Unit
         every { producerWrapper.abortCurrentTransaction() } returns Unit
 
-        invoking {
+        shouldThrow<RetriableKafkaException> {
             runBlocking {
                 producer.sendEventsAndPersistCancellation(events)
             }
-        } `should throw` RetriableKafkaException::class
+        }
 
         verify(exactly = 1) { producerWrapper.sendEventsAndLeaveTransactionOpen(any()) }
         coVerify(exactly = 0) { repository.cancelVarselbestilling(any()) }

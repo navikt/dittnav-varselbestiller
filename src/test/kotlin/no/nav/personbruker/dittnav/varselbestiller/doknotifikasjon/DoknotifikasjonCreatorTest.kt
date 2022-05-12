@@ -1,13 +1,16 @@
 package no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon
 
-import `with message containing`
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.ints.shouldBeGreaterThan
+import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import no.nav.brukernotifikasjon.schemas.internal.domain.PreferertKanal
 import no.nav.personbruker.dittnav.varselbestiller.beskjed.AvroBeskjedInternObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.FieldValidationException
+import no.nav.personbruker.dittnav.varselbestiller.innboks.AvroInnboksInternObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelInternObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.oppgave.AvroOppgaveInternObjectMother
-import no.nav.personbruker.dittnav.varselbestiller.innboks.AvroInnboksInternObjectMother
-import org.amshove.kluent.*
 import org.junit.jupiter.api.Test
 
 class DoknotifikasjonCreatorTest {
@@ -19,16 +22,16 @@ class DoknotifikasjonCreatorTest {
         val beskjed = AvroBeskjedInternObjectMother.createBeskjedIntern()
         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
 
-        doknotifikasjon.getBestillingsId() `should be equal to` "B-${nokkel.getAppnavn()}-${nokkel.getEventId()}"
-        doknotifikasjon.getBestillerId() `should be equal to` nokkel.getAppnavn()
-        doknotifikasjon.getSikkerhetsnivaa() `should be equal to` 4
-        doknotifikasjon.getFodselsnummer() `should be equal to` nokkel.getFodselsnummer()
-        doknotifikasjon.getTittel().`should not be null or empty`()
-        doknotifikasjon.getEpostTekst().`should not be null or empty`()
-        doknotifikasjon.getSmsTekst().`should not be null or empty`()
-        doknotifikasjon.getAntallRenotifikasjoner() `should be equal to` 0
-        doknotifikasjon.getRenotifikasjonIntervall().`should be null`()
-        doknotifikasjon.getPrefererteKanaler().size `should be equal to` beskjed.getPrefererteKanaler().size
+        doknotifikasjon.getBestillingsId() shouldBe "B-${nokkel.getAppnavn()}-${nokkel.getEventId()}"
+        doknotifikasjon.getBestillerId() shouldBe nokkel.getAppnavn()
+        doknotifikasjon.getSikkerhetsnivaa() shouldBe 4
+        doknotifikasjon.getFodselsnummer() shouldBe nokkel.getFodselsnummer()
+        doknotifikasjon.getTittel().length shouldBeGreaterThan 0
+        doknotifikasjon.getEpostTekst().length shouldBeGreaterThan 0
+        doknotifikasjon.getSmsTekst().length shouldBeGreaterThan 0
+        doknotifikasjon.getAntallRenotifikasjoner() shouldBe 0
+        doknotifikasjon.getRenotifikasjonIntervall().shouldBeNull()
+        doknotifikasjon.getPrefererteKanaler().size shouldBe beskjed.getPrefererteKanaler().size
     }
 
     @Test
@@ -38,16 +41,16 @@ class DoknotifikasjonCreatorTest {
         val oppgave = AvroOppgaveInternObjectMother.createOppgaveIntern()
         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(nokkel, oppgave)
 
-        doknotifikasjon.getBestillingsId() `should be equal to` "O-${nokkel.getAppnavn()}-${nokkel.getEventId()}"
-        doknotifikasjon.getBestillerId() `should be equal to` nokkel.getAppnavn()
-        doknotifikasjon.getSikkerhetsnivaa() `should be equal to` 4
-        doknotifikasjon.getFodselsnummer() `should be equal to` nokkel.getFodselsnummer()
-        doknotifikasjon.getTittel().`should not be null or empty`()
-        doknotifikasjon.getEpostTekst().`should not be null or empty`()
-        doknotifikasjon.getSmsTekst().`should not be null or empty`()
-        doknotifikasjon.getAntallRenotifikasjoner() `should be equal to` 1
-        doknotifikasjon.getRenotifikasjonIntervall() `should be equal to` 7
-        doknotifikasjon.getPrefererteKanaler().size `should be equal to` oppgave.getPrefererteKanaler().size
+        doknotifikasjon.getBestillingsId() shouldBe "O-${nokkel.getAppnavn()}-${nokkel.getEventId()}"
+        doknotifikasjon.getBestillerId() shouldBe nokkel.getAppnavn()
+        doknotifikasjon.getSikkerhetsnivaa() shouldBe 4
+        doknotifikasjon.getFodselsnummer() shouldBe nokkel.getFodselsnummer()
+        doknotifikasjon.getTittel().length shouldBeGreaterThan 0
+        doknotifikasjon.getEpostTekst().length shouldBeGreaterThan 0
+        doknotifikasjon.getSmsTekst().length shouldBeGreaterThan 0
+        doknotifikasjon.getAntallRenotifikasjoner() shouldBe 1
+        doknotifikasjon.getRenotifikasjonIntervall() shouldBe 7
+        doknotifikasjon.getPrefererteKanaler().size shouldBe oppgave.getPrefererteKanaler().size
     }
 
     @Test
@@ -57,16 +60,16 @@ class DoknotifikasjonCreatorTest {
         val innboks = AvroInnboksInternObjectMother.createInnboksIntern()
         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(nokkel, innboks)
 
-        doknotifikasjon.getBestillingsId() `should be equal to` "I-${nokkel.getAppnavn()}-${nokkel.getEventId()}"
-        doknotifikasjon.getBestillerId() `should be equal to` nokkel.getAppnavn()
-        doknotifikasjon.getSikkerhetsnivaa() `should be equal to` 4
-        doknotifikasjon.getFodselsnummer() `should be equal to` nokkel.getFodselsnummer()
-        doknotifikasjon.getTittel().`should not be null or empty`()
-        doknotifikasjon.getEpostTekst().`should not be null or empty`()
-        doknotifikasjon.getSmsTekst().`should not be null or empty`()
-        doknotifikasjon.getAntallRenotifikasjoner() `should be equal to` 1
-        doknotifikasjon.getRenotifikasjonIntervall() `should be equal to` 4
-        doknotifikasjon.getPrefererteKanaler().size `should be equal to` innboks.getPrefererteKanaler().size
+        doknotifikasjon.getBestillingsId() shouldBe "I-${nokkel.getAppnavn()}-${nokkel.getEventId()}"
+        doknotifikasjon.getBestillerId() shouldBe nokkel.getAppnavn()
+        doknotifikasjon.getSikkerhetsnivaa() shouldBe 4
+        doknotifikasjon.getFodselsnummer() shouldBe nokkel.getFodselsnummer()
+        doknotifikasjon.getTittel().length shouldBeGreaterThan 0
+        doknotifikasjon.getEpostTekst().length shouldBeGreaterThan 0
+        doknotifikasjon.getSmsTekst().length shouldBeGreaterThan 0
+        doknotifikasjon.getAntallRenotifikasjoner() shouldBe 1
+        doknotifikasjon.getRenotifikasjonIntervall() shouldBe 4
+        doknotifikasjon.getPrefererteKanaler().size shouldBe innboks.getPrefererteKanaler().size
     }
 
     @Test
@@ -76,7 +79,7 @@ class DoknotifikasjonCreatorTest {
         val beskjed = AvroBeskjedInternObjectMother.createBeskjedWithEpostVarslingstekst("epost varslingstekst")
 
         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
-        doknotifikasjon.getEpostTekst() `should contain` "epost varslingstekst"
+        doknotifikasjon.getEpostTekst() shouldContain "epost varslingstekst"
     }
 
     @Test
@@ -89,8 +92,8 @@ class DoknotifikasjonCreatorTest {
         )
 
         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
-        doknotifikasjon.getEpostTekst() `should contain` "epost tittel"
-        doknotifikasjon.getTittel() `should be equal to` "epost tittel"
+        doknotifikasjon.getEpostTekst() shouldContain "epost tittel"
+        doknotifikasjon.getTittel() shouldBe "epost tittel"
     }
 
     @Test
@@ -100,7 +103,7 @@ class DoknotifikasjonCreatorTest {
         val beskjed = AvroBeskjedInternObjectMother.createBeskjedIntern()
 
         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
-        doknotifikasjon.getEpostTekst() `should be equal to` this::class.java.getResource("/texts/epost_beskjed.txt").readText(Charsets.UTF_8)
+        doknotifikasjon.getEpostTekst() shouldBe this::class.java.getResource("/texts/epost_beskjed.txt").readText(Charsets.UTF_8)
     }
 
     @Test
@@ -110,7 +113,7 @@ class DoknotifikasjonCreatorTest {
         val beskjed = AvroBeskjedInternObjectMother.createBeskjedWithSmsVarslingstekst("sms varslingstekst")
 
         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
-        doknotifikasjon.getSmsTekst() `should be equal to` "sms varslingstekst"
+        doknotifikasjon.getSmsTekst() shouldBe "sms varslingstekst"
     }
 
     @Test
@@ -120,7 +123,7 @@ class DoknotifikasjonCreatorTest {
         val beskjed = AvroBeskjedInternObjectMother.createBeskjedIntern()
 
         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
-        doknotifikasjon.getSmsTekst() `should be equal to` this::class.java.getResource("/texts/sms_beskjed.txt").readText(Charsets.UTF_8)
+        doknotifikasjon.getSmsTekst() shouldBe this::class.java.getResource("/texts/sms_beskjed.txt").readText(Charsets.UTF_8)
     }
 
     @Test
@@ -130,7 +133,7 @@ class DoknotifikasjonCreatorTest {
         val oppgave = AvroOppgaveInternObjectMother.createOppgaveWithEpostVarslingstekst("epost varslingstekst")
 
         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(nokkel, oppgave)
-        doknotifikasjon.getEpostTekst() `should contain` "epost varslingstekst"
+        doknotifikasjon.getEpostTekst() shouldContain "epost varslingstekst"
     }
 
     @Test
@@ -143,8 +146,8 @@ class DoknotifikasjonCreatorTest {
         )
 
         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(nokkel, oppgave)
-        doknotifikasjon.getEpostTekst() `should contain` "epost tittel"
-        doknotifikasjon.getTittel() `should be equal to` "epost tittel"
+        doknotifikasjon.getEpostTekst() shouldContain "epost tittel"
+        doknotifikasjon.getTittel() shouldBe "epost tittel"
     }
 
     @Test
@@ -154,7 +157,7 @@ class DoknotifikasjonCreatorTest {
         val oppgave = AvroOppgaveInternObjectMother.createOppgaveIntern()
 
         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(nokkel, oppgave)
-        doknotifikasjon.getEpostTekst() `should be equal to` this::class.java.getResource("/texts/epost_oppgave.txt").readText(Charsets.UTF_8)
+        doknotifikasjon.getEpostTekst() shouldBe this::class.java.getResource("/texts/epost_oppgave.txt").readText(Charsets.UTF_8)
     }
 
     @Test
@@ -164,7 +167,7 @@ class DoknotifikasjonCreatorTest {
         val oppgave = AvroOppgaveInternObjectMother.createOppgaveWithSmsVarslingstekst("sms varslingstekst")
 
         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(nokkel, oppgave)
-        doknotifikasjon.getSmsTekst() `should be equal to` "sms varslingstekst"
+        doknotifikasjon.getSmsTekst() shouldBe "sms varslingstekst"
     }
 
     @Test
@@ -174,7 +177,7 @@ class DoknotifikasjonCreatorTest {
         val oppgave = AvroOppgaveInternObjectMother.createOppgaveIntern()
 
         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(nokkel, oppgave)
-        doknotifikasjon.getSmsTekst() `should be equal to` this::class.java.getResource("/texts/sms_oppgave.txt").readText(Charsets.UTF_8)
+        doknotifikasjon.getSmsTekst() shouldBe this::class.java.getResource("/texts/sms_oppgave.txt").readText(Charsets.UTF_8)
     }
 
     @Test
@@ -184,7 +187,7 @@ class DoknotifikasjonCreatorTest {
         val innboks = AvroInnboksInternObjectMother.createInnboksIntern(epostVarslingstekst = "epost varslingstekst")
 
         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(nokkel, innboks)
-        doknotifikasjon.getEpostTekst() `should contain` "epost varslingstekst"
+        doknotifikasjon.getEpostTekst() shouldContain "epost varslingstekst"
     }
 
     @Test
@@ -197,8 +200,8 @@ class DoknotifikasjonCreatorTest {
         )
 
         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(nokkel, innboks)
-        doknotifikasjon.getEpostTekst() `should contain` "epost tittel"
-        doknotifikasjon.getTittel() `should be equal to` "epost tittel"
+        doknotifikasjon.getEpostTekst() shouldContain "epost tittel"
+        doknotifikasjon.getTittel() shouldBe "epost tittel"
     }
 
     @Test
@@ -208,7 +211,7 @@ class DoknotifikasjonCreatorTest {
         val innboks = AvroInnboksInternObjectMother.createInnboksIntern()
 
         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(nokkel, innboks)
-        doknotifikasjon.getEpostTekst() `should be equal to` this::class.java.getResource("/texts/epost_innboks.txt").readText(Charsets.UTF_8)
+        doknotifikasjon.getEpostTekst() shouldBe this::class.java.getResource("/texts/epost_innboks.txt").readText(Charsets.UTF_8)
     }
 
     @Test
@@ -218,7 +221,7 @@ class DoknotifikasjonCreatorTest {
         val innboks = AvroInnboksInternObjectMother.createInnboksIntern(smsVarslingstekst = "sms varslingstekst")
 
         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(nokkel, innboks)
-        doknotifikasjon.getSmsTekst() `should be equal to` "sms varslingstekst"
+        doknotifikasjon.getSmsTekst() shouldBe "sms varslingstekst"
     }
 
     @Test
@@ -228,7 +231,7 @@ class DoknotifikasjonCreatorTest {
         val innboks = AvroInnboksInternObjectMother.createInnboksIntern()
 
         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(nokkel, innboks)
-        doknotifikasjon.getSmsTekst() `should be equal to` this::class.java.getResource("/texts/sms_innboks.txt").readText(Charsets.UTF_8)
+        doknotifikasjon.getSmsTekst() shouldBe this::class.java.getResource("/texts/sms_innboks.txt").readText(Charsets.UTF_8)
     }
 
     @Test
@@ -236,9 +239,9 @@ class DoknotifikasjonCreatorTest {
         val eventId = 1
         val nokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventId)
         val beskjed = AvroBeskjedInternObjectMother.createBeskjedInternWithEksternVarslingOgPrefererteKanaler(true, listOf("UgyldigKanal"))
-        invoking {
+        shouldThrow<FieldValidationException> {
             DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
-        } `should throw` FieldValidationException::class `with message containing` "preferert kanal"
+        }.message shouldContain "preferert kanal"
     }
 
     @Test
@@ -247,9 +250,9 @@ class DoknotifikasjonCreatorTest {
         val nokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventId)
         val beskjed = AvroBeskjedInternObjectMother.createBeskjedInternWithEksternVarslingOgPrefererteKanaler(false, listOf(
             PreferertKanal.SMS.toString()))
-        invoking {
+        shouldThrow<FieldValidationException> {
             DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
-        } `should throw` FieldValidationException::class `with message containing` "Prefererte kanaler"
+        }.message shouldContain "Prefererte kanaler"
     }
 
 
@@ -258,9 +261,9 @@ class DoknotifikasjonCreatorTest {
         val eventId = 1
         val nokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventId)
         val oppgave = AvroOppgaveInternObjectMother.createOppgaveInternWithEksternVarslingOgPrefererteKanaler(true, listOf("UgyldigKanal"))
-        invoking {
+        shouldThrow<FieldValidationException> {
             DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(nokkel, oppgave)
-        } `should throw` FieldValidationException::class `with message containing` "preferert kanal"
+        }.message shouldContain "preferert kanal"
     }
 
     @Test
@@ -268,9 +271,9 @@ class DoknotifikasjonCreatorTest {
         val eventId = 1
         val nokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventId)
         val oppgave = AvroOppgaveInternObjectMother.createOppgaveInternWithEksternVarslingOgPrefererteKanaler(false, listOf(PreferertKanal.SMS.toString()))
-        invoking {
+        shouldThrow<FieldValidationException> {
             DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(nokkel, oppgave)
-        } `should throw` FieldValidationException::class `with message containing` "Prefererte kanaler"
+        }.message shouldContain "Prefererte kanaler"
     }
 
     @Test
@@ -278,9 +281,9 @@ class DoknotifikasjonCreatorTest {
         val eventId = 1
         val nokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventId)
         val innboks = AvroInnboksInternObjectMother.createInnboksInternWithEksternVarslingOgPrefererteKanaler(true, listOf("UgyldigKanal"))
-        invoking {
+        shouldThrow<FieldValidationException> {
             DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(nokkel, innboks)
-        } `should throw` FieldValidationException::class `with message containing` "preferert kanal"
+        }.message shouldContain "preferert kanal"
     }
 
     @Test
@@ -288,8 +291,8 @@ class DoknotifikasjonCreatorTest {
         val eventId = 1
         val nokkel = AvroNokkelInternObjectMother.createNokkelInternWithEventId(eventId)
         val innboks = AvroInnboksInternObjectMother.createInnboksInternWithEksternVarslingOgPrefererteKanaler(false, listOf(PreferertKanal.SMS.toString()))
-        invoking {
+        shouldThrow<FieldValidationException> {
             DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(nokkel, innboks)
-        } `should throw` FieldValidationException::class `with message containing` "Prefererte kanaler"
+        }.message shouldContain "Prefererte kanaler"
     }
 }

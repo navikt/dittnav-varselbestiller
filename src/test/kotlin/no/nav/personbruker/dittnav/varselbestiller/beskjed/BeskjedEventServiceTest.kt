@@ -1,6 +1,17 @@
 package no.nav.personbruker.dittnav.varselbestiller.beskjed
 
-import io.mockk.*
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.shouldBe
+import io.mockk.clearMocks
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.confirmVerified
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.slot
+import io.mockk.unmockkAll
+import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import no.nav.brukernotifikasjon.schemas.internal.BeskjedIntern
 import no.nav.brukernotifikasjon.schemas.internal.NokkelIntern
@@ -17,13 +28,10 @@ import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother.giveMeANumberOfVarselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
-import org.amshove.kluent.`should be`
-import org.amshove.kluent.`should throw`
-import org.amshove.kluent.invoking
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.util.*
+import java.util.Collections
 
 class BeskjedEventServiceTest {
 
@@ -73,7 +81,7 @@ class BeskjedEventServiceTest {
         coVerify(exactly = 1) { doknotifikasjonProducer.sendAndPersistEvents(allAny(), any()) }
         coVerify(exactly = beskjedWithEksternVarslingRecords.count()) { metricsSession.countSuccessfulEksternVarslingForProducer(any()) }
         coVerify(exactly = beskjedWithEksternVarslingRecords.count() + beskjedWithoutEksternVarslingRecords.count()) { metricsSession.countAllEventsFromKafkaForProducer(any()) }
-        capturedListOfEntities.captured.size `should be` beskjedWithEksternVarslingRecords.count()
+        capturedListOfEntities.captured.size shouldBe beskjedWithEksternVarslingRecords.count()
 
         confirmVerified(doknotifikasjonProducer)
     }
@@ -101,7 +109,7 @@ class BeskjedEventServiceTest {
         coVerify(exactly = 1 ) { metricsSession.countDuplicateVarselbestillingForProducer(any()) }
         coVerify(exactly = beskjedRecords.count()) { metricsSession.countAllEventsFromKafkaForProducer(any()) }
         coVerify(exactly = 1) { doknotifikasjonProducer.sendAndPersistEvents(any(), any()) }
-        capturedListOfEntities.captured.size `should be` 4
+        capturedListOfEntities.captured.size shouldBe 4
         confirmVerified(doknotifikasjonProducer)
     }
 
@@ -126,7 +134,7 @@ class BeskjedEventServiceTest {
 
         coVerify(exactly = beskjedWithEksternVarslingRecords.count()) { metricsSession.countSuccessfulEksternVarslingForProducer(any()) }
         coVerify(exactly = beskjedWithEksternVarslingRecords.count() + beskjedWithoutEksternVarslingRecords.count()) { metricsSession.countAllEventsFromKafkaForProducer(any()) }
-        capturedListOfEntities.captured.size `should be` beskjedWithEksternVarslingRecords.count()
+        capturedListOfEntities.captured.size shouldBe beskjedWithEksternVarslingRecords.count()
     }
 
     @Test
@@ -151,17 +159,17 @@ class BeskjedEventServiceTest {
             slot.captured.invoke(metricsSession)
         }
 
-        invoking {
+        shouldThrow<UntransformableRecordException> {
             runBlocking {
                 eventService.processEvents(beskjedRecords)
             }
-        } `should throw` UntransformableRecordException::class
+        }
 
         coVerify(exactly = 1) { doknotifikasjonProducer.sendAndPersistEvents(any(), any()) }
         coVerify(exactly = numberOfFailedTransformations) { metricsSession.countFailedEksternVarslingForProducer(any()) }
         coVerify(exactly = numberOfSuccessfulTransformations) { metricsSession.countSuccessfulEksternVarslingForProducer(any()) }
         coVerify(exactly = numberOfSuccessfulTransformations + numberOfFailedTransformations) { metricsSession.countAllEventsFromKafkaForProducer(any()) }
-        capturedListOfEntities.captured.size `should be` numberOfSuccessfulTransformations
+        capturedListOfEntities.captured.size shouldBe numberOfSuccessfulTransformations
 
         confirmVerified(doknotifikasjonProducer)
     }

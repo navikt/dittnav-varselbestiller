@@ -1,16 +1,20 @@
 package no.nav.personbruker.dittnav.varselbestiller.beskjed
 
+import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.runBlocking
 import no.nav.brukernotifikasjon.schemas.internal.BeskjedIntern
 import no.nav.brukernotifikasjon.schemas.internal.NokkelIntern
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.personbruker.dittnav.common.metrics.StubMetricsReporter
 import no.nav.personbruker.dittnav.varselbestiller.common.database.LocalPostgresDatabase
-import no.nav.personbruker.dittnav.varselbestiller.common.kafka.*
+import no.nav.personbruker.dittnav.varselbestiller.common.kafka.Consumer
+import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaProducerWrapper
+import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaTestTopics
+import no.nav.personbruker.dittnav.varselbestiller.common.kafka.createEventRecords
+import no.nav.personbruker.dittnav.varselbestiller.common.kafka.delayUntilCommittedOffset
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
-import org.amshove.kluent.shouldBe
 import org.apache.kafka.clients.consumer.MockConsumer
 import org.apache.kafka.clients.consumer.OffsetResetStrategy
 import org.apache.kafka.clients.producer.MockProducer

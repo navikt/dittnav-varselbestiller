@@ -1,8 +1,8 @@
 package no.nav.personbruker.dittnav.varselbestiller.varselbestilling
 
+import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.runBlocking
 import no.nav.personbruker.dittnav.varselbestiller.common.database.LocalPostgresDatabase
-import org.amshove.kluent.`should be equal to`
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -34,10 +34,10 @@ class VarselbestillingTeardownQueriesTest {
         runBlocking {
             createVarselbestillinger(listOf(varselbestilling1, varselbestilling2, varselbestilling3))
             var result = database.dbQuery { getAllVarselbestilling() }
-            result.size `should be equal to` 3
+            result.size shouldBe 3
             deleteAllVarselbestillinger()
             result = database.dbQuery { getAllVarselbestilling() }
-            result.isEmpty() `should be equal to` true
+            result.isEmpty() shouldBe true
         }
     }
 

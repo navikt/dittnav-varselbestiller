@@ -1,6 +1,15 @@
 package no.nav.personbruker.dittnav.varselbestiller.done
 
-import io.mockk.*
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.shouldBe
+import io.mockk.clearMocks
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.confirmVerified
+import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.slot
+import io.mockk.unmockkAll
 import kotlinx.coroutines.runBlocking
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UntransformableRecordException
@@ -14,9 +23,6 @@ import no.nav.personbruker.dittnav.varselbestiller.nokkel.AvroNokkelInternObject
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
-import org.amshove.kluent.`should be`
-import org.amshove.kluent.`should throw`
-import org.amshove.kluent.invoking
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -71,7 +77,7 @@ class DoneEventServiceTest {
         coVerify(exactly = 1) { doknotifikasjonStoppProducer.sendEventsAndPersistCancellation(any()) }
         coVerify (exactly = 3) { metricsSession.countSuccessfulEksternVarslingForProducer(any()) }
         coVerify (exactly = 3) { metricsSession.countAllEventsFromKafkaForProducer(any()) }
-        capturedListOfEntities.captured.size `should be` records.count()
+        capturedListOfEntities.captured.size shouldBe records.count()
 
         confirmVerified(doknotifikasjonStoppProducer)
     }
@@ -104,7 +110,7 @@ class DoneEventServiceTest {
         coVerify(exactly = 1) { doknotifikasjonStoppProducer.sendEventsAndPersistCancellation(any())}
         coVerify (exactly = 2) { metricsSession.countSuccessfulEksternVarslingForProducer(any()) }
         coVerify (exactly = 3) { metricsSession.countAllEventsFromKafkaForProducer(any()) }
-        capturedListOfEntities.captured.size `should be` 2
+        capturedListOfEntities.captured.size shouldBe 2
         confirmVerified(doknotifikasjonStoppProducer)
     }
 
@@ -138,7 +144,7 @@ class DoneEventServiceTest {
 
         coVerify(exactly = 1) { doknotifikasjonStoppProducer.sendEventsAndPersistCancellation(any())}
         coVerify (exactly = 1) { metricsSession.countSuccessfulEksternVarslingForProducer(any()) }
-        capturedListOfEntities.captured.size `should be` 1
+        capturedListOfEntities.captured.size shouldBe 1
         confirmVerified(doknotifikasjonStoppProducer)
     }
 
@@ -167,17 +173,17 @@ class DoneEventServiceTest {
         val doknotifikasjonStopp = AvroDoknotifikasjonStoppObjectMother.giveMeANumberOfDoknotifikasjonStopp(5)
         coEvery { DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(ofType(Varselbestilling::class)) } throws fieldValidationException andThenMany doknotifikasjonStopp
 
-        invoking {
+        shouldThrow<UntransformableRecordException> {
             runBlocking {
                 eventService.processEvents(records)
             }
-        } `should throw` UntransformableRecordException::class
+        }
 
         coVerify(exactly = 1) { doknotifikasjonStoppProducer.sendEventsAndPersistCancellation(any()) }
         coVerify(exactly = numberOfFailedTransformations) { metricsSession.countFailedEksternVarslingForProducer(any()) }
         coVerify (exactly = numberOfSuccessfulTransformations) { metricsSession.countSuccessfulEksternVarslingForProducer(any()) }
         coVerify (exactly = numberOfSuccessfulTransformations + numberOfFailedTransformations) { metricsSession.countAllEventsFromKafkaForProducer(any()) }
-        capturedListOfEntities.captured.size `should be` numberOfSuccessfulTransformations
+        capturedListOfEntities.captured.size shouldBe numberOfSuccessfulTransformations
 
         confirmVerified(doknotifikasjonStoppProducer)
     }

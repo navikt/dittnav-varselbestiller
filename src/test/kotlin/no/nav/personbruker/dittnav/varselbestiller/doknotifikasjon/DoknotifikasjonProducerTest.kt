@@ -1,6 +1,12 @@
 package no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon
 
-import io.mockk.*
+import io.kotest.assertions.throwables.shouldThrow
+import io.mockk.clearMocks
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.personbruker.dittnav.varselbestiller.common.database.ListPersistActionResult
@@ -9,8 +15,6 @@ import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaProducerWra
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.exception.RetriableKafkaException
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingObjectMother
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
-import org.amshove.kluent.`should throw`
-import org.amshove.kluent.invoking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 
@@ -54,11 +58,11 @@ internal class DoknotifikasjonProducerTest {
         coEvery { repository.persistInOneBatch(any()) } throws RetriableDatabaseException("")
         every { producerWrapper.abortCurrentTransaction() } returns Unit
 
-        invoking {
+        shouldThrow<RetriableDatabaseException> {
             runBlocking {
                 producer.sendAndPersistEvents(events, varselBestillinger)
             }
-        } `should throw` RetriableDatabaseException::class
+        }
 
                 verify(exactly = 1) { producerWrapper.sendEventsAndLeaveTransactionOpen(any()) }
         coVerify(exactly = 1) { repository.persistInOneBatch(any()) }
@@ -72,11 +76,11 @@ internal class DoknotifikasjonProducerTest {
         coEvery { repository.persistInOneBatch(any()) } returns ListPersistActionResult.emptyInstance()
         every { producerWrapper.abortCurrentTransaction() } returns Unit
 
-        invoking {
+        shouldThrow<RetriableKafkaException> {
             runBlocking {
                 producer.sendAndPersistEvents(events, varselBestillinger)
             }
-        } `should throw` RetriableKafkaException::class
+        }
 
         verify(exactly = 1) { producerWrapper.sendEventsAndLeaveTransactionOpen(any()) }
         coVerify(exactly = 0) { repository.persistInOneBatch(any()) }
