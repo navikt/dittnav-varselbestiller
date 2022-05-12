@@ -1,17 +1,35 @@
 package no.nav.personbruker.dittnav.varselbestiller.common.database
 
 import com.zaxxer.hikari.HikariDataSource
+import kotlinx.coroutines.runBlocking
 import org.flywaydb.core.Flyway
 
-class LocalPostgresDatabase : Database {
+class LocalPostgresDatabase private constructor() : Database {
 
     private val memDataSource: HikariDataSource
     private val container = TestPostgresqlContainer()
 
+    companion object {
+        private val instance by lazy {
+            LocalPostgresDatabase().also {
+                it.migrate()
+            }
+        }
+
+        fun cleanDb(): LocalPostgresDatabase {
+            runBlocking {
+                instance.dbQuery {
+                    prepareStatement("delete from varselbestilling").execute()
+                    prepareStatement("delete from early_done_event").execute()
+                }
+            }
+            return instance
+        }
+    }
+
     init {
         container.start()
         memDataSource = createDataSource()
-        flyway()
     }
 
     override val dataSource: HikariDataSource
@@ -27,11 +45,11 @@ class LocalPostgresDatabase : Database {
         }
     }
 
-    private fun flyway() {
+    private fun migrate() {
         Flyway.configure()
-                .connectRetries(3)
-                .dataSource(dataSource)
-                .load()
-                .migrate()
+            .connectRetries(3)
+            .dataSource(dataSource)
+            .load()
+            .migrate()
     }
 }

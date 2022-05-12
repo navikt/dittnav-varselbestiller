@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 
 class VarselbestillingRepositoryTest {
 
-    private val database = LocalPostgresDatabase()
+    private val database = LocalPostgresDatabase.cleanDb()
     private val varselbestillingRepository = VarselbestillingRepository(database)
 
     private val varselbestilling1 = VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-test-001", eventId = "001")
