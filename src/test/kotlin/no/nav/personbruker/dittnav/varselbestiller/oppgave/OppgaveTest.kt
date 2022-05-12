@@ -18,7 +18,7 @@ import org.apache.kafka.common.TopicPartition
 import org.junit.jupiter.api.Test
 
 class OppgaveTest {
-    private val database = LocalPostgresDatabase()
+    private val database = LocalPostgresDatabase.cleanDb()
 
     private val metricsReporter = StubMetricsReporter()
     private val metricsCollector = MetricsCollector(metricsReporter)
