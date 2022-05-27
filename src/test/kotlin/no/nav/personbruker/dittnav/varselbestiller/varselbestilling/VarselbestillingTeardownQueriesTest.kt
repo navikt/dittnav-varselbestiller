@@ -13,7 +13,6 @@ class VarselbestillingTeardownQueriesTest {
 
     private val varselbestilling1 = VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-test-001", eventId = "001")
     private val varselbestilling2 = VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-test-002", eventId = "002")
-    private val varselbestilling3 = VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "O-test-001", eventId = "001")
 
     @BeforeAll
     fun setup() {
@@ -32,9 +31,9 @@ class VarselbestillingTeardownQueriesTest {
     @Test
     fun `Skal slette alle rader i varselbestilling-tabellen`() {
         runBlocking {
-            createVarselbestillinger(listOf(varselbestilling1, varselbestilling2, varselbestilling3))
+            createVarselbestillinger(listOf(varselbestilling1, varselbestilling2))
             var result = database.dbQuery { getAllVarselbestilling() }
-            result.size shouldBe 3
+            result.size shouldBe 2
             deleteAllVarselbestillinger()
             result = database.dbQuery { getAllVarselbestilling() }
             result.isEmpty() shouldBe true

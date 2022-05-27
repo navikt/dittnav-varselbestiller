@@ -63,7 +63,7 @@ class DoneEventServiceTest {
         coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
             slot.captured.invoke(metricsSession)
         }
-        val capturedListOfEntities = slot<Map<String, DoknotifikasjonStopp>>()
+        val capturedListOfEntities = slot<List<DoknotifikasjonStopp>>()
         coEvery { varselbestillingRepository.fetchVarselbestillingerForEventIds(listOf(doneEventId1, doneEventId2, doneEventId3)) } returns
                 listOf(VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId("B-dummyAppnavn-001", doneEventId1),
                         VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId("B-dummyAppnavn-002", doneEventId2),
@@ -97,7 +97,7 @@ class DoneEventServiceTest {
             slot.captured.invoke(metricsSession)
         }
 
-        val capturedListOfEntities = slot<Map<String, DoknotifikasjonStopp>>()
+        val capturedListOfEntities = slot<List<DoknotifikasjonStopp>>()
         coEvery { varselbestillingRepository.fetchVarselbestillingerForEventIds(listOf(doneEventId1, doneEventId2, doneEventId3)) } returns
                 listOf(VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId("B-dummyAppnavn-001", doneEventId1),
                         VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId("B-dummyAppnavn-002", doneEventId2))
@@ -134,7 +134,7 @@ class DoneEventServiceTest {
         val varselbestilling3IkkeAvbestilt = VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId("B-test-002", doneEventId3)
 
 
-        val capturedListOfEntities = slot<Map<String, DoknotifikasjonStopp>>()
+        val capturedListOfEntities = slot<List<DoknotifikasjonStopp>>()
         coEvery { varselbestillingRepository.fetchVarselbestillingerForEventIds(listOf(doneEventId1, doneEventId2, doneEventId3)) } returns listOf(varselbestilling1Avbestilt, varselbestilling2Avbestilt, varselbestilling3IkkeAvbestilt)
         coEvery { doknotifikasjonStoppProducer.sendEventsAndPersistCancellation(capture(capturedListOfEntities)) } returns Unit
 
@@ -160,7 +160,7 @@ class DoneEventServiceTest {
         }
 
         val records = ConsumerRecordsObjectMother.giveMeANumberOfDoneRecords(numberOfRecords = totalNumberOfRecords, topicName = "dummyTopic", )
-        val capturedListOfEntities = slot<Map<String, DoknotifikasjonStopp>>()
+        val capturedListOfEntities = slot<List<DoknotifikasjonStopp>>()
         coEvery { doknotifikasjonStoppProducer.sendEventsAndPersistCancellation(capture(capturedListOfEntities)) } returns Unit
         coEvery { varselbestillingRepository.fetchVarselbestillingerForEventIds(allAny()) } returns listOf(
                 VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-dummyAppnavn-0", eventId = "0"),

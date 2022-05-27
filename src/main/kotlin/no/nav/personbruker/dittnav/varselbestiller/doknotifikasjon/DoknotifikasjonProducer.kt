@@ -12,16 +12,19 @@ class DoknotifikasjonProducer(
         private val varselbestillingRepository: VarselbestillingRepository
 ) {
 
-    suspend fun sendAndPersistEvents(
-            successfullyValidatedEvents: Map<String, Doknotifikasjon>,
-            varselbestillinger: List<Varselbestilling>
-    ): ListPersistActionResult<Varselbestilling> {
-        val events = successfullyValidatedEvents.map { RecordKeyValueWrapper(it.key, it.value) }
-        return try {
-            producer.sendEventsAndLeaveTransactionOpen(events)
-            val result = varselbestillingRepository.persistInOneBatch(varselbestillinger)
+    suspend fun sendAndPersistBestillingBatch(
+            varselbestillingList: List<Varselbestilling>,
+            doknotifikasjonList: List<Doknotifikasjon>,
+    ) {
+
+        val kafkaEvents = doknotifikasjonList.map { doknotifikasjon ->
+            RecordKeyValueWrapper(doknotifikasjon.getBestillingsId(), doknotifikasjon)
+        }
+
+        try {
+            producer.sendEventsAndLeaveTransactionOpen(kafkaEvents)
+            varselbestillingRepository.persistInOneBatch(varselbestillingList)
             producer.commitCurrentTransaction()
-            result
         } catch (e: Exception) {
             producer.abortCurrentTransaction()
             throw e

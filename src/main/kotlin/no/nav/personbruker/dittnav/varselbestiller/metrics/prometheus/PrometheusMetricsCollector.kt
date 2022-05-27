@@ -13,6 +13,7 @@ object PrometheusMetricsCollector {
     const val LAST_SEEN_EKSTERNVARSLING_EVENTS_NAME = "kafka_event_type_last_seen"
     const val FAILED_EKSTERNVARSLING_EVENTS_NAME = "kafka_events_failed"
     const val DUPLICATE_KEY_EKSTERNVARSLING_EVENTS_NAME = "kafka_events_duplicate_key"
+    const val DOKNOTIFIKASJON_STOP_BESTILLINGSID_DISCREPANCY_NAME = "doknotifikasjon_stopp_bestillingsid_discrepancy"
     const val ALL_EVENTS_NAME = "kafka_all_events"
 
 
@@ -58,6 +59,13 @@ object PrometheusMetricsCollector {
             .labelNames("type", "producer")
             .register()
 
+    private val DOKNOTIFIKASJON_STOP_BESTILLINGSID_DISCREPANCY: Counter = Counter.build()
+            .name(DOKNOTIFIKASJON_STOP_BESTILLINGSID_DISCREPANCY_NAME)
+            .namespace(NAMESPACE)
+            .help("Doknotifikasjon stop produced for varselbestilling where eventId and bestillingsId differed")
+            .labelNames("producer")
+            .register()
+
 
     fun registerProcessedEksternvarslingEvents(count: Int, topic: String, producer: String) {
         MESSAGES_PROCESSED_EKSTERNVARSLING.labels(topic, producer).inc(count.toDouble())
@@ -78,6 +86,10 @@ object PrometheusMetricsCollector {
 
     fun registerDuplicateKeyEksternvarslingEvents(count: Int, topic: String, producer: String) {
         MESSAGES_DUPLICATE_KEY_EKSTERNVARSLING.labels(topic, producer).inc(count.toDouble())
+    }
+
+    fun registerBestillingsIdDiscrepancy(count: Int, producer: String) {
+        DOKNOTIFIKASJON_STOP_BESTILLINGSID_DISCREPANCY.labels(producer).inc(count.toDouble())
     }
 
 }

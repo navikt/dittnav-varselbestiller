@@ -2,6 +2,7 @@ package no.nav.personbruker.dittnav.varselbestiller.metrics
 
 import no.nav.personbruker.dittnav.common.metrics.MetricsReporter
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
+import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype.DONE_INTERN
 import no.nav.personbruker.dittnav.varselbestiller.metrics.influx.*
 import no.nav.personbruker.dittnav.varselbestiller.metrics.prometheus.PrometheusMetricsCollector
 
@@ -18,6 +19,7 @@ class MetricsCollector(private val metricsReporter: MetricsReporter) {
             handleProcessedEksternvarslingEvents(session)
             handleFailedEksternvarslingEvents(session)
             handleDuplicateEksternvarslingEventKeys(session)
+            handleBestillingsIdDiscrepancy(session)
             handleEventsProcessingTime(session, processingTime)
         }
     }
@@ -76,6 +78,21 @@ class MetricsCollector(private val metricsReporter: MetricsReporter) {
             if (numberEksternvarslingDuplicateKeys > 0) {
                 reportMetrics(KAFKA_EKSTERNVARSLING_EVENTS_DUPLICATE_KEY, numberEksternvarslingDuplicateKeys, eventTypeName, producer.namespace, producer.appnavn)
                 PrometheusMetricsCollector.registerDuplicateKeyEksternvarslingEvents(numberEksternvarslingDuplicateKeys, eventTypeName, producer.appnavn)
+            }
+        }
+    }
+
+    private suspend fun handleBestillingsIdDiscrepancy(session: EventMetricsSession) {
+        if (session.eventtype != DONE_INTERN) {
+            return
+        }
+
+        session.getUniqueProducers().forEach { producer ->
+            val bestillingsIdDiscrepancy = session.getBestillingsIdDiscrepancy(producer)
+
+            if (bestillingsIdDiscrepancy > 0) {
+                reportMetrics(BESTILLINGSID_DISCREPANCY, bestillingsIdDiscrepancy, DONE_INTERN.eventtype, producer.namespace, producer.appnavn)
+                PrometheusMetricsCollector.registerBestillingsIdDiscrepancy(bestillingsIdDiscrepancy, producer.appnavn)
             }
         }
     }

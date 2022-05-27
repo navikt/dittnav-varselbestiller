@@ -22,7 +22,7 @@ class DoknotifikasjonCreatorTest {
         val beskjed = AvroBeskjedInternObjectMother.createBeskjedIntern()
         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromBeskjed(nokkel, beskjed)
 
-        doknotifikasjon.getBestillingsId() shouldBe "B-${nokkel.getAppnavn()}-${nokkel.getEventId()}"
+        doknotifikasjon.getBestillingsId() shouldBe nokkel.getEventId()
         doknotifikasjon.getBestillerId() shouldBe nokkel.getAppnavn()
         doknotifikasjon.getSikkerhetsnivaa() shouldBe 4
         doknotifikasjon.getFodselsnummer() shouldBe nokkel.getFodselsnummer()
@@ -41,7 +41,7 @@ class DoknotifikasjonCreatorTest {
         val oppgave = AvroOppgaveInternObjectMother.createOppgaveIntern()
         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromOppgave(nokkel, oppgave)
 
-        doknotifikasjon.getBestillingsId() shouldBe "O-${nokkel.getAppnavn()}-${nokkel.getEventId()}"
+        doknotifikasjon.getBestillingsId() shouldBe nokkel.getEventId()
         doknotifikasjon.getBestillerId() shouldBe nokkel.getAppnavn()
         doknotifikasjon.getSikkerhetsnivaa() shouldBe 4
         doknotifikasjon.getFodselsnummer() shouldBe nokkel.getFodselsnummer()
@@ -60,7 +60,7 @@ class DoknotifikasjonCreatorTest {
         val innboks = AvroInnboksInternObjectMother.createInnboksIntern()
         val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(nokkel, innboks)
 
-        doknotifikasjon.getBestillingsId() shouldBe "I-${nokkel.getAppnavn()}-${nokkel.getEventId()}"
+        doknotifikasjon.getBestillingsId() shouldBe nokkel.getEventId()
         doknotifikasjon.getBestillerId() shouldBe nokkel.getAppnavn()
         doknotifikasjon.getSikkerhetsnivaa() shouldBe 4
         doknotifikasjon.getFodselsnummer() shouldBe nokkel.getFodselsnummer()

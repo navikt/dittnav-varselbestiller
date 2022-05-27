@@ -12,7 +12,7 @@ class VarselbestillingQueriesTest {
     private val database = LocalPostgresDatabase.cleanDb()
 
     private val varselbestillingBeskjed: Varselbestilling = VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-test-001", eventId = "001")
-    private val varselbestillingOppgave: Varselbestilling = VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "O-test-001", eventId = "001")
+    private val varselbestillingOppgave: Varselbestilling = VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "O-test-001", eventId = "002")
 
     init {
         createVarselbestillinger(listOf(varselbestillingBeskjed, varselbestillingOppgave))
