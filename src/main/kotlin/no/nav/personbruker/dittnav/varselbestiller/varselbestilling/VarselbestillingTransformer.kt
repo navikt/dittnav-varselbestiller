@@ -4,46 +4,45 @@ import no.nav.brukernotifikasjon.schemas.internal.BeskjedIntern
 import no.nav.brukernotifikasjon.schemas.internal.InnboksIntern
 import no.nav.brukernotifikasjon.schemas.internal.NokkelIntern
 import no.nav.brukernotifikasjon.schemas.internal.OppgaveIntern
-import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import java.time.LocalDateTime
 import java.time.ZoneId
 
 object VarselbestillingTransformer {
 
-    fun fromBeskjed(key: NokkelIntern, beskjed: BeskjedIntern, doknotifikasjon: Doknotifikasjon): Varselbestilling {
+    fun fromBeskjed(nokkel: NokkelIntern, beskjed: BeskjedIntern): Varselbestilling {
         return Varselbestilling(
-                bestillingsId = doknotifikasjon.getBestillingsId(),
-                eventId = key.getEventId(),
-                fodselsnummer = key.getFodselsnummer(),
-                systembruker = key.getSystembruker(),
-                namespace = key.getNamespace(),
-                appnavn = key.getAppnavn(),
+                bestillingsId = nokkel.getEventId(),
+                eventId = nokkel.getEventId(),
+                fodselsnummer = nokkel.getFodselsnummer(),
+                systembruker = nokkel.getSystembruker(),
+                namespace = nokkel.getNamespace(),
+                appnavn = nokkel.getAppnavn(),
                 bestillingstidspunkt = LocalDateTime.now(ZoneId.of("UTC")),
                 prefererteKanaler = beskjed.getPrefererteKanaler()
         )
     }
 
-    fun fromOppgave(key: NokkelIntern, oppgave: OppgaveIntern, doknotifikasjon: Doknotifikasjon): Varselbestilling {
+    fun fromOppgave(nokkel: NokkelIntern, oppgave: OppgaveIntern): Varselbestilling {
         return Varselbestilling(
-                bestillingsId = doknotifikasjon.getBestillingsId(),
-                eventId = key.getEventId(),
-                fodselsnummer = key.getFodselsnummer(),
-                systembruker = key.getSystembruker(),
-                namespace = key.getNamespace(),
-                appnavn = key.getAppnavn(),
+                bestillingsId = nokkel.getEventId(),
+                eventId = nokkel.getEventId(),
+                fodselsnummer = nokkel.getFodselsnummer(),
+                systembruker = nokkel.getSystembruker(),
+                namespace = nokkel.getNamespace(),
+                appnavn = nokkel.getAppnavn(),
                 bestillingstidspunkt = LocalDateTime.now(ZoneId.of("UTC")),
                 prefererteKanaler = oppgave.getPrefererteKanaler()
         )
     }
 
-    fun fromInnboks(key: NokkelIntern, innboks: InnboksIntern, doknotifikasjon: Doknotifikasjon): Varselbestilling {
+    fun fromInnboks(nokkel: NokkelIntern, innboks: InnboksIntern): Varselbestilling {
         return Varselbestilling(
-            bestillingsId = doknotifikasjon.getBestillingsId(),
-            eventId = key.getEventId(),
-            fodselsnummer = key.getFodselsnummer(),
-            systembruker = key.getSystembruker(),
-            namespace = key.getNamespace(),
-            appnavn = key.getAppnavn(),
+            bestillingsId = nokkel.getEventId(),
+            eventId = nokkel.getEventId(),
+            fodselsnummer = nokkel.getFodselsnummer(),
+            systembruker = nokkel.getSystembruker(),
+            namespace = nokkel.getNamespace(),
+            appnavn = nokkel.getAppnavn(),
             bestillingstidspunkt = LocalDateTime.now(ZoneId.of("UTC")),
             prefererteKanaler = innboks.getPrefererteKanaler()
         )

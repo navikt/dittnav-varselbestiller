@@ -25,7 +25,6 @@ internal class DoknotifikasjonProducerTest {
     private val producer = DoknotifikasjonProducer(producerWrapper, repository)
 
     val events = AvroDoknotifikasjonObjectMother.giveMeANumberOfDoknotifikasjoner(10)
-            .map { it.getBestillingsId() to it }.toMap()
 
     val varselBestillinger = listOf (
             VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId("B-dummy-001", "001")
@@ -43,7 +42,7 @@ internal class DoknotifikasjonProducerTest {
         every { producerWrapper.commitCurrentTransaction() } returns Unit
 
         runBlocking {
-            producer.sendAndPersistEvents(events, varselBestillinger)
+            producer.sendAndPersistBestillingBatch(varselBestillinger, events)
         }
 
         verify(exactly = 1) { producerWrapper.sendEventsAndLeaveTransactionOpen(any()) }
@@ -60,7 +59,7 @@ internal class DoknotifikasjonProducerTest {
 
         shouldThrow<RetriableDatabaseException> {
             runBlocking {
-                producer.sendAndPersistEvents(events, varselBestillinger)
+                producer.sendAndPersistBestillingBatch(varselBestillinger, events)
             }
         }
 
@@ -78,7 +77,7 @@ internal class DoknotifikasjonProducerTest {
 
         shouldThrow<RetriableKafkaException> {
             runBlocking {
-                producer.sendAndPersistEvents(events, varselBestillinger)
+                producer.sendAndPersistBestillingBatch(varselBestillinger, events)
             }
         }
 

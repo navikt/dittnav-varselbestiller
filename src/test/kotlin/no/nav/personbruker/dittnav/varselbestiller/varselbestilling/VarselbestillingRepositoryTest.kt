@@ -14,7 +14,6 @@ class VarselbestillingRepositoryTest {
 
     private val varselbestilling1 = VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-test-001", eventId = "001")
     private val varselbestilling2 = VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-test-002", eventId = "002")
-    private val varselbestilling3 = VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "O-test-001", eventId = "001")
 
     @BeforeAll
     fun setup() {
@@ -37,7 +36,7 @@ class VarselbestillingRepositoryTest {
     @Test
     fun `Skal returnere korrekt resultat for vellykket persistering av Varselbestillinger i batch`() {
         runBlocking {
-            val toPersist = listOf(varselbestilling1, varselbestilling2, varselbestilling3)
+            val toPersist = listOf(varselbestilling1, varselbestilling2)
             val result = varselbestillingRepository.persistInOneBatch(toPersist)
             result.getPersistedEntitites() shouldBe toPersist
         }
@@ -46,7 +45,7 @@ class VarselbestillingRepositoryTest {
     @Test
     fun `Skal returnere korrekt resultat for persistering i batch hvis noen Varselbestillinger har unique key constraints`() {
         runBlocking {
-            val toPersist = listOf(varselbestilling1, varselbestilling2, varselbestilling3)
+            val toPersist = listOf(varselbestilling1, varselbestilling2)
             val alreadyPersisted = listOf(varselbestilling1, varselbestilling2)
             val expectedPersistResult = toPersist - alreadyPersisted
             varselbestillingRepository.persistInOneBatch(alreadyPersisted)

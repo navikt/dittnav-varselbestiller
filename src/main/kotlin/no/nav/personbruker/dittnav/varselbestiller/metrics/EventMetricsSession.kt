@@ -9,6 +9,7 @@ class EventMetricsSession(val eventtype: Eventtype) {
     private val countProcessedEksternvarslingByProducer = HashMap<Producer, Int>()
     private val countFailedEksternvarslingByProducer = HashMap<Producer, Int>()
     private val countDuplicateKeyEksternvarslingByProducer = HashMap<Producer, Int>()
+    private var countBestillingsIdDiscrepancy = HashMap<Producer, Int>()
     private var countNokkelWasNull: Int = 0
     private val startTime = System.nanoTime()
 
@@ -22,6 +23,10 @@ class EventMetricsSession(val eventtype: Eventtype) {
 
     fun countNokkelWasNull() {
         countNokkelWasNull++
+    }
+
+    fun countBestillingsIdAndEventIdDiffered(producer: Producer) {
+        countBestillingsIdDiscrepancy[producer] = countBestillingsIdDiscrepancy.getOrDefault(producer, 0).inc()
     }
 
     fun countFailedEksternVarslingForProducer(producer: Producer) {
@@ -64,6 +69,10 @@ class EventMetricsSession(val eventtype: Eventtype) {
 
     fun getEksternvarslingDuplicateKeys(producer: Producer): Int {
         return countDuplicateKeyEksternvarslingByProducer.getOrDefault(producer, 0)
+    }
+
+    fun getBestillingsIdDiscrepancy(producer: Producer): Int {
+        return countBestillingsIdDiscrepancy.getOrDefault(producer, 0)
     }
 
     fun getAllEventsFromKafka(): Int {

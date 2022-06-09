@@ -59,24 +59,23 @@ class InnboksEventServiceTest {
     fun `Skal opprette Doknotifikasjon for alle eventer som har ekstern varsling`() {
         val innboksWithEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfInnboksRecords(numberOfRecords = 4, topicName = "innboksTopic", withEksternVarsling = true)
         val innboksWithoutEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfInnboksRecords(numberOfRecords = 6, topicName = "innboksTopic", withEksternVarsling = false)
-        val capturedListOfEntities = slot<Map<String, Doknotifikasjon>>()
+        val capturedListOfEntities = slot<List<Doknotifikasjon>>()
 
-        val persistResult = successfulEvents(VarselbestillingObjectMother.giveMeANumberOfVarselbestilling(numberOfEvents = 4))
-        coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns Collections.emptyList()
+        coEvery { varselbestillingRepository.fetchVarselbestillingerForEventIds(any()) } returns Collections.emptyList()
 
         val slot = slot<suspend EventMetricsSession.() -> Unit>()
         coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
             slot.captured.invoke(metricsSession)
         }
 
-        coEvery { doknotifikasjonProducer.sendAndPersistEvents(capture(capturedListOfEntities), any()) } returns persistResult
+        coEvery { doknotifikasjonProducer.sendAndPersistBestillingBatch(any(), capture(capturedListOfEntities)) } returns Unit
         runBlocking {
             eventService.processEvents(innboksWithEksternVarslingRecords)
             eventService.processEvents(innboksWithoutEksternVarslingRecords)
         }
 
         verify(exactly = innboksWithEksternVarslingRecords.count()) { DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(ofType(NokkelIntern::class), ofType(InnboksIntern::class)) }
-        coVerify(exactly = 1) { doknotifikasjonProducer.sendAndPersistEvents(allAny(), any()) }
+        coVerify(exactly = 1) { doknotifikasjonProducer.sendAndPersistBestillingBatch(allAny(), any()) }
         coVerify(exactly = innboksWithEksternVarslingRecords.count()) { metricsSession.countSuccessfulEksternVarslingForProducer(any()) }
         coVerify(exactly = innboksWithEksternVarslingRecords.count() + innboksWithoutEksternVarslingRecords.count()) { metricsSession.countAllEventsFromKafkaForProducer(any()) }
         capturedListOfEntities.captured.size shouldBe innboksWithEksternVarslingRecords.count()
@@ -87,17 +86,16 @@ class InnboksEventServiceTest {
     @Test
     fun `Skal ikke opprette Doknotifikasjon for eventer som har tidligere bestilt ekstern varsling`() {
         val innboksRecords = ConsumerRecordsObjectMother.giveMeANumberOfInnboksRecords(numberOfRecords = 5, topicName = "innboksTopic", withEksternVarsling = true)
-        val capturedListOfEntities = slot<Map<String, Doknotifikasjon>>()
+        val capturedListOfEntities = slot<List<Doknotifikasjon>>()
 
-        val persistResult = successfulEvents(VarselbestillingObjectMother.giveMeANumberOfVarselbestilling(numberOfEvents = 5))
-        coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns listOf(
+        coEvery { varselbestillingRepository.fetchVarselbestillingerForEventIds(any()) } returns listOf(
             VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "I-dummyAppnavn-1", eventId = "1"))
 
         val slot = slot<suspend EventMetricsSession.() -> Unit>()
         coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
             slot.captured.invoke(metricsSession)
         }
-        coEvery { doknotifikasjonProducer.sendAndPersistEvents(capture(capturedListOfEntities), any()) } returns persistResult
+        coEvery { doknotifikasjonProducer.sendAndPersistBestillingBatch(any(), capture(capturedListOfEntities)) } returns Unit
 
         runBlocking {
             eventService.processEvents(innboksRecords)
@@ -107,7 +105,7 @@ class InnboksEventServiceTest {
         coVerify(exactly = innboksRecords.count()) { metricsSession.countSuccessfulEksternVarslingForProducer(any()) }
         coVerify(exactly = 1 ) { metricsSession.countDuplicateVarselbestillingForProducer(any()) }
         coVerify(exactly = innboksRecords.count()) { metricsSession.countAllEventsFromKafkaForProducer(any()) }
-        coVerify(exactly = 1) { doknotifikasjonProducer.sendAndPersistEvents(any(), any()) }
+        coVerify(exactly = 1) { doknotifikasjonProducer.sendAndPersistBestillingBatch(any(), any()) }
         capturedListOfEntities.captured.size shouldBe 4
         confirmVerified(doknotifikasjonProducer)
     }
@@ -116,15 +114,15 @@ class InnboksEventServiceTest {
     fun `Skal skrive Doknotifikasjon til database for Innboks som har ekstern varsling`() {
         val innboksWithEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfInnboksRecords(numberOfRecords = 4, topicName = "innboksTopic", withEksternVarsling = true)
         val innboksWithoutEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfInnboksRecords(numberOfRecords = 6, topicName = "innboksTopic", withEksternVarsling = false)
-        val capturedListOfEntities = slot<Map<String, Doknotifikasjon>>()
+        val capturedListOfEntities = slot<List<Doknotifikasjon>>()
 
         val slot = slot<suspend EventMetricsSession.() -> Unit>()
         coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
             slot.captured.invoke(metricsSession)
         }
 
-        coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns Collections.emptyList()
-        coEvery { doknotifikasjonProducer.sendAndPersistEvents(capture(capturedListOfEntities), any()) } returns ListPersistActionResult.emptyInstance()
+        coEvery { varselbestillingRepository.fetchVarselbestillingerForEventIds(any()) } returns Collections.emptyList()
+        coEvery { doknotifikasjonProducer.sendAndPersistBestillingBatch(any(), capture(capturedListOfEntities)) } returns Unit
 
         runBlocking {
             eventService.processEvents(innboksWithEksternVarslingRecords)
@@ -142,20 +140,15 @@ class InnboksEventServiceTest {
         val numberOfFailedTransformations = 1
         val numberOfSuccessfulTransformations = totalNumberOfRecords - numberOfFailedTransformations
 
-        val persistResult = successfulEvents(
-            VarselbestillingObjectMother.giveMeANumberOfVarselbestilling(
-                numberOfSuccessfulTransformations
-            )
-        )
         val innboksRecords = ConsumerRecordsObjectMother.giveMeANumberOfInnboksRecords(numberOfRecords = totalNumberOfRecords, topicName = "innboksTopic", withEksternVarsling = true)
-        val capturedListOfEntities = slot<Map<String, Doknotifikasjon>>()
-        coEvery { doknotifikasjonProducer.sendAndPersistEvents(capture(capturedListOfEntities), any()) } returns persistResult
+        val capturedListOfEntities = slot<List<Doknotifikasjon>>()
+        coEvery { doknotifikasjonProducer.sendAndPersistBestillingBatch(any(), capture(capturedListOfEntities)) } returns Unit
 
         val fieldValidationException = UntransformableRecordException("Simulert feil i en test")
         val doknotifikasjoner = AvroDoknotifikasjonObjectMother.giveMeANumberOfDoknotifikasjoner(numberOfSuccessfulTransformations)
         every { DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(ofType(NokkelIntern::class), ofType(InnboksIntern::class)) } throws fieldValidationException andThenMany doknotifikasjoner
 
-        coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns emptyList()
+        coEvery { varselbestillingRepository.fetchVarselbestillingerForEventIds(any()) } returns emptyList()
 
         val slot = slot<suspend EventMetricsSession.() -> Unit>()
         coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
@@ -168,7 +161,7 @@ class InnboksEventServiceTest {
             }
         }
 
-        coVerify(exactly = 1) { doknotifikasjonProducer.sendAndPersistEvents(any(), any()) }
+        coVerify(exactly = 1) { doknotifikasjonProducer.sendAndPersistBestillingBatch(any(), any()) }
         coVerify(exactly = numberOfFailedTransformations) { metricsSession.countFailedEksternVarslingForProducer(any()) }
         coVerify(exactly = numberOfSuccessfulTransformations) { metricsSession.countSuccessfulEksternVarslingForProducer(any()) }
         coVerify(exactly = numberOfSuccessfulTransformations + numberOfFailedTransformations) { metricsSession.countAllEventsFromKafkaForProducer(any()) }
@@ -185,9 +178,8 @@ class InnboksEventServiceTest {
         val innboksWithEksternVarslingRecords = ConsumerRecordsObjectMother.giveMeANumberOfInnboksRecords(numberOfRecords, topicName = "innboksTopic", withEksternVarsling = true)
         val slot = slot<suspend EventMetricsSession.() -> Unit>()
 
-        val persistResult = successfulEvents(VarselbestillingObjectMother.giveMeANumberOfVarselbestilling(numberOfRecords))
-        coEvery { doknotifikasjonProducer.sendAndPersistEvents(any(), any()) } returns persistResult
-        coEvery { varselbestillingRepository.fetchVarselbestillingerForBestillingIds(any()) } returns emptyList()
+        coEvery { doknotifikasjonProducer.sendAndPersistBestillingBatch(any(), any()) } returns Unit
+        coEvery { varselbestillingRepository.fetchVarselbestillingerForEventIds(any()) } returns emptyList()
 
         coEvery { metricsCollector.recordMetrics(any(), capture(slot)) } coAnswers {
             slot.captured.invoke(metricsSession)

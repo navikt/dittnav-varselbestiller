@@ -4,6 +4,7 @@ import no.nav.brukernotifikasjon.schemas.internal.BeskjedIntern
 import no.nav.brukernotifikasjon.schemas.internal.InnboksIntern
 import no.nav.brukernotifikasjon.schemas.internal.NokkelIntern
 import no.nav.brukernotifikasjon.schemas.internal.OppgaveIntern
+import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.doknotifikasjon.schemas.PrefererteKanal
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.FieldValidationException
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UnknownEventtypeException
@@ -11,9 +12,9 @@ import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
 
 object DoknotifikasjonCreator {
 
-    fun createDoknotifikasjonFromBeskjed(nokkel: NokkelIntern, beskjed: BeskjedIntern): no.nav.doknotifikasjon.schemas.Doknotifikasjon {
-        val doknotifikasjonBuilder = no.nav.doknotifikasjon.schemas.Doknotifikasjon.newBuilder()
-                .setBestillingsId(createDoknotifikasjonKey(nokkel, Eventtype.BESKJED_INTERN))
+    fun createDoknotifikasjonFromBeskjed(nokkel: NokkelIntern, beskjed: BeskjedIntern): Doknotifikasjon {
+        val doknotifikasjonBuilder = Doknotifikasjon.newBuilder()
+                .setBestillingsId(nokkel.getEventId())
                 .setBestillerId(nokkel.getAppnavn())
                 .setSikkerhetsnivaa(beskjed.getSikkerhetsnivaa())
                 .setFodselsnummer(nokkel.getFodselsnummer())
@@ -25,9 +26,9 @@ object DoknotifikasjonCreator {
         return doknotifikasjonBuilder.build()
     }
 
-    fun createDoknotifikasjonFromOppgave(nokkel: NokkelIntern, oppgave: OppgaveIntern): no.nav.doknotifikasjon.schemas.Doknotifikasjon {
-        val doknotifikasjonBuilder = no.nav.doknotifikasjon.schemas.Doknotifikasjon.newBuilder()
-                .setBestillingsId(createDoknotifikasjonKey(nokkel, Eventtype.OPPGAVE_INTERN))
+    fun createDoknotifikasjonFromOppgave(nokkel: NokkelIntern, oppgave: OppgaveIntern): Doknotifikasjon {
+        val doknotifikasjonBuilder = Doknotifikasjon.newBuilder()
+                .setBestillingsId(nokkel.getEventId())
                 .setBestillerId(nokkel.getAppnavn())
                 .setSikkerhetsnivaa(oppgave.getSikkerhetsnivaa())
                 .setFodselsnummer(nokkel.getFodselsnummer())
@@ -40,9 +41,9 @@ object DoknotifikasjonCreator {
         return doknotifikasjonBuilder.build()
     }
 
-    fun createDoknotifikasjonFromInnboks(nokkel: NokkelIntern, innboks: InnboksIntern): no.nav.doknotifikasjon.schemas.Doknotifikasjon {
-        val doknotifikasjonBuilder = no.nav.doknotifikasjon.schemas.Doknotifikasjon.newBuilder()
-            .setBestillingsId(createDoknotifikasjonKey(nokkel, Eventtype.INNBOKS_INTERN))
+    fun createDoknotifikasjonFromInnboks(nokkel: NokkelIntern, innboks: InnboksIntern): Doknotifikasjon {
+        val doknotifikasjonBuilder = Doknotifikasjon.newBuilder()
+            .setBestillingsId(nokkel.getEventId())
             .setBestillerId(nokkel.getAppnavn())
             .setSikkerhetsnivaa(innboks.getSikkerhetsnivaa())
             .setFodselsnummer(nokkel.getFodselsnummer())
@@ -53,18 +54,6 @@ object DoknotifikasjonCreator {
             .setRenotifikasjonIntervall(4)
             .setPrefererteKanaler(getPrefererteKanaler(innboks.getEksternVarsling(), innboks.getPrefererteKanaler()))
         return doknotifikasjonBuilder.build()
-    }
-
-    fun createDoknotifikasjonKey(nokkel: NokkelIntern, eventtype: Eventtype): String {
-        val eventId = nokkel.getEventId()
-        val appnavn = nokkel.getAppnavn()
-        return when (eventtype) {
-            Eventtype.BESKJED_INTERN -> "B-$appnavn-$eventId"
-            Eventtype.OPPGAVE_INTERN -> "O-$appnavn-$eventId"
-            Eventtype.INNBOKS_INTERN -> "I-$appnavn-$eventId"
-            Eventtype.DONE_INTERN -> "D-$appnavn-$eventId"
-            else -> throw UnknownEventtypeException("$eventtype er ugyldig type for å generere Doknotifikasjon-key")
-        }
     }
 
     private fun getDoknotifikasjonEmailText(event: BeskjedIntern): String {

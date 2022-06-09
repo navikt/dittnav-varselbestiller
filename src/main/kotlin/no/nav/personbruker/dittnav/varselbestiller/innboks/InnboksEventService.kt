@@ -1,23 +1,18 @@
 package no.nav.personbruker.dittnav.varselbestiller.innboks
 
-
 import no.nav.brukernotifikasjon.schemas.internal.InnboksIntern
 import no.nav.brukernotifikasjon.schemas.internal.NokkelIntern
-import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.personbruker.dittnav.varselbestiller.common.EventBatchProcessorService
-import no.nav.personbruker.dittnav.varselbestiller.common.database.ListPersistActionResult
 import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.UntransformableRecordException
 import no.nav.personbruker.dittnav.varselbestiller.config.Eventtype
-import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varselbestiller.metrics.EventMetricsSession
 import no.nav.personbruker.dittnav.varselbestiller.metrics.MetricsCollector
 import no.nav.personbruker.dittnav.varselbestiller.metrics.Producer
-import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
-import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
-import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingTransformer
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.*
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class InnboksEventService(
@@ -26,65 +21,70 @@ class InnboksEventService(
     private val metricsCollector: MetricsCollector
 ) : EventBatchProcessorService<NokkelIntern, InnboksIntern> {
 
-    private val log = LoggerFactory.getLogger(InnboksEventService::class.java)
+    private val log: Logger = LoggerFactory.getLogger(InnboksEventService::class.java)
 
     override suspend fun processEvents(events: ConsumerRecords<NokkelIntern, InnboksIntern>) {
-        val successfullyTransformedEvents = mutableMapOf<String, Doknotifikasjon>()
+        val viableEntries = mutableListOf<BestillingWrapper>()
         val problematicEvents = mutableListOf<ConsumerRecord<NokkelIntern, InnboksIntern>>()
-        val varselbestillinger = mutableListOf<Varselbestilling>()
 
         metricsCollector.recordMetrics(eventType = Eventtype.INNBOKS_INTERN) {
             events.forEach { event ->
+                val producer = Producer(event.namespace, event.appnavn)
+
                 try {
-                    val innboksKey = event.key()
-                    val innboksEvent = event.value()
-                    val producer = Producer(event.namespace, event.appnavn)
                     countAllEventsFromKafkaForProducer(producer)
-                    if (innboksEvent.getEksternVarsling()) {
-                        val doknotifikasjonKey = DoknotifikasjonCreator.createDoknotifikasjonKey(innboksKey, Eventtype.INNBOKS_INTERN)
-                        val doknotifikasjon = DoknotifikasjonCreator.createDoknotifikasjonFromInnboks(innboksKey, innboksEvent)
-                        successfullyTransformedEvents[doknotifikasjonKey] = doknotifikasjon
-                        varselbestillinger.add(VarselbestillingTransformer.fromInnboks(innboksKey, innboksEvent, doknotifikasjon))
+
+                    if(event.isEksternVarsling()) {
+                        val bestilling = BestillingTransformer.transformAndWrapEvent(event.key(), event.value())
+                        viableEntries.add(bestilling)
                         countSuccessfulEksternVarslingForProducer(producer)
                     }
-                }  catch (e: Exception) {
-                    countFailedEksternVarslingForProducer(Producer(event.namespace, event.appnavn))
+                } catch (e: Exception) {
+                    countFailedEksternVarslingForProducer(producer)
                     problematicEvents.add(event)
-                    log.warn("Validering av innboks-event fra Kafka fikk en uventet feil, fullfører batch-en.", e)
+                    log.warn("Transformasjon av innboks-event fra Kafka feilet, fullfører batch-en før polling stoppes.", e)
                 }
             }
-            if (successfullyTransformedEvents.isNotEmpty()) {
-                produceDoknotifikasjonerAndPersistToDB(this, successfullyTransformedEvents, varselbestillinger)
+
+            if (viableEntries.isNotEmpty()) {
+                val (uniques, duplicates) = partitionUniquesAndDuplicates(viableEntries)
+
+                produceBestilling(uniques)
+
+                logDuplicates(duplicates)
             }
-            if (problematicEvents.isNotEmpty()) {
-                throwExceptionForProblematicEvents(problematicEvents)
-            }
+        }
+
+        if (problematicEvents.isNotEmpty()) {
+            throwExceptionForProblematicEvents(problematicEvents)
         }
     }
 
-    private suspend fun produceDoknotifikasjonerAndPersistToDB(eventMetricsSession: EventMetricsSession,
-                                                               successfullyTransformedEvents: Map<String, Doknotifikasjon>,
-                                                               varselbestillinger: List<Varselbestilling>): ListPersistActionResult<Varselbestilling> {
-        val duplicateVarselbestillinger = varselbestillingRepository.fetchVarselbestillingerForBestillingIds(successfullyTransformedEvents.keys.toList())
-        return if(duplicateVarselbestillinger.isEmpty()) {
-            produce(successfullyTransformedEvents, varselbestillinger)
-        } else {
-            val duplicateBestillingIds = duplicateVarselbestillinger.map { it.bestillingsId }
-            val remainingTransformedEvents = successfullyTransformedEvents.filterKeys { bestillingsId -> !duplicateBestillingIds.contains(bestillingsId) }
-            val varselbestillingerToOrder = varselbestillinger.filter { !duplicateBestillingIds.contains(it.bestillingsId)}
-            logDuplicateVarselbestillinger(eventMetricsSession, duplicateVarselbestillinger)
-            produce(remainingTransformedEvents, varselbestillingerToOrder)
+    private suspend fun partitionUniquesAndDuplicates(bestillingList: List<BestillingWrapper>): Pair<List<BestillingWrapper>, List<BestillingWrapper>> {
+        val eventIds = bestillingList.map { (varselbestilling, _) -> varselbestilling.eventId }
+
+        val duplicateVarselbestillinger = varselbestillingRepository.fetchVarselbestillingerForEventIds(eventIds)
+        val duplicateEventIds = duplicateVarselbestillinger.map { it.eventId }
+
+        return bestillingList.partition { !duplicateEventIds.contains(it.varselbestilling.eventId) }
+    }
+
+    private suspend fun produceBestilling(bestillingList: List<BestillingWrapper>) {
+        if (bestillingList.isEmpty()) {
+            return
         }
+
+        val varselbestillingList = bestillingList.map { it.varselbestilling }
+        val doknotifikasjonList = bestillingList.map { it.doknotifikasjon }
+        doknotifikasjonProducer.sendAndPersistBestillingBatch(varselbestillingList, doknotifikasjonList)
     }
 
-    private suspend fun produce(successfullyTransformedEvents: Map<String, Doknotifikasjon>, varselbestillinger: List<Varselbestilling>): ListPersistActionResult<Varselbestilling> {
-        return doknotifikasjonProducer.sendAndPersistEvents(successfullyTransformedEvents, varselbestillinger)
-    }
+    private fun EventMetricsSession.logDuplicates(duplicateBestillinger: List<BestillingWrapper>) {
+        duplicateBestillinger.forEach {
+            val varselbestilling = it.varselbestilling
 
-    private fun logDuplicateVarselbestillinger(eventMetricsSession: EventMetricsSession, duplicateVarselbestillinger: List<Varselbestilling>) {
-        duplicateVarselbestillinger.forEach{
-            log.info("Varsel med bestillingsid ${it.bestillingsId} er allerede bestilt, bestiller ikke på nytt.")
-            eventMetricsSession.countDuplicateVarselbestillingForProducer(Producer(it.namespace, it.appnavn))
+            log.info("Varsel med eventId ${varselbestilling.eventId} er allerede bestilt, bestiller ikke på nytt.")
+            countDuplicateVarselbestillingForProducer(Producer(varselbestilling.namespace, varselbestilling.appnavn))
         }
     }
 
@@ -94,4 +94,6 @@ class InnboksEventService(
         exception.addContext("antallMislykkedeTransformasjoner", problematicEvents.size)
         throw exception
     }
+
+    private fun ConsumerRecord<NokkelIntern, InnboksIntern>.isEksternVarsling() = value().getEksternVarsling()
 }
