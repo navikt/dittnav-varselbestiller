@@ -1,1 +1,1 @@
-<!DOCTYPE html><html><head><title>Innboks</title></head><body><p>Hei!</p><p>Du har fått en ny melding fra NAV. Logg inn på Ditt NAV for å lese meldingen.</p><p>Vennlig hilsen</p><p>NAV</p></body></html>
+<!DOCTYPE html><html><head><title>Innboks</title></head><body><p>Hei!</p><p>Du har fått en ny melding fra NAV. Logg inn på nav.no for å lese meldingen.</p><p>Vennlig hilsen</p><p>NAV</p></body></html>
