@@ -34,7 +34,7 @@ spec:
         type: POSTGRES_11
         tier: db-custom-1-6144
         diskType: SSD
-        diskSize: 10
+        diskSize: 25
         diskAutoresize: false
         autoBackupTime: "03:00"
         databases:
