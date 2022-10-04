@@ -6,7 +6,6 @@ import java.time.ZoneId
 
 data class Varsel(
     val varselType: VarselType,
-    val systembruker: String,
     val namespace: String,
     val appnavn: String,
     val eventId: String,
@@ -23,7 +22,7 @@ data class Varsel(
         bestillingsId = eventId,
         eventId = eventId,
         fodselsnummer = fodselsnummer,
-        systembruker = systembruker,
+        systembruker = "",
         namespace = namespace,
         appnavn = appnavn,
         bestillingstidspunkt = LocalDateTime.now(ZoneId.of("UTC")),

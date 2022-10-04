@@ -1,9 +1,11 @@
 package no.nav.personbruker.dittnav.varselbestiller.varsel
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
+import no.nav.doknotifikasjon.schemas.PrefererteKanal
 import no.nav.helse.rapids_rivers.testsupport.TestRapid
 import no.nav.personbruker.dittnav.varselbestiller.common.database.LocalPostgresDatabase
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaProducerWrapper
@@ -34,35 +36,75 @@ class VarselSinkTest {
         runBlocking {
             database.dbQuery { deleteAllVarselbestilling() }
         }
+        doknotifikasjonKafkaProducer.clear()
     }
 
     @Test
-    fun `Bestiller og lagrer ekstern varsling`() = runBlocking {
+    fun `Bestiller og lagrer ekstern varsling for beskjed`() = runBlocking {
         val testRapid = TestRapid()
         setupVarselSink(testRapid)
 
-        testRapid.sendTestMessage(varselJson(VarselType.BESKJED, "1"))
-        testRapid.sendTestMessage(varselJson(VarselType.OPPGAVE, "2"))
-        testRapid.sendTestMessage(varselJson(VarselType.INNBOKS, "3"))
+        val varselJson = varselJson(VarselType.BESKJED, "1")
+        testRapid.sendTestMessage(varselJson)
 
+        doknotifikasjonKafkaProducer.history().size shouldBe 1
         val varselbestillinger = bestilleringerFromDb()
-        varselbestillinger.size shouldBe 3
-        doknotifikasjonKafkaProducer.history().size shouldBe 3
+        varselbestillinger.size shouldBe 1
 
         val varselbestilling = varselbestillinger.first()
+        val varselJsonNode = ObjectMapper().readTree(varselJson)
+        varselbestilling.appnavn shouldBe varselJsonNode["appnavn"].textValue()
+        varselbestilling.bestillingsId shouldBe varselJsonNode["eventId"].textValue()
+        varselbestilling.eventId shouldBe varselJsonNode["eventId"].textValue()
+        varselbestilling.fodselsnummer shouldBe varselJsonNode["fodselsnummer"].textValue()
+        varselbestilling.namespace shouldBe varselJsonNode["namespace"].textValue()
+        varselbestilling.appnavn shouldBe varselJsonNode["appnavn"].textValue()
+        varselbestilling.prefererteKanaler shouldBe varselJsonNode["prefererteKanaler"].map { it.textValue() }
+        varselbestilling.avbestilt shouldBe false
+
+        val doknotifikasjon = doknotifikasjonKafkaProducer.history().first()
+        doknotifikasjon.key() shouldBe varselJsonNode["eventId"].textValue()
+        doknotifikasjon.value().getBestillingsId() shouldBe varselJsonNode["eventId"].textValue()
+        doknotifikasjon.value().getBestillerId() shouldBe varselJsonNode["appnavn"].textValue()
+        doknotifikasjon.value().getSikkerhetsnivaa() shouldBe varselJsonNode["sikkerhetsnivaa"].intValue()
+        doknotifikasjon.value().getFodselsnummer() shouldBe varselJsonNode["fodselsnummer"].textValue()
+        doknotifikasjon.value().getTittel() shouldBe varselJsonNode["epostVarslingstittel"].textValue()
+        doknotifikasjon.value().getEpostTekst() shouldBe "<!DOCTYPE html><html><head><title>${varselJsonNode["epostVarslingstittel"].textValue()}</title></head><body>${varselJsonNode["epostVarslingstekst"].textValue()}</body></html>\n"
+        doknotifikasjon.value().getSmsTekst() shouldBe varselJsonNode["smsVarslingstekst"].textValue()
+        doknotifikasjon.value().getPrefererteKanaler() shouldBe varselJsonNode["prefererteKanaler"].map { PrefererteKanal.valueOf(it.textValue()) }
+        doknotifikasjon.value().getAntallRenotifikasjoner() shouldBe 0
+        doknotifikasjon.value().getRenotifikasjonIntervall() shouldBe null
     }
 
     @Test
     @Disabled
-    fun `Ignorerer duplikat varsel`() = runBlocking {
+    fun `Bestiller og lagrer ekstern varsling for oppgave`() = runBlocking {
+
+    }
+
+    @Test
+    @Disabled
+    fun `Bestiller og lagrer ekstern varsling for innboks`() = runBlocking {
+
+    }
+
+    @Test
+    fun `Ignorerer duplikate varsler`() = runBlocking {
         val testRapid = TestRapid()
         setupVarselSink(testRapid)
 
         testRapid.sendTestMessage(varselJson(VarselType.BESKJED, "1"))
         testRapid.sendTestMessage(varselJson(VarselType.BESKJED, "1"))
 
+        testRapid.sendTestMessage(varselJson(VarselType.OPPGAVE, "2"))
+        testRapid.sendTestMessage(varselJson(VarselType.OPPGAVE, "2"))
+
+        testRapid.sendTestMessage(varselJson(VarselType.INNBOKS, "3"))
+        testRapid.sendTestMessage(varselJson(VarselType.INNBOKS, "3"))
+
         val eksternVarselBestillinger = bestilleringerFromDb()
-        eksternVarselBestillinger.size shouldBe 1
+        eksternVarselBestillinger.size shouldBe 3
+        eksternVarselBestillinger.map { it.bestillingsId }.toSet() shouldBe setOf("1", "2", "3")
     }
 
     @Test
@@ -124,6 +166,9 @@ class VarselSinkTest {
         "synligFremTil": "2022-04-01T00:00:00",
         "aktiv": true,
         "eksternVarsling": true,
-        "prefererteKanaler": ["EPOST", "SMS"]
+        "prefererteKanaler": ["EPOST", "SMS"],
+        "smsVarslingstekst": "smstekst",
+        "epostVarslingstekst": "eposttekst",
+        "epostVarslingstittel": "eposttittel"
     }""".trimIndent()
 }

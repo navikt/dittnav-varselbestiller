@@ -45,7 +45,6 @@ class VarselSink(
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
         val varsel = Varsel(
             varselType = VarselType.valueOf(packet["@event_name"].textValue().uppercase()),
-            systembruker = "N/A",
             namespace = packet["namespace"].textValue(),
             appnavn = packet["appnavn"].textValue(),
             eventId = packet["eventId"].textValue(),
@@ -76,10 +75,6 @@ class VarselSink(
 
     override fun onError(problems: MessageProblems, context: MessageContext) {
         log.error(problems.toString())
-    }
-
-    override fun onSevere(error: MessageProblems.MessageException, context: MessageContext) {
-        log.error(error.toString())
     }
 }
 
