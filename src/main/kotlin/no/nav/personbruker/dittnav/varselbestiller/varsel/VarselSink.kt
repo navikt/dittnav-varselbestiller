@@ -8,12 +8,14 @@ import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.River
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator.createDoknotifikasjonFromVarsel
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class VarselSink(
     rapidsConnection: RapidsConnection,
     private val doknotifikasjonProducer: DoknotifikasjonProducer,
+    private val varselbestillingRepository: VarselbestillingRepository,
     private val rapidMetricsProbe: RapidMetricsProbe,
     private val writeToDb: Boolean
 ) :
@@ -60,7 +62,9 @@ class VarselSink(
         val dokNotifikasjon = createDoknotifikasjonFromVarsel(varsel)
 
         runBlocking {
-            if (writeToDb) {
+            val eksisterendeBestillinger = varselbestillingRepository.fetchVarselbestillingerForEventIds(listOf(varsel.eventId))
+
+            if (eksisterendeBestillinger.isEmpty() && writeToDb) {
                 doknotifikasjonProducer.sendAndPersistBestillingBatch(
                     listOf(varsel.toVarselBestilling()),
                     listOf(dokNotifikasjon)
