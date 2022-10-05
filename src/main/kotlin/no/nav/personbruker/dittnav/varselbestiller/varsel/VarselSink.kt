@@ -62,9 +62,10 @@ class VarselSink(
         val dokNotifikasjon = createDoknotifikasjonFromVarsel(varsel)
 
         runBlocking {
-            val eksisterendeBestillinger = varselbestillingRepository.fetchVarselbestillingerForEventIds(listOf(varsel.eventId))
+            val isDuplicateVarselbestilling =
+                varselbestillingRepository.fetchVarselbestillingerForEventIds(listOf(varsel.eventId)).isNotEmpty()
 
-            if (eksisterendeBestillinger.isEmpty() && writeToDb) {
+            if (!isDuplicateVarselbestilling && writeToDb) {
                 doknotifikasjonProducer.sendAndPersistBestillingBatch(
                     listOf(varsel.toVarselBestilling()),
                     listOf(dokNotifikasjon)

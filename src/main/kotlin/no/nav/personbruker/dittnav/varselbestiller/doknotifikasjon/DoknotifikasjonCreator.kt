@@ -12,8 +12,8 @@ import no.nav.personbruker.dittnav.varselbestiller.varsel.VarselType
 
 object DoknotifikasjonCreator {
 
-    fun createDoknotifikasjonFromVarsel(varsel: Varsel): Doknotifikasjon {
-        val doknotifikasjonBuilder = Doknotifikasjon.newBuilder()
+    fun createDoknotifikasjonFromVarsel(varsel: Varsel): Doknotifikasjon =
+        Doknotifikasjon.newBuilder()
             .setBestillingsId(varsel.eventId)
             .setBestillerId(varsel.appnavn)
             .setSikkerhetsnivaa(varsel.sikkerhetsnivaa)
@@ -23,35 +23,30 @@ object DoknotifikasjonCreator {
             .setSmsTekst(getDoknotifikasjonSMSText(varsel))
             .setPrefererteKanaler(getPrefererteKanaler(varsel.eksternVarsling, varsel.prefererteKanaler))
             .setRenotifikasjoner(varsel)
+            .build()
 
-        return doknotifikasjonBuilder.build()
-    }
-
-    private fun getDoknotifikasjonEmailText(varsel: Varsel): String {
-        return varsel.epostVarslingstekst?.let {
+    private fun getDoknotifikasjonEmailText(varsel: Varsel): String =
+        varsel.epostVarslingstekst?.let {
             replaceInEmailTemplate(getDoknotifikasjonEmailTitle(varsel), varsel.epostVarslingstekst)
-        } ?: when(varsel.varselType) {
+        } ?: when (varsel.varselType) {
             VarselType.BESKJED -> this::class.java.getResource("/texts/epost_beskjed.txt")!!.readText(Charsets.UTF_8)
             VarselType.OPPGAVE -> this::class.java.getResource("/texts/epost_oppgave.txt")!!.readText(Charsets.UTF_8)
             VarselType.INNBOKS -> this::class.java.getResource("/texts/epost_innboks.txt")!!.readText(Charsets.UTF_8)
         }
-    }
 
-    private fun getDoknotifikasjonEmailTitle(varsel: Varsel): String {
-        return varsel.epostVarslingstittel ?: when(varsel.varselType) {
+    private fun getDoknotifikasjonEmailTitle(varsel: Varsel): String =
+        varsel.epostVarslingstittel ?: when(varsel.varselType) {
             VarselType.BESKJED -> "Beskjed fra NAV"
             VarselType.OPPGAVE -> "Du har fått en oppgave fra NAV"
             VarselType.INNBOKS -> "Du har fått en melding fra NAV"
         }
-    }
 
-    private fun getDoknotifikasjonSMSText(varsel: Varsel): String {
-        return varsel.smsVarslingstekst ?: when(varsel.varselType) {
+    private fun getDoknotifikasjonSMSText(varsel: Varsel): String =
+        varsel.smsVarslingstekst ?: when(varsel.varselType) {
             VarselType.BESKJED -> this::class.java.getResource("/texts/sms_beskjed.txt")!!.readText(Charsets.UTF_8)
             VarselType.OPPGAVE -> this::class.java.getResource("/texts/sms_oppgave.txt")!!.readText(Charsets.UTF_8)
             VarselType.INNBOKS -> this::class.java.getResource("/texts/sms_innboks.txt")!!.readText(Charsets.UTF_8)
         }
-    }
 
     private fun Doknotifikasjon.Builder.setRenotifikasjoner(varsel: Varsel): Doknotifikasjon.Builder {
         when (varsel.varselType) {
