@@ -65,12 +65,14 @@ class VarselSink(
             val isDuplicateVarselbestilling =
                 varselbestillingRepository.fetchVarselbestillingerForEventIds(listOf(varsel.eventId)).isNotEmpty()
 
-            if (!isDuplicateVarselbestilling && writeToDb) {
-                doknotifikasjonProducer.sendAndPersistBestillingBatch(
-                    listOf(varsel.toVarselBestilling()),
-                    listOf(dokNotifikasjon)
-                )
-                log.info("Behandlet varsel fra rapid med eventid ${varsel.eventId}")
+            if(writeToDb) {
+                if (!isDuplicateVarselbestilling) {
+                    doknotifikasjonProducer.sendAndPersistBestillingBatch(
+                        listOf(varsel.toVarselBestilling()),
+                        listOf(dokNotifikasjon)
+                    )
+                    log.info("Behandlet varsel fra rapid med eventid ${varsel.eventId}")
+                }
             } else {
                 log.info("Dryrun: varsel fra rapid med eventid ${varsel.eventId}")
             }
