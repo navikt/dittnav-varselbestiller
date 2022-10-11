@@ -30,13 +30,15 @@ class ApplicationContext {
     val environment = Environment()
     val database: Database = PostgresDatabase(environment)
 
-    val metricsReporter = resolveMetricsReporter(environment)
+    private val metricsReporter = resolveMetricsReporter(environment)
     val metricsCollector = MetricsCollector(metricsReporter)
 
     val doknotifikasjonRepository = VarselbestillingRepository(database)
     val doknotifikasjonBeskjedProducer = initializeDoknotifikasjonProducer(Eventtype.BESKJED_INTERN)
     val doknotifikasjonOppgaveProducer = initializeDoknotifikasjonProducer(Eventtype.OPPGAVE_INTERN)
     val doknotifikasjonInnboksProducer = initializeDoknotifikasjonProducer(Eventtype.INNBOKS_INTERN)
+
+    val doknotifikasjonProducer = initializeDoknotifikasjonProducer(Eventtype.VARSEL)
 
     val doknotifikasjonStopProducer = initializeDoknotifikasjonStoppProducer()
 
@@ -130,7 +132,7 @@ class ApplicationContext {
         }
     }
 
-    private fun resolveMetricsReporter(environment: Environment): MetricsReporter {
+    fun resolveMetricsReporter(environment: Environment): MetricsReporter {
         return if (environment.influxdbHost == "" || environment.influxdbHost == "stub") {
             StubMetricsReporter()
         } else {
