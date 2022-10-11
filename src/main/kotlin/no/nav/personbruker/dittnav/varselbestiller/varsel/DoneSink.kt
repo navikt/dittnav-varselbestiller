@@ -46,7 +46,7 @@ class DoneSink(
                 log.info("Behandlet done fra rapid med eventid $eventId")
             }
 
-            rapidMetricsProbe.countProcessed()
+            rapidMetricsProbe.countDoknotifikasjonStoppProduced()
         }
     }
 

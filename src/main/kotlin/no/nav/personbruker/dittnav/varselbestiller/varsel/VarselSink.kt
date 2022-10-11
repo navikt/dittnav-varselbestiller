@@ -76,7 +76,7 @@ class VarselSink(
             } else {
                 log.info("Dryrun: varsel fra rapid med eventid ${varsel.eventId}")
             }
-            rapidMetricsProbe.countProcessed()
+            rapidMetricsProbe.countDoknotifikasjonProduced()
         }
     }
 
