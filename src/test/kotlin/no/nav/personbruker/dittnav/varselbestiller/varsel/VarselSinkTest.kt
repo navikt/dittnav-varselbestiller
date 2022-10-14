@@ -130,9 +130,9 @@ class VarselSinkTest {
         val testRapid = TestRapid()
         setupVarselSink(testRapid)
 
-        testRapid.sendTestMessage(varselJson(VarselType.BESKJED, "1", smsVarslingstekst = null, epostVarslingstekst = null, epostVarslingstittel = null))
-        testRapid.sendTestMessage(varselJson(VarselType.OPPGAVE, "2", smsVarslingstekst = null, epostVarslingstekst = null, epostVarslingstittel = null))
-        testRapid.sendTestMessage(varselJson(VarselType.INNBOKS, "3", smsVarslingstekst = null, epostVarslingstekst = null, epostVarslingstittel = null))
+        testRapid.sendTestMessage(varselJsonWithNullableFields(VarselType.BESKJED, "1"))
+        testRapid.sendTestMessage(varselJsonWithNullableFields(VarselType.OPPGAVE, "2"))
+        testRapid.sendTestMessage(varselJsonWithNullableFields(VarselType.INNBOKS, "3"))
 
         doknotifikasjonKafkaProducer.history().size shouldBe 3
         val doknotifikasjonBeskjed = doknotifikasjonKafkaProducer.history().first { it.key() == "1" }
@@ -173,30 +173,4 @@ class VarselSinkTest {
     private suspend fun bestilleringerFromDb(): List<Varselbestilling> {
         return database.dbQuery { getAllVarselbestilling() }
     }
-
-    private fun varselJson(
-        type: VarselType,
-        eventId: String,
-        eksternVarsling: Boolean = true,
-        smsVarslingstekst: String? = "smstekst",
-        epostVarslingstekst: String? = "eposttekst",
-        epostVarslingstittel: String? = "eposttittel"
-    ) = """{
-        "@event_name": "${type.name.lowercase()}",
-        "namespace": "ns",
-        "appnavn": "app",
-        "eventId": "$eventId",
-        "forstBehandlet": "2022-02-01T00:00:00",
-        "fodselsnummer": "12345678910",
-        "tekst": "Tekst",
-        "link": "url",
-        "sikkerhetsnivaa": 4,
-        "synligFremTil": "2022-04-01T00:00:00",
-        "aktiv": true,
-        "eksternVarsling": $eksternVarsling,
-        "prefererteKanaler": ["EPOST", "SMS"],
-        "smsVarslingstekst": ${smsVarslingstekst?.let { "\"$smsVarslingstekst\"" }},
-        "epostVarslingstekst": ${epostVarslingstekst?.let { "\"$epostVarslingstekst\"" }},
-        "epostVarslingstittel": ${epostVarslingstittel?.let { "\"$epostVarslingstittel\"" }}
-    }""".trimIndent()
 }
