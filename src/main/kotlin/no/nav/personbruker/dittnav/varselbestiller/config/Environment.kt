@@ -31,7 +31,19 @@ data class Environment(
     val aivenBrokers: String = getEnvVar("KAFKA_BROKERS"),
     val aivenSchemaRegistry: String = getEnvVar("KAFKA_SCHEMA_REGISTRY"),
     val securityConfig: SecurityConfig = SecurityConfig(isCurrentlyRunningOnNais()),
-)
+    val rapidEnabled: Boolean = getEnvVar("RAPID_ENABLED", "false").toBoolean(),
+    val rapidWriteToDb: Boolean = getEnvVar("RAPID_WRITE_TO_DB", "false").toBoolean(),
+    val rapidTopic: String = getEnvVar("RAPID_TOPIC")
+    ) {
+    fun rapidConfig(): Map<String, String> = mapOf(
+        "KAFKA_BROKERS" to aivenBrokers,
+        "KAFKA_CONSUMER_GROUP_ID" to "dittnav-varselbestiller-v1",
+        "KAFKA_RAPID_TOPIC" to rapidTopic,
+        "KAFKA_KEYSTORE_PATH" to securityConfig.variables!!.aivenKeystorePath,
+        "KAFKA_CREDSTORE_PASSWORD" to securityConfig.variables.aivenCredstorePassword,
+        "KAFKA_TRUSTSTORE_PATH" to securityConfig.variables.aivenTruststorePath
+    )
+}
 
 data class SecurityConfig(
     val enabled: Boolean,

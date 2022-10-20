@@ -6,5 +6,6 @@ enum class Eventtype(val eventtype: String) {
     INNBOKS_INTERN("innboks"),
     DONE_INTERN("done"),
     DOKNOTIFIKASJON("doknotifikasjon"),
-    DOKNOTIFIKASJON_STOPP("doknotifikasjon-stopp")
+    DOKNOTIFIKASJON_STOPP("doknotifikasjon-stopp"),
+    VARSEL(" varsel")
 }
