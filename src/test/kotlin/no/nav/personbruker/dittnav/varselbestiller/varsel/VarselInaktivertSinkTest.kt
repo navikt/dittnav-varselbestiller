@@ -54,6 +54,8 @@ class VarselInaktivertSinkTest {
 
     @BeforeEach
     fun populate(){
+        doknotifikasjonStoppKafkaProducer.clear()
+        testRapid.reset()
         runBlocking {
             database.dbQuery {
                 createVarselbestillinger(listOf(varselbestillingBeskjed,inaktivertVarselbestilling))

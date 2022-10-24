@@ -1,5 +1,6 @@
 package no.nav.personbruker.dittnav.varselbestiller.varselbestilling
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.runBlocking
@@ -11,8 +12,16 @@ class VarselbestillingQueriesTest {
 
     private val database = LocalPostgresDatabase.cleanDb()
 
-    private val varselbestillingBeskjed: Varselbestilling = VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-test-001", eventId = "001")
-    private val varselbestillingOppgave: Varselbestilling = VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "O-test-001", eventId = "002")
+    private val varselbestillingBeskjed: Varselbestilling =
+        VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(
+            bestillingsId = "B-test-001",
+            eventId = "001"
+        )
+    private val varselbestillingOppgave: Varselbestilling =
+        VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId(
+            bestillingsId = "O-test-001",
+            eventId = "002"
+        )
 
     init {
         createVarselbestillinger(listOf(varselbestillingBeskjed, varselbestillingOppgave))
@@ -38,7 +47,14 @@ class VarselbestillingQueriesTest {
     @Test
     fun `Finner Varselbestillinger med bestillingsIds`() {
         runBlocking {
-            val result = database.dbQuery { getVarselbestillingerForBestillingsIds(listOf(varselbestillingBeskjed.bestillingsId, varselbestillingOppgave.bestillingsId)) }
+            val result = database.dbQuery {
+                getVarselbestillingerForBestillingsIds(
+                    listOf(
+                        varselbestillingBeskjed.bestillingsId,
+                        varselbestillingOppgave.bestillingsId
+                    )
+                )
+            }
             result.size shouldBe 2
             result shouldBe listOf(varselbestillingBeskjed, varselbestillingOppgave)
         }
@@ -55,18 +71,37 @@ class VarselbestillingQueriesTest {
     @Test
     fun `Finner Varselbestillinger med eventIds`() {
         runBlocking {
-            val result = database.dbQuery { getVarselbestillingerForEventIds(listOf(varselbestillingBeskjed.eventId, varselbestillingOppgave.eventId)) }
+            val result = database.dbQuery {
+                getVarselbestillingerForEventIds(
+                    listOf(
+                        varselbestillingBeskjed.eventId,
+                        varselbestillingOppgave.eventId
+                    )
+                )
+            }
             result.size shouldBe 2
             result shouldBe listOf(varselbestillingBeskjed, varselbestillingOppgave)
         }
     }
 
     @Test
-    fun `Finner varselbestilling for en eventId`(){
+    fun `Finner varselbestilling for en eventId`() {
         runBlocking {
             database.dbQuery {
                 getVarselbestillingForEventId(varselbestillingBeskjed.eventId)
             } shouldBe varselbestillingBeskjed
+
+            database.dbQuery {
+                createVarselbestillinger(listOf(varselbestillingBeskjed.copy(bestillingsId = "8877")))
+            }
+        }
+
+        shouldThrow<DupilcateEventIdExcpetion> {
+            runBlocking {
+                database.dbQuery {
+                    getVarselbestillingForEventId(varselbestillingBeskjed.eventId)
+                }
+            }
         }
     }
 
@@ -103,10 +138,12 @@ class VarselbestillingQueriesTest {
 
     @Test
     fun `Skal haantere at prefererteKanaler er tom`() {
-        val varselbestilling = VarselbestillingObjectMother.createVarselbestillingWithPrefererteKanaler(prefererteKanaler = emptyList())
+        val varselbestilling =
+            VarselbestillingObjectMother.createVarselbestillingWithPrefererteKanaler(prefererteKanaler = emptyList())
         runBlocking {
             database.dbQuery { createVarselbestillinger(listOf(varselbestilling)) }
-            val result = database.dbQuery { getVarselbestillingerForBestillingsIds(listOf(varselbestilling.bestillingsId)) }
+            val result =
+                database.dbQuery { getVarselbestillingerForBestillingsIds(listOf(varselbestilling.bestillingsId)) }
             result.size shouldBe 1
             result shouldBe listOf(varselbestilling)
             result[0].prefererteKanaler.shouldBeEmpty()
