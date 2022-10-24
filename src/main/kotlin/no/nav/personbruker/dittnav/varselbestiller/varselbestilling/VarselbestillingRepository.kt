@@ -25,7 +25,9 @@ class VarselbestillingRepository(private val database: Database) {
         }
     }
 
-    suspend fun varselbestillingByEventId(eventId: String): List<Varselbestilling> {
-        TODO()
-    }
+    suspend fun varselbestillingByEventId(eventId: String): Varselbestilling? =
+        database.queryWithExceptionTranslation {
+            getVarselbestillingForEventId(eventId)
+        }
+
 }

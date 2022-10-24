@@ -32,13 +32,17 @@ class VarselInaktivertSink(
         runBlocking {
             varselbestillingRepository.varselbestillingByEventId(eventId).also {
                 log.info("Kanselerer bestillig av eksterne varsel for eventId $eventId")
-                doknotifikasjonStoppProducer.sendEventsAndPersistCancellation(it.toDoktifikasjon())
+                if (it != null && !it.avbestilt) {
+                    doknotifikasjonStoppProducer.sendEventsAndPersistCancellation(it.toDoktifikasjonList())
+                } else {
+                    log.warn("Fant ikke bestilling for eventId $eventId")
+                }
 
             }
         }
     }
 }
 
-private fun List<Varselbestilling>.toDoktifikasjon(): List<DoknotifikasjonStopp> = map {
-    DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(it)
-}
+private fun Varselbestilling.toDoktifikasjonList(): List<DoknotifikasjonStopp> = listOf(
+    DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp(this)
+)
