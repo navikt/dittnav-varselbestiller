@@ -62,6 +62,15 @@ class VarselbestillingQueriesTest {
     }
 
     @Test
+    fun `Finner varselbestilling for en eventId`(){
+        runBlocking {
+            database.dbQuery {
+                getVarselbestillingForEventId(varselbestillingBeskjed.eventId)
+            } shouldBe varselbestillingBeskjed
+        }
+    }
+
+    @Test
     fun `Returnerer tom liste hvis Varselbestilling med eventId ikke finnes`() {
         runBlocking {
             val result = database.dbQuery { getVarselbestillingerForEventIds(listOf("idFinnesIkke")) }

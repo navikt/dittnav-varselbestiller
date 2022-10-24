@@ -24,4 +24,8 @@ class VarselbestillingRepository(private val database: Database) {
             setVarselbestillingAvbestiltFlag(bestillingsIds, true)
         }
     }
+
+    suspend fun varselbestillingByEventId(eventId: String): List<Varselbestilling> {
+        TODO()
+    }
 }

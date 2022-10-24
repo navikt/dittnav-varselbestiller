@@ -28,6 +28,15 @@ fun Connection.getVarselbestillingerForEventIds(eventIds: List<String>): List<Va
                     it.executeQuery().mapList { toVarselbestilling() }
                 }
 
+fun Connection.getVarselbestillingForEventId(eventId: String): Varselbestilling? =
+    prepareStatement("""SELECT varselbestilling.* FROM varselbestilling WHERE eventid = ? """)
+        .use {
+            it.setString(1, eventId)
+            it.executeQuery().mapList { toVarselbestilling() }.firstOrNull()
+        }
+
+
+
 fun Connection.setVarselbestillingAvbestiltFlag(bestillingsIds: List<String>, avbestilt: Boolean) {
     executeBatchPersistQuery("""UPDATE varselbestilling SET avbestilt = ? WHERE bestillingsid = ?""", skipConflicting = false) {
         bestillingsIds.forEach { bestillingsId ->
