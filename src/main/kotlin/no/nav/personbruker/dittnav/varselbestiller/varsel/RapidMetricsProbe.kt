@@ -6,11 +6,11 @@ class RapidMetricsProbe(private val metricsReporter: MetricsReporter) {
 
     private val METRIC_NAMESPACE = "dittnav.varselbestiller.v1"
 
-    suspend fun countDoknotifikasjonProduced() {
+    suspend fun countDoknotifikasjonProduced(varselType: VarselType) {
         metricsReporter.registerDataPoint(
             measurementName = "$METRIC_NAMESPACE.doknotifikasjon.produced",
             fields = counterField(),
-            tags = emptyMap()
+            tags = mapOf("varselType" to varselType.toString())
         )
     }
 
