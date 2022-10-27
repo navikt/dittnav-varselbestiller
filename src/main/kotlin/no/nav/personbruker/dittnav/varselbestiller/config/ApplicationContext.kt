@@ -23,6 +23,7 @@ import no.nav.personbruker.dittnav.varselbestiller.oppgave.OppgaveEventService
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.slf4j.LoggerFactory
+import java.util.concurrent.TimeUnit
 
 class ApplicationContext {
 
@@ -145,7 +146,8 @@ class ApplicationContext {
                     clusterName = environment.clusterName,
                     namespace = environment.namespace,
                     userName = environment.influxdbUser,
-                    password = environment.influxdbPassword
+                    password = environment.influxdbPassword,
+                    timePrecision = TimeUnit.NANOSECONDS
             )
             InfluxMetricsReporter(influxConfig)
         }

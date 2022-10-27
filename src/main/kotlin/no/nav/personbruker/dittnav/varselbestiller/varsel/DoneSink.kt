@@ -44,9 +44,10 @@ class DoneSink(
                 } else {
                     log.info("Dryrun: done fra rapid med eventid $eventId")
                 }
+
+                rapidMetricsProbe.countDoknotifikasjonStoppProduced()
             }
 
-            rapidMetricsProbe.countDoknotifikasjonStoppProduced()
         }
     }
 
