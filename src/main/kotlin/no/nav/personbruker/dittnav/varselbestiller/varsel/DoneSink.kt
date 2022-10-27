@@ -40,10 +40,10 @@ class DoneSink(
 
                 if (writeToDb) {
                     doknotifikasjonStoppProducer.sendEventsAndPersistCancellation(listOf(doknotifikasjonStopp))
+                    log.info("Behandlet done fra rapid med eventid $eventId")
                 } else {
                     log.info("Dryrun: done fra rapid med eventid $eventId")
                 }
-                log.info("Behandlet done fra rapid med eventid $eventId")
             }
 
             rapidMetricsProbe.countDoknotifikasjonStoppProduced()
