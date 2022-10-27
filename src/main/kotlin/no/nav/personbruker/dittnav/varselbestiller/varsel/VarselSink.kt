@@ -76,6 +76,8 @@ class VarselSink(
                     log.info("Dryrun: varsel ${varsel.varselType} fra rapid med eventid ${varsel.eventId}")
                 }
                 rapidMetricsProbe.countDoknotifikasjonProduced(varsel.varselType)
+            } else {
+                rapidMetricsProbe.countDuplicates(varsel.varselType)
             }
         }
     }

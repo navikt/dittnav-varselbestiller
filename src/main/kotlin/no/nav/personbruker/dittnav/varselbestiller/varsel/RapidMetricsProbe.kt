@@ -22,5 +22,13 @@ class RapidMetricsProbe(private val metricsReporter: MetricsReporter) {
         )
     }
 
+    suspend fun countDuplicates(varselType: VarselType) {
+        metricsReporter.registerDataPoint(
+            measurementName = "$METRIC_NAMESPACE.rapid.duplicates",
+            fields = counterField(),
+            tags = mapOf("varselType" to varselType.toString())
+        )
+    }
+
     private fun counterField(): Map<String, Int> = listOf("counter" to 1).toMap()
 }
