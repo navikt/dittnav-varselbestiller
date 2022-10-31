@@ -16,7 +16,7 @@ import no.nav.personbruker.dittnav.varselbestiller.varsel.RapidMetricsProbe
 import no.nav.personbruker.dittnav.varselbestiller.varsel.VarselSink
 import kotlin.concurrent.thread
 
-fun Application.mainModule(appContext: ApplicationContext = ApplicationContext()) {
+fun Application.varselbestillerApi(appContext: ApplicationContext = ApplicationContext()) {
     DefaultExports.initialize()
     install(DefaultHeaders)
     routing {
