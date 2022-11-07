@@ -68,7 +68,7 @@ dependencies {
 }
 
 application {
-    mainClass.set("io.ktor.server.netty.EngineMain")
+    mainClass.set("no.nav.personbruker.dittnav.varselbestiller.config.ApplicationKt")
 }
 
 tasks {

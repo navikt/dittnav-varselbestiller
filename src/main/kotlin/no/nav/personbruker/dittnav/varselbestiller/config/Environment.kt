@@ -32,6 +32,7 @@ data class Environment(
     val aivenSchemaRegistry: String = getEnvVar("KAFKA_SCHEMA_REGISTRY"),
     val securityConfig: SecurityConfig = SecurityConfig(isCurrentlyRunningOnNais()),
     val rapidEnabled: Boolean = getEnvVar("RAPID_ENABLED", "false").toBoolean(),
+    val rapidOnly: Boolean = getEnvVar("RAPID_ONLY", "false").toBoolean(),
     val rapidWriteToDb: Boolean = getEnvVar("RAPID_WRITE_TO_DB", "false").toBoolean(),
     val rapidTopic: String = getEnvVar("RAPID_TOPIC")
     ) {
