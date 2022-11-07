@@ -5,17 +5,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import no.nav.personbruker.dittnav.varselbestiller.common.database.exception.RetriableDatabaseException
 import no.nav.personbruker.dittnav.varselbestiller.common.database.exception.UnretriableDatabaseException
-import no.nav.personbruker.dittnav.varselbestiller.health.HealthCheck
-import no.nav.personbruker.dittnav.varselbestiller.health.HealthStatus
-import no.nav.personbruker.dittnav.varselbestiller.health.Status
 import org.postgresql.util.PSQLException
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import java.sql.*
+import java.sql.Connection
+import java.sql.SQLException
+import java.sql.SQLRecoverableException
+import java.sql.SQLTransientException
 
-val log: Logger = LoggerFactory.getLogger(Database::class.java)
-
-interface Database: HealthCheck {
+interface Database {
 
     val dataSource: HikariDataSource
 
@@ -37,24 +33,10 @@ interface Database: HealthCheck {
         }
     }
 
-
     suspend fun <T> queryWithExceptionTranslation(operationToExecute: Connection.() -> T): T {
         return translateExternalExceptionsToInternalOnes {
             dbQuery {
                 operationToExecute()
-            }
-        }
-    }
-
-    override suspend fun status(): HealthStatus {
-        val serviceName = "Database"
-        return withContext(Dispatchers.IO) {
-            try {
-                dbQuery { prepareStatement("""SELECT * FROM varselbestilling LIMIT 1""").execute() }
-                HealthStatus(serviceName, Status.OK, "200 OK")
-            } catch (e: Exception) {
-                log.error("Selftest mot databasen feilet", e)
-                HealthStatus(serviceName, Status.ERROR, "Feil mot DB")
             }
         }
     }

@@ -2,7 +2,6 @@ package no.nav.personbruker.dittnav.varselbestiller.config
 
 import no.nav.personbruker.dittnav.common.util.config.IntEnvVar.getEnvVarAsInt
 import no.nav.personbruker.dittnav.common.util.config.StringEnvVar.getEnvVar
-import no.nav.personbruker.dittnav.common.util.config.StringEnvVar.getOptionalEnvVar
 import no.nav.personbruker.dittnav.varselbestiller.config.ConfigUtil.isCurrentlyRunningOnNais
 
 data class Environment(
@@ -31,9 +30,6 @@ data class Environment(
     val aivenBrokers: String = getEnvVar("KAFKA_BROKERS"),
     val aivenSchemaRegistry: String = getEnvVar("KAFKA_SCHEMA_REGISTRY"),
     val securityConfig: SecurityConfig = SecurityConfig(isCurrentlyRunningOnNais()),
-    val rapidEnabled: Boolean = getEnvVar("RAPID_ENABLED", "false").toBoolean(),
-    val rapidOnly: Boolean = getEnvVar("RAPID_ONLY", "false").toBoolean(),
-    val rapidWriteToDb: Boolean = getEnvVar("RAPID_WRITE_TO_DB", "false").toBoolean(),
     val rapidTopic: String = getEnvVar("RAPID_TOPIC")
     ) {
     fun rapidConfig(): Map<String, String> = mapOf(
@@ -42,7 +38,8 @@ data class Environment(
         "KAFKA_RAPID_TOPIC" to rapidTopic,
         "KAFKA_KEYSTORE_PATH" to securityConfig.variables!!.aivenKeystorePath,
         "KAFKA_CREDSTORE_PASSWORD" to securityConfig.variables.aivenCredstorePassword,
-        "KAFKA_TRUSTSTORE_PATH" to securityConfig.variables.aivenTruststorePath
+        "KAFKA_TRUSTSTORE_PATH" to securityConfig.variables.aivenTruststorePath,
+        "HTTP_PORT" to "8080"
     )
 }
 
@@ -63,14 +60,6 @@ data class SecurityVars(
     val aivenSchemaRegistryUser: String = getEnvVar("KAFKA_SCHEMA_REGISTRY_USER"),
     val aivenSchemaRegistryPassword: String = getEnvVar("KAFKA_SCHEMA_REGISTRY_PASSWORD")
 )
-
-fun shouldPollBeskjedToDoknotifikasjon() = getOptionalEnvVar("POLL_BESKJED_TO_DOKNOTIFIKASJON", "false").toBoolean()
-
-fun shouldPollOppgaveToDoknotifikasjon() = getOptionalEnvVar("POLL_OPPGAVE_TO_DOKNOTIFIKASJON", "false").toBoolean()
-
-fun shouldPollInnboksToDoknotifikasjon() = getOptionalEnvVar("POLL_INNBOKS_TO_DOKNOTIFIKASJON", "false").toBoolean()
-
-fun shouldPollDoneToDoknotifikasjonStopp() = getOptionalEnvVar("POLL_DONE_TO_DOKNOTIFIKASJON_STOPP", "false").toBoolean()
 
 fun getDbUrl(host: String, port: String, name: String): String {
     return if (host.endsWith(":$port")) {
