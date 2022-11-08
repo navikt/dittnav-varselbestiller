@@ -1,7 +1,7 @@
 package no.nav.personbruker.dittnav.varselbestiller.varselbestilling
 
-import no.nav.personbruker.dittnav.varselbestiller.common.database.mapList
 import java.sql.Connection
+import java.sql.ResultSet
 
 fun Connection.deleteAllVarselbestilling() =
         prepareStatement("""DELETE FROM varselbestilling""")
@@ -12,3 +12,10 @@ fun Connection.getAllVarselbestilling() =
                 .use {
                     it.executeQuery().mapList { toVarselbestilling() }
                 }
+
+private fun <T> ResultSet.mapList(result: ResultSet.() -> T): List<T> =
+        mutableListOf<T>().apply {
+                while (next()) {
+                        add(result())
+                }
+        }

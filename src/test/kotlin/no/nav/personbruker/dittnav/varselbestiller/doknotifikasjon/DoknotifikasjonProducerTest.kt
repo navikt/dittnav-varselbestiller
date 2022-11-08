@@ -35,7 +35,7 @@ internal class DoknotifikasjonProducerTest {
     @Test
     fun `Should commit events to kafka if persisting to database is successful`() {
         every { producerWrapper.sendEventsAndLeaveTransactionOpen(any()) } returns Unit
-        coEvery { repository.persistVarselbestilling(any()) } returns IntArray(0)
+        coEvery { repository.persistVarselbestilling(any()) } returns 1
         every { producerWrapper.commitCurrentTransaction() } returns Unit
 
         runBlocking {
@@ -69,7 +69,7 @@ internal class DoknotifikasjonProducerTest {
     @Test
     fun `Should not persist events to database if sending events to kafka is unsuccessful`() {
         every { producerWrapper.sendEventsAndLeaveTransactionOpen(any()) } throws RetriableKafkaException("")
-        coEvery { repository.persistVarselbestilling(any()) } returns IntArray(0)
+        coEvery { repository.persistVarselbestilling(any()) } returns 1
         every { producerWrapper.abortCurrentTransaction() } returns Unit
 
         shouldThrow<RetriableKafkaException> {
