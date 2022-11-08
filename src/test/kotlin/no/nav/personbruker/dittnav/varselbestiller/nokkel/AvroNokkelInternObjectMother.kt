@@ -20,15 +20,4 @@ object AvroNokkelInternObjectMother {
         defaultAppnavn,
         defaultSystembruker
     )
-
-    fun createNokkelInternWithEventId(eventId: String): NokkelIntern = NokkelIntern(
-        defaultUlid,
-        eventId,
-        defaultGrupperingsid,
-        defaultFodselsnummer,
-        defaultNamespace,
-        defaultAppnavn,
-        defaultSystembruker
-    )
-
 }
