@@ -7,41 +7,24 @@ import java.time.temporal.ChronoUnit
 
 object VarselbestillingObjectMother {
 
-    private val defaultEventId = "123"
-    private val defaultFodselsnr = "12345678901"
-    private val defaultSystembruker = "dummySystembruker"
-    private val defaultNamespace = "dummyNamespace"
-    private val defaultAppnavn = "dummyAppnavn"
-    private val defaultBestillingstidspunkt = LocalDateTime.now(ZoneId.of("UTC")).truncatedTo(ChronoUnit.MILLIS)
-    private val defaultBestillingsId = "B-$defaultAppnavn-$defaultEventId"
-    private val defaultPrefererteKanaler = listOf(PreferertKanal.SMS.toString(), PreferertKanal.EPOST.toString())
-
-    fun giveMeANumberOfVarselbestilling(numberOfEvents: Int): List<Varselbestilling> {
-        val varselbestillinger = mutableListOf<Varselbestilling>()
-
-        for (i in 0 until numberOfEvents) {
-            varselbestillinger.add(createVarselbestillingWithBestillingsIdAndEventId(bestillingsId = "B-${defaultAppnavn}-$i", eventId = i.toString()))
-        }
-        return varselbestillinger
-    }
-
-    fun createVarselbestillingWithBestillingsIdAndEventId(bestillingsId: String, eventId: String): Varselbestilling {
-        return createVarselbestilling(bestillingsId, eventId, defaultFodselsnr, defaultPrefererteKanaler)
-    }
-
-    fun createVarselbestillingWithPrefererteKanaler(prefererteKanaler: List<String>): Varselbestilling {
-        return createVarselbestilling(defaultBestillingsId, defaultEventId, defaultFodselsnr, prefererteKanaler)
-    }
-
-    private fun createVarselbestilling(bestillingsId: String, eventId: String, fodselsnummer: String, prefererteKanaler: List<String>): Varselbestilling {
+    fun createVarselbestilling(
+        bestillingsId: String = "B-dummyAppnavn-123",
+        eventId: String = "123",
+        fodselsnummer: String = "12345678901",
+        systembruker: String = "dummySystembruker",
+        namespace: String = "dummyNamespace",
+        appnavn: String = "dummyAppnavn",
+        bestillingstidspunkt: LocalDateTime = LocalDateTime.now(ZoneId.of("UTC")).truncatedTo(ChronoUnit.MILLIS),
+        prefererteKanaler: List<String> = listOf(PreferertKanal.SMS.toString(), PreferertKanal.EPOST.toString())
+    ): Varselbestilling {
         return Varselbestilling(
                 bestillingsId = bestillingsId,
                 eventId = eventId,
                 fodselsnummer = fodselsnummer,
-                systembruker = defaultSystembruker,
-                namespace = defaultNamespace,
-                appnavn = defaultAppnavn,
-                bestillingstidspunkt = defaultBestillingstidspunkt,
+                systembruker = systembruker,
+                namespace = namespace,
+                appnavn = appnavn,
+                bestillingstidspunkt = bestillingstidspunkt,
                 prefererteKanaler = prefererteKanaler
         )
     }

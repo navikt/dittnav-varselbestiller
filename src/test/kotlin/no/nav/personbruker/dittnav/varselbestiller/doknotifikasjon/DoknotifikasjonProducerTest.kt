@@ -20,12 +20,10 @@ import org.junit.jupiter.api.Test
 internal class DoknotifikasjonProducerTest {
     private val producerWrapper: KafkaProducerWrapper<String, Doknotifikasjon> = mockk()
     private val repository: VarselbestillingRepository = mockk()
-
     private val producer = DoknotifikasjonProducer(producerWrapper, repository)
 
-    private val event = AvroDoknotifikasjonObjectMother.giveMeANumberOfDoknotifikasjoner(10).first()
-
-    private val varselBestilling = VarselbestillingObjectMother.createVarselbestillingWithBestillingsIdAndEventId("B-dummy-001", "001")
+    private val doknotifikasjon = Doknotifikasjon()
+    private val varselBestilling = VarselbestillingObjectMother.createVarselbestilling("B-dummy-001", "001")
 
     @AfterEach
     fun cleanup() {
@@ -39,7 +37,7 @@ internal class DoknotifikasjonProducerTest {
         every { producerWrapper.commitCurrentTransaction() } returns Unit
 
         runBlocking {
-            producer.sendAndPersistBestilling(varselBestilling, event)
+            producer.sendAndPersistBestilling(varselBestilling, doknotifikasjon)
         }
 
         verify(exactly = 1) { producerWrapper.sendEventsAndLeaveTransactionOpen(any()) }
@@ -56,7 +54,7 @@ internal class DoknotifikasjonProducerTest {
 
         shouldThrow<RetriableDatabaseException> {
             runBlocking {
-                producer.sendAndPersistBestilling(varselBestilling, event)
+                producer.sendAndPersistBestilling(varselBestilling, doknotifikasjon)
             }
         }
 
@@ -74,7 +72,7 @@ internal class DoknotifikasjonProducerTest {
 
         shouldThrow<RetriableKafkaException> {
             runBlocking {
-                producer.sendAndPersistBestilling(varselBestilling, event)
+                producer.sendAndPersistBestilling(varselBestilling, doknotifikasjon)
             }
         }
 

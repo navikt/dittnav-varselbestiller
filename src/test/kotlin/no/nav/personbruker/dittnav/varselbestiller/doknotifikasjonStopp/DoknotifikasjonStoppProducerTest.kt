@@ -22,7 +22,7 @@ internal class DoknotifikasjonStoppProducerTest {
 
     private val producer = DoknotifikasjonStoppProducer(producerWrapper, repository)
 
-    private val event = AvroDoknotifikasjonStoppObjectMother.giveMeANumberOfDoknotifikasjonStopp(10).first()
+    private val event = DoknotifikasjonStopp("bestillingsId", "bestillerId")
 
     @AfterEach
     fun cleanup() {

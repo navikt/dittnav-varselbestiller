@@ -3,11 +3,12 @@ package no.nav.personbruker.dittnav.varselbestiller.common.database
 import com.zaxxer.hikari.HikariDataSource
 import kotlinx.coroutines.runBlocking
 import org.flywaydb.core.Flyway
+import org.testcontainers.containers.PostgreSQLContainer
 
 class LocalPostgresDatabase private constructor() : Database {
 
     private val memDataSource: HikariDataSource
-    private val container = TestPostgresqlContainer()
+    private val container =  PostgreSQLContainer("postgres:12.6")
 
     companion object {
         private val instance by lazy {
