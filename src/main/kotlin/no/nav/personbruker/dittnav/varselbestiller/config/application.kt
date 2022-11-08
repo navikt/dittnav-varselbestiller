@@ -66,15 +66,13 @@ private fun startRapid(
             rapidsConnection = this,
             doknotifikasjonProducer = doknotifikasjonProducer,
             varselbestillingRepository = varselbestillingRepository,
-            rapidMetricsProbe = rapidMetricsProbe,
-            writeToDb = true
+            rapidMetricsProbe = rapidMetricsProbe
         )
         DoneSink(
             rapidsConnection = this,
             doknotifikasjonStoppProducer = doknotifikasjonStoppProducer,
             varselbestillingRepository = varselbestillingRepository,
-            rapidMetricsProbe = rapidMetricsProbe,
-            writeToDb = true
+            rapidMetricsProbe = rapidMetricsProbe
         )
     }.apply {
         register(object : RapidsConnection.StatusListener {

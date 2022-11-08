@@ -16,8 +16,7 @@ class VarselSink(
     rapidsConnection: RapidsConnection,
     private val doknotifikasjonProducer: DoknotifikasjonProducer,
     private val varselbestillingRepository: VarselbestillingRepository,
-    private val rapidMetricsProbe: RapidMetricsProbe,
-    private val writeToDb: Boolean
+    private val rapidMetricsProbe: RapidMetricsProbe
 ) :
     River.PacketListener {
     private val log: Logger = LoggerFactory.getLogger(VarselSink::class.java)
@@ -59,19 +58,15 @@ class VarselSink(
             epostVarslingstittel = packet["epostVarslingstittel"].textValue()
         )
 
-        val dokNotifikasjon = createDoknotifikasjonFromVarsel(varsel)
-
         runBlocking {
             val isDuplicateVarselbestilling =
                 varselbestillingRepository.getVarselbestillingIfExists(varsel.eventId) != null
 
             if (!isDuplicateVarselbestilling) {
-                if (writeToDb) {
-                    doknotifikasjonProducer.sendAndPersistBestilling(varsel.toVarselBestilling(), dokNotifikasjon)
-                    log.info("Behandlet varsel fra rapid med eventid ${varsel.eventId}")
-                } else {
-                    log.info("Dryrun: varsel ${varsel.varselType} fra rapid med eventid ${varsel.eventId}")
-                }
+                doknotifikasjonProducer.sendAndPersistBestilling(
+                    varselbestilling = varsel.toVarselBestilling(),
+                    doknotifikasjon = createDoknotifikasjonFromVarsel(varsel)
+                )
                 rapidMetricsProbe.countDoknotifikasjonProduced(varsel.varselType)
             } else {
                 rapidMetricsProbe.countDuplicates(varsel.varselType)

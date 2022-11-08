@@ -16,8 +16,7 @@ class DoneSink(
     rapidsConnection: RapidsConnection,
     private val doknotifikasjonStoppProducer: DoknotifikasjonStoppProducer,
     private val varselbestillingRepository: VarselbestillingRepository,
-    private val rapidMetricsProbe: RapidMetricsProbe,
-    private val writeToDb: Boolean
+    private val rapidMetricsProbe: RapidMetricsProbe
 ) :
     River.PacketListener {
     private val log: Logger = LoggerFactory.getLogger(DoneSink::class.java)
@@ -34,15 +33,9 @@ class DoneSink(
 
         runBlocking {
             varselbestillingRepository.getVarselbestillingIfExists(eventId)?.let { existingVarselbestilling ->
-                val doknotifikasjonStopp = createDoknotifikasjonStopp(existingVarselbestilling)
-
-                if (writeToDb) {
-                    doknotifikasjonStoppProducer.sendEventsAndPersistCancellation(doknotifikasjonStopp)
-                    log.info("Behandlet done fra rapid med eventid $eventId")
-                } else {
-                    log.info("Dryrun: done fra rapid med eventid $eventId")
-                }
-
+                doknotifikasjonStoppProducer.sendDoknotifikasjonStoppAndPersistCancellation(
+                    createDoknotifikasjonStopp(existingVarselbestilling)
+                )
                 rapidMetricsProbe.countDoknotifikasjonStoppProduced()
             }
         }

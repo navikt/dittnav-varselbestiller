@@ -151,23 +151,11 @@ class VarselSinkTest {
         doknotifikasjonInnboks.value().getSmsTekst() shouldBe "Hei! Du har fått en ny melding fra NAV. Logg inn på nav.no for å lese meldingen. Vennlig hilsen NAV\n"
     }
 
-    @Test
-    fun `dryryn-modus når writeToDb er false`() = runBlocking {
-        val testRapid = TestRapid()
-        setupVarselSink(testRapid, writeToDb = false)
-
-        testRapid.sendTestMessage(varselJson(VarselType.BESKJED, "1"))
-
-        val eksternVarselBestillinger = bestilleringerFromDb()
-        eksternVarselBestillinger.size shouldBe 0
-    }
-
-    private fun setupVarselSink(testRapid: TestRapid, writeToDb: Boolean = true) = VarselSink(
+    private fun setupVarselSink(testRapid: TestRapid) = VarselSink(
         rapidsConnection = testRapid,
         doknotifikasjonProducer = doknotifikasjonProducer,
         varselbestillingRepository = varselbestillingRepository,
-        rapidMetricsProbe = mockk(relaxed = true),
-        writeToDb = writeToDb
+        rapidMetricsProbe = mockk(relaxed = true)
     )
 
     private suspend fun bestilleringerFromDb(): List<Varselbestilling> {

@@ -9,7 +9,7 @@ class DoknotifikasjonStoppProducer(
         private val producer: KafkaProducerWrapper<String, DoknotifikasjonStopp>,
         private val varselbestillingRepository: VarselbestillingRepository
 ) {
-    suspend fun sendEventsAndPersistCancellation(doknotStop: DoknotifikasjonStopp) {
+    suspend fun sendDoknotifikasjonStoppAndPersistCancellation(doknotStop: DoknotifikasjonStopp) {
         val event = RecordKeyValueWrapper(doknotStop.getBestillingsId(), doknotStop)
 
         try {

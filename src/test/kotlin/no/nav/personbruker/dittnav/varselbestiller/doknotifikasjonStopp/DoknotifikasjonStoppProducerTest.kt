@@ -37,7 +37,7 @@ internal class DoknotifikasjonStoppProducerTest {
 
 
         runBlocking {
-            producer.sendEventsAndPersistCancellation(event)
+            producer.sendDoknotifikasjonStoppAndPersistCancellation(event)
         }
 
         verify(exactly = 1) { producerWrapper.sendEventsAndLeaveTransactionOpen(any()) }
@@ -54,7 +54,7 @@ internal class DoknotifikasjonStoppProducerTest {
 
         shouldThrow<RetriableDatabaseException> {
             runBlocking {
-                producer.sendEventsAndPersistCancellation(event)
+                producer.sendDoknotifikasjonStoppAndPersistCancellation(event)
             }
         }
 
@@ -72,7 +72,7 @@ internal class DoknotifikasjonStoppProducerTest {
 
         shouldThrow<RetriableKafkaException> {
             runBlocking {
-                producer.sendEventsAndPersistCancellation(event)
+                producer.sendDoknotifikasjonStoppAndPersistCancellation(event)
             }
         }
 

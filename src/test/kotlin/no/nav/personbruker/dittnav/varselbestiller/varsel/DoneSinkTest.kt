@@ -80,34 +80,18 @@ class DoneSinkTest {
         varselbestilling.avbestilt shouldBe true
     }
 
-    @Test
-    fun `dryryn-modus når writeToDb er false`() = runBlocking {
-        val testRapid = TestRapid()
-        setupVarselSink(testRapid, writeToDb = true)
-        setupDoneSink(testRapid, writeToDb = false)
-
-        val eventId = "123"
-        testRapid.sendTestMessage(varselJson(VarselType.BESKJED, eventId))
-        testRapid.sendTestMessage(doneJson(eventId))
-
-        bestilleringerFromDb().first { it.bestillingsId == eventId }
-        doknotifikasjonStoppKafkaProducer.history().find { it.key() == eventId } shouldBe null
-    }
-
-    private fun setupVarselSink(testRapid: TestRapid, writeToDb: Boolean = true) = VarselSink(
+    private fun setupVarselSink(testRapid: TestRapid) = VarselSink(
         rapidsConnection = testRapid,
         doknotifikasjonProducer = doknotifikasjonProducer,
         varselbestillingRepository = varselbestillingRepository,
-        rapidMetricsProbe = mockk(relaxed = true),
-        writeToDb = writeToDb
+        rapidMetricsProbe = mockk(relaxed = true)
     )
 
-    private fun setupDoneSink(testRapid: TestRapid, writeToDb: Boolean = true) = DoneSink(
+    private fun setupDoneSink(testRapid: TestRapid) = DoneSink(
         rapidsConnection = testRapid,
         doknotifikasjonStoppProducer = doknotifikasjonStoppProducer,
         varselbestillingRepository = varselbestillingRepository,
-        rapidMetricsProbe = mockk(relaxed = true),
-        writeToDb = writeToDb
+        rapidMetricsProbe = mockk(relaxed = true)
     )
 
     private suspend fun bestilleringerFromDb(): List<Varselbestilling> {
