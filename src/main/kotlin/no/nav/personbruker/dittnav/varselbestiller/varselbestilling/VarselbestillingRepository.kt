@@ -1,27 +1,15 @@
 package no.nav.personbruker.dittnav.varselbestiller.varselbestilling
 
 import no.nav.personbruker.dittnav.varselbestiller.common.database.Database
-import no.nav.personbruker.dittnav.varselbestiller.common.database.ListPersistActionResult
 
 class VarselbestillingRepository(private val database: Database) {
 
-    suspend fun persistInOneBatch(entities: List<Varselbestilling>): ListPersistActionResult<Varselbestilling> {
-        return database.queryWithExceptionTranslation {
-            createVarselbestillinger(entities)
-        }
-    }
+    suspend fun persistVarselbestilling(bestilling: Varselbestilling) =
+        database.queryWithExceptionTranslation { createVarselbestilling(bestilling) }
 
-    suspend fun fetchVarselbestillingerForEventIds(eventIds: List<String>): List<Varselbestilling> {
-        var resultat = emptyList<Varselbestilling>()
-        database.queryWithExceptionTranslation {
-            resultat = getVarselbestillingerForEventIds(eventIds)
-        }
-        return resultat
-    }
+    suspend fun getVarselbestillingIfExists(eventId: String) =
+        database.queryWithExceptionTranslation { getVarselbestillingIfExists(eventId) }
 
-    suspend fun cancelVarselbestilling(bestillingsIds: List<String>) {
-        database.queryWithExceptionTranslation {
-            setVarselbestillingAvbestiltFlag(bestillingsIds, true)
-        }
-    }
+    suspend fun cancelVarselbestilling(bestillingsId: String) =
+        database.queryWithExceptionTranslation { cancelVarselbestilling(bestillingsId) }
 }

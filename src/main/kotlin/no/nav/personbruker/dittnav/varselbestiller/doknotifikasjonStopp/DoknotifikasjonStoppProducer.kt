@@ -9,17 +9,12 @@ class DoknotifikasjonStoppProducer(
         private val producer: KafkaProducerWrapper<String, DoknotifikasjonStopp>,
         private val varselbestillingRepository: VarselbestillingRepository
 ) {
-    suspend fun sendEventsAndPersistCancellation(doknotStopList: List<DoknotifikasjonStopp>) {
-
-        val events = doknotStopList.map { dokStop ->
-            RecordKeyValueWrapper(dokStop.getBestillingsId(), dokStop)
-        }
-
-        val keys = events.map { it.key }
+    suspend fun sendEventsAndPersistCancellation(doknotStop: DoknotifikasjonStopp) {
+        val event = RecordKeyValueWrapper(doknotStop.getBestillingsId(), doknotStop)
 
         try {
-            producer.sendEventsAndLeaveTransactionOpen(events)
-            varselbestillingRepository.cancelVarselbestilling(keys)
+            producer.sendEventsAndLeaveTransactionOpen(event)
+            varselbestillingRepository.cancelVarselbestilling(event.key)
             producer.commitCurrentTransaction()
         } catch (e: Exception) {
             producer.abortCurrentTransaction()

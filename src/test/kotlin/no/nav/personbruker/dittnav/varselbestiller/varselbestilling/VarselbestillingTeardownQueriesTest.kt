@@ -42,7 +42,7 @@ class VarselbestillingTeardownQueriesTest {
 
     private suspend fun createVarselbestillinger(varselbestillinger: List<Varselbestilling>) {
         database.dbQuery {
-            createVarselbestillinger(varselbestillinger)
+            varselbestillinger.forEach { createVarselbestilling(it) }
         }
     }
 

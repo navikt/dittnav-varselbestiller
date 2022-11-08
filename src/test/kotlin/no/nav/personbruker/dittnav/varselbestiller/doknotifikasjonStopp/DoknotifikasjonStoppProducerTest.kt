@@ -22,7 +22,7 @@ internal class DoknotifikasjonStoppProducerTest {
 
     private val producer = DoknotifikasjonStoppProducer(producerWrapper, repository)
 
-    val events = AvroDoknotifikasjonStoppObjectMother.giveMeANumberOfDoknotifikasjonStopp(10)
+    private val event = AvroDoknotifikasjonStoppObjectMother.giveMeANumberOfDoknotifikasjonStopp(10).first()
 
     @AfterEach
     fun cleanup() {
@@ -37,7 +37,7 @@ internal class DoknotifikasjonStoppProducerTest {
 
 
         runBlocking {
-            producer.sendEventsAndPersistCancellation(events)
+            producer.sendEventsAndPersistCancellation(event)
         }
 
         verify(exactly = 1) { producerWrapper.sendEventsAndLeaveTransactionOpen(any()) }
@@ -54,7 +54,7 @@ internal class DoknotifikasjonStoppProducerTest {
 
         shouldThrow<RetriableDatabaseException> {
             runBlocking {
-                producer.sendEventsAndPersistCancellation(events)
+                producer.sendEventsAndPersistCancellation(event)
             }
         }
 
@@ -72,7 +72,7 @@ internal class DoknotifikasjonStoppProducerTest {
 
         shouldThrow<RetriableKafkaException> {
             runBlocking {
-                producer.sendEventsAndPersistCancellation(events)
+                producer.sendEventsAndPersistCancellation(event)
             }
         }
 

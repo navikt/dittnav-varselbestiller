@@ -14,12 +14,10 @@ class KafkaProducerWrapper<K, V>(
 
     val log = LoggerFactory.getLogger(KafkaProducerWrapper::class.java)
 
-    fun sendEventsAndLeaveTransactionOpen(events: List<RecordKeyValueWrapper<K, V>>) {
+    fun sendEventsAndLeaveTransactionOpen(event: RecordKeyValueWrapper<K, V>) {
         try {
             kafkaProducer.beginTransaction()
-            events.forEach { event ->
-                sendSingleEvent(event)
-            }
+            sendSingleEvent(event)
         } catch (e: KafkaException) {
             kafkaProducer.abortTransaction()
             throw RetriableKafkaException("Et eller flere eventer feilet med en periodisk feil ved sending til kafka", e)

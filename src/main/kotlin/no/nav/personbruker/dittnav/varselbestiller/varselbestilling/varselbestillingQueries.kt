@@ -1,40 +1,36 @@
 package no.nav.personbruker.dittnav.varselbestiller.varselbestilling
 
-import no.nav.personbruker.dittnav.varselbestiller.common.database.*
-import java.sql.*
-import java.sql.Array
+import no.nav.personbruker.dittnav.varselbestiller.common.database.executeBatchPersistQuery
+import no.nav.personbruker.dittnav.varselbestiller.common.database.getListFromSeparatedString
+import no.nav.personbruker.dittnav.varselbestiller.common.database.getUtcDateTime
+import java.sql.Connection
+import java.sql.PreparedStatement
+import java.sql.ResultSet
+import java.sql.Types
 
-fun Connection.createVarselbestillinger(varselbestillinger: List<Varselbestilling>): ListPersistActionResult<Varselbestilling> =
-        executeBatchPersistQuery("""INSERT INTO varselbestilling (bestillingsid, eventid, fodselsnummer, systembruker, eventtidspunkt, avbestilt, prefererteKanaler, namespace, appnavn) 
-                                    |VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""".trimMargin()) {
-                varselbestillinger.forEach { varselbestilling ->
-                        buildStatementForSingleRow(varselbestilling)
-                        addBatch()
-                }
-        }.toBatchPersistResult(varselbestillinger)
+fun Connection.createVarselbestilling(varselbestilling: Varselbestilling) =
+    executeBatchPersistQuery(
+        """INSERT INTO varselbestilling (bestillingsid, eventid, fodselsnummer, systembruker, eventtidspunkt, avbestilt, prefererteKanaler, namespace, appnavn) 
+                                    |VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""".trimMargin()
+    ) {
+        buildStatementForSingleRow(varselbestilling)
+        addBatch()
+    }
 
-
-fun Connection.getVarselbestillingerForBestillingsIds(bestillingsIds: List<String>): List<Varselbestilling> =
-        prepareStatement("""SELECT varselbestilling.* FROM varselbestilling WHERE bestillingsid = ANY(?)""")
-                .use {
-                    it.setArray(1, toVarcharArray(bestillingsIds))
-                    it.executeQuery().mapList { toVarselbestilling() }
-                }
-
-fun Connection.getVarselbestillingerForEventIds(eventIds: List<String>): List<Varselbestilling> =
-        prepareStatement("""SELECT varselbestilling.* FROM varselbestilling WHERE eventid = ANY(?) """)
-                .use {
-                    it.setArray(1, toVarcharArray(eventIds))
-                    it.executeQuery().mapList { toVarselbestilling() }
-                }
-
-fun Connection.setVarselbestillingAvbestiltFlag(bestillingsIds: List<String>, avbestilt: Boolean) {
-    executeBatchPersistQuery("""UPDATE varselbestilling SET avbestilt = ? WHERE bestillingsid = ?""", skipConflicting = false) {
-        bestillingsIds.forEach { bestillingsId ->
-            setBoolean(1, avbestilt)
-            setString(2, bestillingsId)
-            addBatch()
+fun Connection.getVarselbestillingIfExists(eventId: String): Varselbestilling? =
+    prepareStatement("""SELECT varselbestilling.* FROM varselbestilling WHERE eventid = ? """)
+        .use {
+            it.setString(1, eventId)
+            it.executeQuery().use {
+                    resultSet -> if(resultSet.next()) resultSet.toVarselbestilling() else null
+            }
         }
+
+fun Connection.cancelVarselbestilling(bestillingsId: String) {
+    executeBatchPersistQuery("""UPDATE varselbestilling SET avbestilt = ? WHERE bestillingsid = ?""", skipConflicting = false) {
+        setBoolean(1, true)
+        setString(2, bestillingsId)
+        addBatch()
     }
 }
 
@@ -62,10 +58,6 @@ private fun PreparedStatement.buildStatementForSingleRow(varselbestilling: Varse
         setObject(7, varselbestilling.prefererteKanaler.joinToString(","))
         setString(8, varselbestilling.namespace)
         setString(9, varselbestilling.appnavn)
-}
-
-private fun Connection.toVarcharArray(stringList: List<String>): Array {
-    return createArrayOf("VARCHAR", stringList.toTypedArray())
 }
 
 

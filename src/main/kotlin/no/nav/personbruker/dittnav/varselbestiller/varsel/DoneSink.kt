@@ -33,13 +33,11 @@ class DoneSink(
         val eventId = packet["eventId"].textValue()
 
         runBlocking {
-            val varselbestillinger = varselbestillingRepository.fetchVarselbestillingerForEventIds(listOf(eventId))
-
-            if (varselbestillinger.isNotEmpty()) {
-                val doknotifikasjonStopp = createDoknotifikasjonStopp(varselbestillinger.first())
+            varselbestillingRepository.getVarselbestillingIfExists(eventId)?.let { existingVarselbestilling ->
+                val doknotifikasjonStopp = createDoknotifikasjonStopp(existingVarselbestilling)
 
                 if (writeToDb) {
-                    doknotifikasjonStoppProducer.sendEventsAndPersistCancellation(listOf(doknotifikasjonStopp))
+                    doknotifikasjonStoppProducer.sendEventsAndPersistCancellation(doknotifikasjonStopp)
                     log.info("Behandlet done fra rapid med eventid $eventId")
                 } else {
                     log.info("Dryrun: done fra rapid med eventid $eventId")
@@ -47,7 +45,6 @@ class DoneSink(
 
                 rapidMetricsProbe.countDoknotifikasjonStoppProduced()
             }
-
         }
     }
 

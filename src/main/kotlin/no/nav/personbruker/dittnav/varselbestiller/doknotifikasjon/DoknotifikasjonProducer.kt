@@ -1,7 +1,6 @@
 package no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon
 
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
-import no.nav.personbruker.dittnav.varselbestiller.common.database.ListPersistActionResult
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaProducerWrapper
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.RecordKeyValueWrapper
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
@@ -12,18 +11,12 @@ class DoknotifikasjonProducer(
         private val varselbestillingRepository: VarselbestillingRepository
 ) {
 
-    suspend fun sendAndPersistBestillingBatch(
-            varselbestillingList: List<Varselbestilling>,
-            doknotifikasjonList: List<Doknotifikasjon>,
-    ) {
-
-        val kafkaEvents = doknotifikasjonList.map { doknotifikasjon ->
-            RecordKeyValueWrapper(doknotifikasjon.getBestillingsId(), doknotifikasjon)
-        }
+    suspend fun sendAndPersistBestilling(varselbestilling: Varselbestilling, doknotifikasjon: Doknotifikasjon) {
+        val event = RecordKeyValueWrapper(doknotifikasjon.getBestillingsId(), doknotifikasjon)
 
         try {
-            producer.sendEventsAndLeaveTransactionOpen(kafkaEvents)
-            varselbestillingRepository.persistInOneBatch(varselbestillingList)
+            producer.sendEventsAndLeaveTransactionOpen(event)
+            varselbestillingRepository.persistVarselbestilling(varselbestilling)
             producer.commitCurrentTransaction()
         } catch (e: Exception) {
             producer.abortCurrentTransaction()
