@@ -43,9 +43,7 @@ object Kafka {
             put(ProducerConfig.MAX_BLOCK_MS_CONFIG, 40000)
             put(ProducerConfig.ACKS_CONFIG, "all")
             put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true")
-            if (env.securityConfig.enabled) {
-                putAll(credentialPropsAiven(env.securityConfig.variables!!))
-            }
+            putAll(credentialPropsAiven(env.securityVars))
         }
     }
 

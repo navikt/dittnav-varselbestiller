@@ -2,7 +2,6 @@ package no.nav.personbruker.dittnav.varselbestiller.config
 
 import no.nav.personbruker.dittnav.common.util.config.IntEnvVar.getEnvVarAsInt
 import no.nav.personbruker.dittnav.common.util.config.StringEnvVar.getEnvVar
-import no.nav.personbruker.dittnav.varselbestiller.config.ConfigUtil.isCurrentlyRunningOnNais
 
 data class Environment(
     val groupId: String = getEnvVar("GROUP_ID"),
@@ -29,30 +28,20 @@ data class Environment(
     val doknotifikasjonStopTopicName: String = getEnvVar("DOKNOTIFIKASJON_STOP_TOPIC"),
     val aivenBrokers: String = getEnvVar("KAFKA_BROKERS"),
     val aivenSchemaRegistry: String = getEnvVar("KAFKA_SCHEMA_REGISTRY"),
-    val securityConfig: SecurityConfig = SecurityConfig(isCurrentlyRunningOnNais()),
+    val securityVars: SecurityVars = SecurityVars(),
     val rapidTopic: String = getEnvVar("RAPID_TOPIC")
     ) {
     fun rapidConfig(): Map<String, String> = mapOf(
         "KAFKA_BROKERS" to aivenBrokers,
         "KAFKA_CONSUMER_GROUP_ID" to "dittnav-varselbestiller-v1",
         "KAFKA_RAPID_TOPIC" to rapidTopic,
-        "KAFKA_KEYSTORE_PATH" to securityConfig.variables!!.aivenKeystorePath,
-        "KAFKA_CREDSTORE_PASSWORD" to securityConfig.variables.aivenCredstorePassword,
-        "KAFKA_TRUSTSTORE_PATH" to securityConfig.variables.aivenTruststorePath,
+        "KAFKA_KEYSTORE_PATH" to securityVars.aivenKeystorePath,
+        "KAFKA_CREDSTORE_PASSWORD" to securityVars.aivenCredstorePassword,
+        "KAFKA_TRUSTSTORE_PATH" to securityVars.aivenTruststorePath,
         "KAFKA_RESET_POLICY" to "earliest",
         "HTTP_PORT" to "8080"
     )
 }
-
-data class SecurityConfig(
-    val enabled: Boolean,
-
-    val variables: SecurityVars? = if (enabled) {
-        SecurityVars()
-    } else {
-        null
-    }
-)
 
 data class SecurityVars(
     val aivenTruststorePath: String = getEnvVar("KAFKA_TRUSTSTORE_PATH"),
