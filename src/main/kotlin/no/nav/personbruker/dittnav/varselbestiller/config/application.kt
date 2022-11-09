@@ -79,6 +79,11 @@ private fun startRapid(
             override fun onStartup(rapidsConnection: RapidsConnection) {
                 Flyway.runFlywayMigrations(environment)
             }
+
+            override fun onShutdown(rapidsConnection: RapidsConnection) {
+                doknotifikasjonProducer.flushAndClose()
+                doknotifikasjonStoppProducer.flushAndClose()
+            }
         })
     }.start()
 }
