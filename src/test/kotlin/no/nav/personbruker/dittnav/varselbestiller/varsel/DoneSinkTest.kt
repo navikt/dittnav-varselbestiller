@@ -43,6 +43,7 @@ class DoneSinkTest {
 
     private val eventId = "1"
     private val varselJson = varselJson(VarselType.BESKJED, eventId)
+    private val testRapid = TestRapid()
 
     @BeforeEach
     fun setup() {
@@ -52,16 +53,15 @@ class DoneSinkTest {
         doknotifikasjonKafkaProducer.clear()
         doknotifikasjonStoppKafkaProducer.clear()
 
-        val testRapid = TestRapid()
         setupVarselSink(testRapid)
         setupDoneSink(testRapid)
-
-        testRapid.sendTestMessage(varselJson)
-        testRapid.sendTestMessage(doneJson(eventId))
     }
 
     @Test
     fun `Sender doknotifikasjonStopp ved done`() = runBlocking {
+        testRapid.sendTestMessage(varselJson)
+        testRapid.sendTestMessage(doneJson(eventId))
+
         doknotifikasjonStoppKafkaProducer.history().size shouldBe 1
 
         val doknotifikasjonStopp = doknotifikasjonStoppKafkaProducer.history().first()
@@ -72,12 +72,24 @@ class DoneSinkTest {
 
     @Test
     fun `Setter varselbestilling til avbestilt ved done`() = runBlocking {
+        testRapid.sendTestMessage(varselJson)
+        testRapid.sendTestMessage(doneJson(eventId))
+
         val varselbestillinger = bestilleringerFromDb()
         varselbestillinger.size shouldBe 1
 
         val varselbestilling = varselbestillinger.first()
         varselbestilling.eventId shouldBe ObjectMapper().readTree(varselJson)["eventId"].textValue()
         varselbestilling.avbestilt shouldBe true
+    }
+
+    @Test
+    fun `Sender ikke doknotifikasjonStopp for duplikat done`() = runBlocking {
+        testRapid.sendTestMessage(varselJson)
+        testRapid.sendTestMessage(doneJson(eventId))
+        testRapid.sendTestMessage(doneJson(eventId))
+
+        doknotifikasjonStoppKafkaProducer.history().size shouldBe 1
     }
 
     private fun setupVarselSink(testRapid: TestRapid) = VarselSink(

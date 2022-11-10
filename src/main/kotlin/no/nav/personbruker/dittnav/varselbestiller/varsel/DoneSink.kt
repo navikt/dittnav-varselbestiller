@@ -33,10 +33,12 @@ class DoneSink(
 
         runBlocking {
             varselbestillingRepository.getVarselbestillingIfExists(eventId)?.let { existingVarselbestilling ->
-                doknotifikasjonStoppProducer.sendDoknotifikasjonStoppAndPersistCancellation(
-                    createDoknotifikasjonStopp(existingVarselbestilling)
-                )
-                rapidMetricsProbe.countDoknotifikasjonStoppProduced()
+                if (!existingVarselbestilling.avbestilt) {
+                    doknotifikasjonStoppProducer.sendDoknotifikasjonStoppAndPersistCancellation(
+                        createDoknotifikasjonStopp(existingVarselbestilling)
+                    )
+                    rapidMetricsProbe.countDoknotifikasjonStoppProduced()
+                }
             }
         }
     }
