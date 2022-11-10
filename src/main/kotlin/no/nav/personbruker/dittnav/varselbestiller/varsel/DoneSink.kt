@@ -24,7 +24,7 @@ class DoneSink(
 
     init {
         River(rapidsConnection).apply {
-            if(includeVarselInaktivert) {
+            if (includeVarselInaktivert) {
                 validate { it.demandAny("@event_name", listOf("done", "varselInaktivert")) }
             } else {
                 validate { it.demandValue("@event_name", "done") }
@@ -37,12 +37,18 @@ class DoneSink(
         val eventId = packet["eventId"].textValue()
 
         runBlocking {
+            if (packet["@event_name"].asText() == "varselInaktivert") {
+                rapidMetricsProbe.countReadVarselInaktivertEvents()
+            }
             varselbestillingRepository.getVarselbestillingIfExists(eventId)?.let { existingVarselbestilling ->
                 if (!existingVarselbestilling.avbestilt) {
                     doknotifikasjonStoppProducer.sendDoknotifikasjonStoppAndPersistCancellation(
                         createDoknotifikasjonStopp(existingVarselbestilling)
                     )
                     rapidMetricsProbe.countDoknotifikasjonStoppProduced()
+                    if (packet["@event_name"].asText() == "varselInaktivert") {
+                        rapidMetricsProbe.countProducedForVarslerInaktivert()
+                    }
                 }
             }
         }
