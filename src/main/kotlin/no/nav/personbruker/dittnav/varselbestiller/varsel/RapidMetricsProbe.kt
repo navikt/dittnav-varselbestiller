@@ -2,9 +2,9 @@ package no.nav.personbruker.dittnav.varselbestiller.varsel
 
 import no.nav.personbruker.dittnav.common.metrics.MetricsReporter
 
-class RapidMetricsProbe(private val metricsReporter: MetricsReporter) {
+private const val METRIC_NAMESPACE = "dittnav.varselbestiller.v1"
 
-    private val METRIC_NAMESPACE = "dittnav.varselbestiller.v1"
+class RapidMetricsProbe(private val metricsReporter: MetricsReporter) {
 
     suspend fun countDoknotifikasjonProduced(varselType: VarselType) {
         metricsReporter.registerDataPoint(
@@ -14,11 +14,11 @@ class RapidMetricsProbe(private val metricsReporter: MetricsReporter) {
         )
     }
 
-    suspend fun countDoknotifikasjonStoppProduced() {
+    suspend fun countDoknotifikasjonStoppProduced(eventName:String) {
         metricsReporter.registerDataPoint(
             measurementName = "$METRIC_NAMESPACE.doknotifikasjonstopp.produced",
             fields = counterField(),
-            tags = emptyMap()
+            tags = mapOf("eventName" to eventName)
         )
     }
 
@@ -31,4 +31,5 @@ class RapidMetricsProbe(private val metricsReporter: MetricsReporter) {
     }
 
     private fun counterField(): Map<String, Int> = listOf("counter" to 1).toMap()
+
 }
