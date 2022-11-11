@@ -35,20 +35,16 @@ class DoneSink(
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
         val eventId = packet["eventId"].textValue()
+        val eventName = packet["@event_name"].textValue()
 
         runBlocking {
-            if (packet["@event_name"].asText() == "varselInaktivert") {
-                rapidMetricsProbe.countReadVarselInaktivertEvents()
-            }
+
             varselbestillingRepository.getVarselbestillingIfExists(eventId)?.let { existingVarselbestilling ->
                 if (!existingVarselbestilling.avbestilt) {
                     doknotifikasjonStoppProducer.sendDoknotifikasjonStoppAndPersistCancellation(
                         createDoknotifikasjonStopp(existingVarselbestilling)
                     )
-                    rapidMetricsProbe.countDoknotifikasjonStoppProduced()
-                    if (packet["@event_name"].asText() == "varselInaktivert") {
-                        rapidMetricsProbe.countProducedForVarslerInaktivert()
-                    }
+                    rapidMetricsProbe.countDoknotifikasjonStoppProduced(eventName)
                 }
             }
         }
