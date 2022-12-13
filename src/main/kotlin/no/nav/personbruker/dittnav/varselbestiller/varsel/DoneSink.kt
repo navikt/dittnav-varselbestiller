@@ -25,7 +25,7 @@ class DoneSink(
     init {
         River(rapidsConnection).apply {
             if (includeVarselInaktivert) {
-                validate { it.demandAny("@event_name", listOf("done", "varselInaktivert", "inaktivert")) }
+                validate { it.demandAny("@event_name", listOf("inaktivert")) }
             } else {
                 validate { it.demandValue("@event_name", "done") }
             }
