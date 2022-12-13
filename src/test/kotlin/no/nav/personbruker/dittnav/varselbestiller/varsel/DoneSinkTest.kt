@@ -1,6 +1,5 @@
 package no.nav.personbruker.dittnav.varselbestiller.varsel
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
@@ -43,10 +42,8 @@ class DoneSinkTest {
         varselbestillingRepository = varselbestillingRepository
     )
 
-    private val eventId = "1"
-    private val eventaggregatorEventId = "77"
-    private val varselJson = varselJson(VarselType.BESKJED, eventId)
-    private val eventaggregatorJson = varselJson(VarselType.BESKJED, eventaggregatorEventId)
+    private val eventId = "77"
+    private val varselAktivertJson = varselAktivertJson(VarselType.BESKJED, eventId)
     private lateinit var testRapid: TestRapid
 
     @BeforeEach
@@ -61,35 +58,14 @@ class DoneSinkTest {
     }
 
     @Test
-    fun `Sender doknotifikasjonStopp ved done`() = runBlocking {
-        setupDoneSink(testRapid, false)
-
-        testRapid.sendTestMessage(varselJson)
-        testRapid.sendTestMessage(eventaggregatorJson)
-        testRapid.sendTestMessage(doneJson(eventId))
-        testRapid.sendTestMessage(varselInaktivertEventJson(eventaggregatorEventId))
-
-
-        doknotifikasjonStoppKafkaProducer.history().size shouldBe 1
-
-        val doknotifikasjonStopp = doknotifikasjonStoppKafkaProducer.history().first()
-        doknotifikasjonStopp.key() shouldBe eventId
-        doknotifikasjonStopp.value().getBestillingsId() shouldBe eventId
-        doknotifikasjonStopp.value()
-            .getBestillerId() shouldBe ObjectMapper().readTree(varselJson)["appnavn"].textValue()
-    }
-
-    @Test
-    fun `Sender doknotifikasjonStopp ved done og varselInaktivert`() {
+    fun `Sender doknotifikasjonStopp ved inaktivert`() {
         runBlocking {
             setupDoneSink(testRapid, true)
 
-            testRapid.sendTestMessage(varselJson)
-            testRapid.sendTestMessage(eventaggregatorJson)
-            testRapid.sendTestMessage(doneJson(eventId))
-            testRapid.sendTestMessage(varselInaktivertEventJson(eventaggregatorEventId))
+            testRapid.sendTestMessage(varselAktivertJson)
+            testRapid.sendTestMessage(varselInaktivertEventJson(eventId))
             testRapid.sendTestMessage(
-                varselJson(
+                varselAktivertJson(
                     eventId = "99",
                     type = VarselType.BESKJED,
                     eksternVarsling = true,
@@ -99,21 +75,20 @@ class DoneSinkTest {
 
 
             doknotifikasjonStoppKafkaProducer.history().assert {
-                size shouldBe 2
-                map { it.key() } shouldContainExactly listOf(eventId, eventaggregatorEventId)
+                size shouldBe 1
+                map { it.key() } shouldContainExactly listOf(eventId)
             }
         }
     }
 
     @Test
-    fun `Setter varselbestilling til avbestilt ved done og varselInaktivert`() {
+    fun `Setter varselbestilling til avbestilt ved inaktivert-event`() {
         runBlocking {
             setupDoneSink(testRapid, true)
 
-            testRapid.sendTestMessage(varselJson)
-            testRapid.sendTestMessage(eventaggregatorJson)
+            testRapid.sendTestMessage(varselAktivertJson)
             testRapid.sendTestMessage(
-                varselJson(
+                varselAktivertJson(
                     eventId = "99",
                     type = VarselType.BESKJED,
                     eksternVarsling = true,
@@ -122,24 +97,22 @@ class DoneSinkTest {
             )
 
 
-            testRapid.sendTestMessage(doneJson(eventId))
-            testRapid.sendTestMessage(varselInaktivertEventJson(eventaggregatorEventId))
+            testRapid.sendTestMessage(varselInaktivertEventJson(eventId))
 
             bestilleringerFromDb().filter { it.avbestilt }.assert {
-                size shouldBe 2
-                map { it.eventId } shouldContainExactly listOf(eventId, eventaggregatorEventId)
+                size shouldBe 1
+                map { it.eventId } shouldContainExactly listOf(eventId)
             }
         }
     }
 
     @Test
-    fun `Sender ikke doknotifikasjonStopp for duplikat done eller varselInaktivert`() = runBlocking {
+    fun `Sender ikke doknotifikasjonStopp for duplikat inaktivert-event`() = runBlocking {
         setupDoneSink(testRapid, true)
 
-        testRapid.sendTestMessage(varselJson)
-        testRapid.sendTestMessage(eventaggregatorJson)
+        testRapid.sendTestMessage(varselAktivertJson)
         testRapid.sendTestMessage(
-            varselJson(
+            varselAktivertJson(
                 eventId = "99",
                 type = VarselType.BESKJED,
                 eksternVarsling = true,
@@ -147,12 +120,10 @@ class DoneSinkTest {
             )
         )
 
-        testRapid.sendTestMessage(doneJson(eventId))
-        testRapid.sendTestMessage(varselInaktivertEventJson(eventaggregatorEventId))
-        testRapid.sendTestMessage(doneJson(eventId))
-        testRapid.sendTestMessage(varselInaktivertEventJson(eventaggregatorEventId))
+        testRapid.sendTestMessage(varselInaktivertEventJson(eventId))
+        testRapid.sendTestMessage(varselInaktivertEventJson(eventId))
 
-        doknotifikasjonStoppKafkaProducer.history().size shouldBe 2
+        doknotifikasjonStoppKafkaProducer.history().size shouldBe 1
     }
 
     private fun setupVarselSink(testRapid: TestRapid) = VarselSink(
@@ -174,15 +145,9 @@ class DoneSinkTest {
         return database.dbQuery { getAllVarselbestilling() }
     }
 
-    private fun doneJson(eventId: String) =
-        """{
-        "@event_name": "done",
-        "eventId": "$eventId"
-    }""".trimIndent()
-
     private fun varselInaktivertEventJson(eventId: String) =
         """{
-        "@event_name": "varselInaktivert",
+        "@event_name": "inaktivert",
         "eventId": "$eventId"
     }""".trimIndent()
 }

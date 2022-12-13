@@ -1,11 +1,11 @@
 package no.nav.personbruker.dittnav.varselbestiller.varsel
 
 
-fun varselJsonWithNullableFields(
+fun varselAktivertJsonWithNullableFields(
     type: VarselType,
     eventId: String,
     eksternVarsling: Boolean = true
-) = varselJson(
+) = varselAktivertJson(
     type = type,
     eventId = eventId,
     eksternVarsling = eksternVarsling,
@@ -15,7 +15,7 @@ fun varselJsonWithNullableFields(
     epostVarslingstittel = null
 )
 
-fun varselJson(
+fun varselAktivertJson(
     type: VarselType,
     eventId: String,
     eksternVarsling: Boolean = true,
