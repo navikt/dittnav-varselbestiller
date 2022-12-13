@@ -24,7 +24,8 @@ fun varselJson(
     epostVarslingstekst: String? = "eposttekst",
     epostVarslingstittel: String? = "eposttittel"
 ) = """{
-        "@event_name": "${type.name.lowercase()}",
+        "@event_name": "aktivert",
+        "varselType": "${type.name.lowercase()}",
         "namespace": "ns",
         "appnavn": "app",
         "eventId": "$eventId",
