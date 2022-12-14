@@ -45,7 +45,7 @@ class VarselSinkTest {
         val testRapid = TestRapid()
         setupVarselSink(testRapid)
 
-        val varselJson = varselJson(VarselType.BESKJED, "1")
+        val varselJson = varselAktivertJson(VarselType.BESKJED, "1")
         testRapid.sendTestMessage(varselJson)
 
         doknotifikasjonKafkaProducer.history().size shouldBe 1
@@ -70,7 +70,7 @@ class VarselSinkTest {
         val testRapid = TestRapid()
         setupVarselSink(testRapid)
 
-        val varselJson = varselJson(varselType, "1")
+        val varselJson = varselAktivertJson(varselType, "1")
         testRapid.sendTestMessage(varselJson)
 
         doknotifikasjonKafkaProducer.history().size shouldBe 1
@@ -96,14 +96,14 @@ class VarselSinkTest {
         val testRapid = TestRapid()
         setupVarselSink(testRapid)
 
-        testRapid.sendTestMessage(varselJson(VarselType.BESKJED, "1"))
-        testRapid.sendTestMessage(varselJson(VarselType.BESKJED, "1"))
+        testRapid.sendTestMessage(varselAktivertJson(VarselType.BESKJED, "1"))
+        testRapid.sendTestMessage(varselAktivertJson(VarselType.BESKJED, "1"))
 
-        testRapid.sendTestMessage(varselJson(VarselType.OPPGAVE, "2"))
-        testRapid.sendTestMessage(varselJson(VarselType.OPPGAVE, "2"))
+        testRapid.sendTestMessage(varselAktivertJson(VarselType.OPPGAVE, "2"))
+        testRapid.sendTestMessage(varselAktivertJson(VarselType.OPPGAVE, "2"))
 
-        testRapid.sendTestMessage(varselJson(VarselType.INNBOKS, "3"))
-        testRapid.sendTestMessage(varselJson(VarselType.INNBOKS, "3"))
+        testRapid.sendTestMessage(varselAktivertJson(VarselType.INNBOKS, "3"))
+        testRapid.sendTestMessage(varselAktivertJson(VarselType.INNBOKS, "3"))
 
         val eksternVarselBestillinger = bestilleringerFromDb()
         eksternVarselBestillinger.size shouldBe 3
@@ -119,7 +119,7 @@ class VarselSinkTest {
         val testRapid = TestRapid()
         setupVarselSink(testRapid)
 
-        testRapid.sendTestMessage(varselJson(VarselType.BESKJED, "1", eksternVarsling = false))
+        testRapid.sendTestMessage(varselAktivertJson(VarselType.BESKJED, "1", eksternVarsling = false))
 
         val eksternVarselBestillinger = bestilleringerFromDb()
         eksternVarselBestillinger.size shouldBe 0
@@ -130,9 +130,9 @@ class VarselSinkTest {
         val testRapid = TestRapid()
         setupVarselSink(testRapid)
 
-        testRapid.sendTestMessage(varselJsonWithNullableFields(VarselType.BESKJED, "1"))
-        testRapid.sendTestMessage(varselJsonWithNullableFields(VarselType.OPPGAVE, "2"))
-        testRapid.sendTestMessage(varselJsonWithNullableFields(VarselType.INNBOKS, "3"))
+        testRapid.sendTestMessage(varselAktivertJsonWithNullableFields(VarselType.BESKJED, "1"))
+        testRapid.sendTestMessage(varselAktivertJsonWithNullableFields(VarselType.OPPGAVE, "2"))
+        testRapid.sendTestMessage(varselAktivertJsonWithNullableFields(VarselType.INNBOKS, "3"))
 
         doknotifikasjonKafkaProducer.history().size shouldBe 3
         val doknotifikasjonBeskjed = doknotifikasjonKafkaProducer.history().first { it.key() == "1" }

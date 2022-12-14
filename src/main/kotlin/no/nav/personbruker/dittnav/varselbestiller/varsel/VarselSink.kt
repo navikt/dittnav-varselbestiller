@@ -23,9 +23,9 @@ class VarselSink(
 
     init {
         River(rapidsConnection).apply {
-            validate { it.demandAny("@event_name", listOf("beskjed", "oppgave", "innboks")) }
+            validate { it.demandValue("@event_name", "aktivert") }
+            validate { it.demandAny("varselType", listOf("beskjed", "oppgave", "innboks")) }
             validate { it.demandValue("eksternVarsling", true) }
-            //aktiv == true?
             validate { it.requireKey(
                 "namespace",
                 "appnavn",
@@ -45,7 +45,7 @@ class VarselSink(
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
         val varsel = Varsel(
-            varselType = VarselType.valueOf(packet["@event_name"].textValue().uppercase()),
+            varselType = VarselType.valueOf(packet["varselType"].textValue().uppercase()),
             namespace = packet["namespace"].textValue(),
             appnavn = packet["appnavn"].textValue(),
             eventId = packet["eventId"].textValue(),
