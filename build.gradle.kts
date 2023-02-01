@@ -33,15 +33,14 @@ sourceSets {
 }
 
 dependencies {
-    implementation("com.github.navikt:brukernotifikasjon-schemas-internal:1.2022.01.20-12.20-9c37cb170dc9")
-    implementation(DittNAV.Common.influxdb)
-    implementation(DittNAV.Common.utils)
+    implementation(DittNAVCommonLib.influxdb)
+    implementation(DittNAVCommonLib.utils)
     implementation(Doknotifikasjon.schemas)
     implementation(Flyway.core)
     implementation(Hikari.cp)
     implementation(Influxdb.java)
-    implementation(Kafka.Apache.clients)
-    implementation(Kafka.Confluent.avroSerializer)
+    implementation(Kafka.clients)
+    implementation(Avro.avroSerializer)
     implementation(Ktor.htmlBuilder)
     implementation(Ktor.serverNetty)
     implementation(Logback.classic)
@@ -50,14 +49,14 @@ dependencies {
     implementation(Prometheus.common)
     implementation(Prometheus.hotspot)
     implementation(Prometheus.logback)
-    implementation("com.github.navikt:rapids-and-rivers:20210617121814-3e67e4d")
+    implementation(RapidsAndRivers.rapidsAndRivers)
 
     testImplementation(Junit.api)
     testImplementation(Junit.engine)
     testImplementation(Junit.params)
-    testImplementation(Kafka.Apache.kafka_2_12)
-    testImplementation(Kafka.Apache.streams)
-    testImplementation(Kafka.Confluent.schemaRegistry)
+    testImplementation(Kafka.kafka_2_12)
+    testImplementation(Kafka.streams)
+    testImplementation(Avro.schemaRegistry)
     testImplementation(Kotlinx.atomicfu)
     testImplementation(Ktor.clientMock)
     testImplementation(Mockk.mockk)
@@ -78,22 +77,6 @@ tasks {
             exceptionFormat = TestExceptionFormat.FULL
             events("passed", "skipped", "failed")
         }
-    }
-
-    register("runServer", JavaExec::class) {
-        environment("KAFKA_BROKERS", "localhost:29092")
-        environment("KAFKA_SCHEMA_REGISTRY", "http://localhost:8081")
-        environment("GROUP_ID", "dittnav_varselbestiller")
-        environment("DB_HOST", "localhost")
-        environment("DB_PORT", "5432")
-        environment("DB_DATABASE", "dittnav-varselbestiller")
-        environment("DB_USERNAME", "testuser")
-        environment("DB_PASSWORD", "testpassword")
-        environment("NAIS_CLUSTER_NAME", "dev-gcp")
-        environment("NAIS_NAMESPACE", "dev")
-
-        main = application.mainClass.get()
-        classpath = sourceSets["main"].runtimeClasspath
     }
 }
 
