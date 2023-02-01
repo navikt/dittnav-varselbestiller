@@ -67,7 +67,7 @@ class VarselSink(
                     varselbestilling = varsel.toVarselBestilling(),
                     doknotifikasjon = createDoknotifikasjonFromVarsel(varsel)
                 )
-                rapidMetricsProbe.countDoknotifikasjonProduced(varsel.varselType)
+                rapidMetricsProbe.countDoknotifikasjonProduced(varsel.varselType,varsel.prefererteKanaler)
             } else {
                 rapidMetricsProbe.countDuplicates(varsel.varselType)
             }
