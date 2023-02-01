@@ -1,6 +1,5 @@
 package no.nav.personbruker.dittnav.varselbestiller.varselbestilling
 
-import no.nav.brukernotifikasjon.schemas.internal.domain.PreferertKanal
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
@@ -15,7 +14,7 @@ object VarselbestillingObjectMother {
         namespace: String = "dummyNamespace",
         appnavn: String = "dummyAppnavn",
         bestillingstidspunkt: LocalDateTime = LocalDateTime.now(ZoneId.of("UTC")).truncatedTo(ChronoUnit.MILLIS),
-        prefererteKanaler: List<String> = listOf(PreferertKanal.SMS.toString(), PreferertKanal.EPOST.toString())
+        prefererteKanaler: List<String> = listOf("SMS", "EPOST")
     ): Varselbestilling {
         return Varselbestilling(
                 bestillingsId = bestillingsId,
