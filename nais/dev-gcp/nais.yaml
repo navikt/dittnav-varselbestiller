@@ -26,6 +26,8 @@ spec:
     cpuThresholdPercentage: 50
   kafka:
     pool: nav-dev
+  secureLogs:
+    enabled: true
   gcp:
     sqlInstances:
       - name: varselbestiller
