@@ -1,18 +1,18 @@
 package no.nav.personbruker.dittnav.varselbestiller.common.kafka
 
+import mu.KotlinLogging
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.exception.RetriableKafkaException
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.exception.UnretriableKafkaException
 import org.apache.kafka.clients.producer.Producer
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.KafkaException
-import org.slf4j.LoggerFactory
 
 class KafkaProducerWrapper<K, V>(
     private val topicName: String,
     private val kafkaProducer: Producer<K, V>
 ) {
 
-    val log = LoggerFactory.getLogger(KafkaProducerWrapper::class.java)
+    private val log = KotlinLogging.logger {  }
 
     fun sendEventsAndLeaveTransactionOpen(event: RecordKeyValueWrapper<K, V>) {
         try {

@@ -1,6 +1,7 @@
 package no.nav.personbruker.dittnav.varselbestiller.varsel
 
 import kotlinx.coroutines.runBlocking
+import mu.KotlinLogging
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.MessageProblems
@@ -9,8 +10,6 @@ import no.nav.helse.rapids_rivers.River
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 class DoneSink(
     rapidsConnection: RapidsConnection,
@@ -20,7 +19,7 @@ class DoneSink(
     private val includeVarselInaktivert: Boolean = false
 ) :
     River.PacketListener {
-    private val log: Logger = LoggerFactory.getLogger(DoneSink::class.java)
+    private val log = KotlinLogging.logger {  }
 
     init {
         River(rapidsConnection).apply {
