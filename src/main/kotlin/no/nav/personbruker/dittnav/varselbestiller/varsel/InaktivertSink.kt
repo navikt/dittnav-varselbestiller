@@ -12,7 +12,7 @@ import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.Doknotif
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 
-class DoneSink(
+class InaktivertSink(
     rapidsConnection: RapidsConnection,
     private val doknotifikasjonStoppProducer: DoknotifikasjonStoppProducer,
     private val varselbestillingRepository: VarselbestillingRepository,

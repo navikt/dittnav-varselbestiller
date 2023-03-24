@@ -12,7 +12,7 @@ import no.nav.personbruker.dittnav.varselbestiller.common.database.Database
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaProducerWrapper
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
-import no.nav.personbruker.dittnav.varselbestiller.varsel.DoneSink
+import no.nav.personbruker.dittnav.varselbestiller.varsel.InaktivertSink
 import no.nav.personbruker.dittnav.varselbestiller.varsel.RapidMetricsProbe
 import no.nav.personbruker.dittnav.varselbestiller.varsel.VarselSink
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
@@ -68,7 +68,7 @@ private fun startRapid(
             varselbestillingRepository = varselbestillingRepository,
             rapidMetricsProbe = rapidMetricsProbe
         )
-        DoneSink(
+        InaktivertSink(
             rapidsConnection = this,
             doknotifikasjonStoppProducer = doknotifikasjonStoppProducer,
             varselbestillingRepository = varselbestillingRepository,

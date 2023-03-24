@@ -60,7 +60,7 @@ class InaktivertSinkTest {
     @Test
     fun `Sender doknotifikasjonStopp ved inaktivert`() {
         runBlocking {
-            setupDoneSink(testRapid)
+            setupInaktivertSink(testRapid)
 
             testRapid.sendTestMessage(varselAktivertJson)
             testRapid.sendTestMessage(varselInaktivertEventJson(eventId))
@@ -84,7 +84,7 @@ class InaktivertSinkTest {
     @Test
     fun `Setter varselbestilling til avbestilt ved inaktivert-event`() {
         runBlocking {
-            setupDoneSink(testRapid)
+            setupInaktivertSink(testRapid)
 
             testRapid.sendTestMessage(varselAktivertJson)
             testRapid.sendTestMessage(
@@ -108,7 +108,7 @@ class InaktivertSinkTest {
 
     @Test
     fun `Sender ikke doknotifikasjonStopp for duplikat inaktivert-event`() = runBlocking {
-        setupDoneSink(testRapid)
+        setupInaktivertSink(testRapid)
 
         testRapid.sendTestMessage(varselAktivertJson)
         testRapid.sendTestMessage(
@@ -133,7 +133,7 @@ class InaktivertSinkTest {
         rapidMetricsProbe = mockk(relaxed = true)
     )
 
-    private fun setupDoneSink(testRapid: TestRapid) = DoneSink(
+    private fun setupInaktivertSink(testRapid: TestRapid) = InaktivertSink(
         rapidsConnection = testRapid,
         doknotifikasjonStoppProducer = doknotifikasjonStoppProducer,
         varselbestillingRepository = varselbestillingRepository,
