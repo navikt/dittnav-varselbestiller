@@ -16,20 +16,17 @@ class DoneSink(
     rapidsConnection: RapidsConnection,
     private val doknotifikasjonStoppProducer: DoknotifikasjonStoppProducer,
     private val varselbestillingRepository: VarselbestillingRepository,
-    private val rapidMetricsProbe: RapidMetricsProbe,
-    private val includeVarselInaktivert: Boolean = false
+    private val rapidMetricsProbe: RapidMetricsProbe
 ) :
     River.PacketListener {
-    private val log = KotlinLogging.logger {  }
+    private val log = KotlinLogging.logger { }
 
     init {
         River(rapidsConnection).apply {
-            if (includeVarselInaktivert) {
-                validate { it.demandAny("@event_name", listOf("inaktivert")) }
-            } else {
-                validate { it.demandValue("@event_name", "done") }
+            validate {
+                it.requireValue("@event_name", "inaktivert")
+                it.requireKey("eventId")
             }
-            validate { it.requireKey("eventId") }
         }.register(this)
     }
 

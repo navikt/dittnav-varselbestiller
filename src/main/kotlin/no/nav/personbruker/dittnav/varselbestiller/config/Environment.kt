@@ -30,7 +30,6 @@ data class Environment(
     val aivenSchemaRegistry: String = getEnvVar("KAFKA_SCHEMA_REGISTRY"),
     val securityVars: SecurityVars = SecurityVars(),
     val rapidTopic: String = getEnvVar("RAPID_TOPIC"),
-    val readVarselInaktivertFromRapid: Boolean = getEnvVar("READ_VARSEL_INAKTIVERT","false").toBoolean()
     ) {
     fun rapidConfig(): Map<String, String> = mapOf(
         "KAFKA_BROKERS" to aivenBrokers,

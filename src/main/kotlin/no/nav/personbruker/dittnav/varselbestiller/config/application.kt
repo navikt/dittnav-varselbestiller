@@ -72,8 +72,7 @@ private fun startRapid(
             rapidsConnection = this,
             doknotifikasjonStoppProducer = doknotifikasjonStoppProducer,
             varselbestillingRepository = varselbestillingRepository,
-            rapidMetricsProbe = rapidMetricsProbe,
-            includeVarselInaktivert = environment.readVarselInaktivertFromRapid
+            rapidMetricsProbe = rapidMetricsProbe
         )
     }.apply {
         register(object : RapidsConnection.StatusListener {
