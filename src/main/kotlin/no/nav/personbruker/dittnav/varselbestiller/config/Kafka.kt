@@ -51,3 +51,8 @@ object Kafka {
             "$transactionIdName-${eventtype.eventtype}"
 
 }
+
+enum class Eventtype(val eventtype: String) {
+    DOKNOTIFIKASJON_STOPP("doknotifikasjon-stopp"),
+    VARSEL(" varsel")
+}

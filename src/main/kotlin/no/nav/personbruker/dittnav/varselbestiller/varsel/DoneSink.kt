@@ -2,13 +2,14 @@ package no.nav.personbruker.dittnav.varselbestiller.varsel
 
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
+import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.MessageProblems
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.River
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
-import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 
 class DoneSink(
@@ -54,3 +55,9 @@ class DoneSink(
     }
 }
 
+fun createDoknotifikasjonStopp(varselbestilling: Varselbestilling): DoknotifikasjonStopp {
+    val doknotifikasjonStoppBuilder = DoknotifikasjonStopp.newBuilder()
+        .setBestillingsId(varselbestilling.bestillingsId)
+        .setBestillerId(varselbestilling.appnavn)
+    return doknotifikasjonStoppBuilder.build()
+}
