@@ -47,6 +47,7 @@ class VarselSink(
     }
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
+
         val varsel = Varsel(
             varselType = VarselType.valueOf(packet["varselType"].textValue().uppercase()),
             namespace = packet["namespace"].textValue(),
