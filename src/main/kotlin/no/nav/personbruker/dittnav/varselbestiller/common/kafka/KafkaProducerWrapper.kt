@@ -1,8 +1,8 @@
 package no.nav.personbruker.dittnav.varselbestiller.common.kafka
 
 import mu.KotlinLogging
-import no.nav.personbruker.dittnav.varselbestiller.common.kafka.exception.RetriableKafkaException
-import no.nav.personbruker.dittnav.varselbestiller.common.kafka.exception.UnretriableKafkaException
+import no.nav.personbruker.dittnav.varselbestiller.common.RetriableKafkaException
+import no.nav.personbruker.dittnav.varselbestiller.common.UnretriableKafkaException
 import org.apache.kafka.clients.producer.Producer
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.KafkaException

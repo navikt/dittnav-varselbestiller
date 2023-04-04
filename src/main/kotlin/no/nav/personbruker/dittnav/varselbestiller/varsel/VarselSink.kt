@@ -69,6 +69,7 @@ class VarselSink(
             if (!isDuplicateVarselbestilling) {
                 doknotifikasjonProducer.sendAndPersistBestilling(
                     varselbestilling = varsel.toVarselBestilling(),
+
                     doknotifikasjon = createDoknotifikasjonFromVarsel(varsel)
                 )
                 rapidMetricsProbe.countDoknotifikasjonProduced(varsel.varselType, varsel.prefererteKanaler)

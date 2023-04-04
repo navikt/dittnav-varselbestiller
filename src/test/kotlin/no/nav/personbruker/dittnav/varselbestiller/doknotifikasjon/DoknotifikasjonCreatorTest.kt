@@ -2,7 +2,7 @@ package no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.string.shouldContain
-import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.FieldValidationException
+import no.nav.personbruker.dittnav.varselbestiller.common.FieldValidationException
 import no.nav.personbruker.dittnav.varselbestiller.varsel.Varsel
 import no.nav.personbruker.dittnav.varselbestiller.varsel.VarselType
 import org.junit.jupiter.api.Test

@@ -3,8 +3,8 @@ package no.nav.personbruker.dittnav.varselbestiller.common.database
 import com.zaxxer.hikari.HikariDataSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import no.nav.personbruker.dittnav.varselbestiller.common.database.exception.RetriableDatabaseException
-import no.nav.personbruker.dittnav.varselbestiller.common.database.exception.UnretriableDatabaseException
+import no.nav.personbruker.dittnav.varselbestiller.common.RetriableDatabaseException
+import no.nav.personbruker.dittnav.varselbestiller.common.UnretriableDatabaseException
 import org.postgresql.util.PSQLException
 import java.sql.Connection
 import java.sql.SQLException
@@ -33,8 +33,11 @@ interface Database {
         }
     }
 
-    suspend fun <T> queryWithExceptionTranslation(operationToExecute: Connection.() -> T): T {
-        return translateExternalExceptionsToInternalOnes {
+    suspend fun <T> queryWithExceptionTranslation(
+        identifier: String? = null,
+        operationToExecute: Connection.() -> T
+    ): T {
+        return translateExternalExceptionsToInternalOnes(identifier) {
             dbQuery {
                 operationToExecute()
             }
@@ -42,32 +45,32 @@ interface Database {
     }
 }
 
-inline fun <T> translateExternalExceptionsToInternalOnes(databaseActions: () -> T): T {
+inline fun <T> translateExternalExceptionsToInternalOnes(identifier: String? = null, databaseActions: () -> T): T {
     return try {
         databaseActions()
 
     } catch (te: SQLTransientException) {
         val message = "Skriving til databasen feilet grunnet en periodisk feil."
-        throw RetriableDatabaseException(message, te)
+        throw RetriableDatabaseException(message, te,identifier)
 
     } catch (re: SQLRecoverableException) {
         val message = "Skriving til databasen feilet grunnet en periodisk feil."
-        throw RetriableDatabaseException(message, re)
+        throw RetriableDatabaseException(message, re,identifier)
 
     } catch (pe: PSQLException) {
         val message = "Det skjedde en SQL relatert feil ved skriving til databasen."
-        val ure = UnretriableDatabaseException(message, pe)
+        val ure = UnretriableDatabaseException(message, pe,identifier)
         pe.sqlState?.map { sqlState -> ure.addContext("sqlState", sqlState) }
         throw ure
 
     } catch (se: SQLException) {
         val message = "Det skjedde en SQL relatert feil ved skriving til databasen."
-        val ure = UnretriableDatabaseException(message, se)
+        val ure = UnretriableDatabaseException(message, se, identifier)
         se.sqlState?.map { sqlState -> ure.addContext("sqlState", sqlState) }
         throw ure
 
     } catch (e: Exception) {
         val message = "Det skjedde en ukjent feil ved skriving til databasen."
-        throw UnretriableDatabaseException(message, e)
+        throw UnretriableDatabaseException(message, e, identifier)
     }
 }
