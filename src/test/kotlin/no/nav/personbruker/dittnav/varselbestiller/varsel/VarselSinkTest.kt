@@ -138,7 +138,7 @@ class VarselSinkTest {
         val doknotifikasjonBeskjed = doknotifikasjonKafkaProducer.history().first { it.key() == "1" }
         doknotifikasjonBeskjed.value().getTittel() shouldBe "Beskjed fra NAV"
         doknotifikasjonBeskjed.value().getEpostTekst() shouldBe "<!DOCTYPE html><html><head><title>Melding</title></head><body><p>Hei!</p><p>Du har fått en ny beskjed fra NAV. Logg inn på nav.no for å se hva beskjeden gjelder.</p><p>Vennlig hilsen</p><p>NAV</p></body></html>\n"
-        doknotifikasjonBeskjed.value().getSmsTekst() shouldBe "Hei! Du har fått en ny beskjed fra NAV. Logg inn for å se hva beskjeden gjelder. Vennlig hilsen NAV\n"
+        doknotifikasjonBeskjed.value().getSmsTekst() shouldBe "Hei! Du har fått en ny beskjed fra NAV. Logg inn på nav.no for å se hva beskjeden gjelder. Vennlig hilsen NAV\n"
 
         val doknotifikasjonOppgave = doknotifikasjonKafkaProducer.history().first { it.key() == "2" }
         doknotifikasjonOppgave.value().getTittel() shouldBe "Du har fått en oppgave fra NAV"
