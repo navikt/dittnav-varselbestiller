@@ -48,7 +48,7 @@ class InaktivertSink(
     }
 
     override fun onError(problems: MessageProblems, context: MessageContext) {
-        log.error(problems.toString())
+        log.debug(problems.toString())
     }
 }
 
