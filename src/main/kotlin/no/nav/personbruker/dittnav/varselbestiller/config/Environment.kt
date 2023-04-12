@@ -23,14 +23,12 @@ data class Environment(
     val beskjedTopicName: String = getEnvVar("INTERN_BESKJED_TOPIC"),
     val oppgaveTopicName: String = getEnvVar("INTERN_OPPGAVE_TOPIC"),
     val innboksTopicName: String = getEnvVar("INTERN_INNBOKS_TOPIC"),
-    val doneTopicName: String = getEnvVar("INTERN_DONE_TOPIC"),
     val doknotifikasjonTopicName: String = getEnvVar("DOKNOTIFIKASJON_TOPIC"),
     val doknotifikasjonStopTopicName: String = getEnvVar("DOKNOTIFIKASJON_STOP_TOPIC"),
     val aivenBrokers: String = getEnvVar("KAFKA_BROKERS"),
     val aivenSchemaRegistry: String = getEnvVar("KAFKA_SCHEMA_REGISTRY"),
     val securityVars: SecurityVars = SecurityVars(),
     val rapidTopic: String = getEnvVar("RAPID_TOPIC"),
-    val readVarselInaktivertFromRapid: Boolean = getEnvVar("READ_VARSEL_INAKTIVERT","false").toBoolean()
     ) {
     fun rapidConfig(): Map<String, String> = mapOf(
         "KAFKA_BROKERS" to aivenBrokers,

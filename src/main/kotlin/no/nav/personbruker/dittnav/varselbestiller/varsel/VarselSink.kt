@@ -1,6 +1,7 @@
 package no.nav.personbruker.dittnav.varselbestiller.varsel
 
 import kotlinx.coroutines.runBlocking
+import mu.KotlinLogging
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.MessageProblems
@@ -9,8 +10,6 @@ import no.nav.helse.rapids_rivers.River
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator.createDoknotifikasjonFromVarsel
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 class VarselSink(
     rapidsConnection: RapidsConnection,
@@ -19,31 +18,36 @@ class VarselSink(
     private val rapidMetricsProbe: RapidMetricsProbe
 ) :
     River.PacketListener {
-    private val log: Logger = LoggerFactory.getLogger(VarselSink::class.java)
+    private val log = KotlinLogging.logger { }
 
     init {
         River(rapidsConnection).apply {
             validate { it.demandValue("@event_name", "aktivert") }
             validate { it.demandAny("varselType", listOf("beskjed", "oppgave", "innboks")) }
             validate { it.demandValue("eksternVarsling", true) }
-            validate { it.requireKey(
-                "namespace",
-                "appnavn",
-                "eventId",
-                "fodselsnummer",
-                "sikkerhetsnivaa",
-                "eksternVarsling"
-            ) }
-            validate { it.interestedIn(
-                "prefererteKanaler",
-                "smsVarslingstekst",
-                "epostVarslingstekst",
-                "epostVarslingstittel"
-            ) }
+            validate {
+                it.requireKey(
+                    "namespace",
+                    "appnavn",
+                    "eventId",
+                    "fodselsnummer",
+                    "sikkerhetsnivaa",
+                    "eksternVarsling"
+                )
+            }
+            validate {
+                it.interestedIn(
+                    "prefererteKanaler",
+                    "smsVarslingstekst",
+                    "epostVarslingstekst",
+                    "epostVarslingstittel"
+                )
+            }
         }.register(this)
     }
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
+
         val varsel = Varsel(
             varselType = VarselType.valueOf(packet["varselType"].textValue().uppercase()),
             namespace = packet["namespace"].textValue(),
@@ -65,9 +69,10 @@ class VarselSink(
             if (!isDuplicateVarselbestilling) {
                 doknotifikasjonProducer.sendAndPersistBestilling(
                     varselbestilling = varsel.toVarselBestilling(),
+
                     doknotifikasjon = createDoknotifikasjonFromVarsel(varsel)
                 )
-                rapidMetricsProbe.countDoknotifikasjonProduced(varsel.varselType,varsel.prefererteKanaler)
+                rapidMetricsProbe.countDoknotifikasjonProduced(varsel.varselType, varsel.prefererteKanaler)
             } else {
                 rapidMetricsProbe.countDuplicates(varsel.varselType)
             }
@@ -75,7 +80,7 @@ class VarselSink(
     }
 
     override fun onError(problems: MessageProblems, context: MessageContext) {
-        log.error(problems.toString())
+        log.debug(problems.toString())
     }
 }
 

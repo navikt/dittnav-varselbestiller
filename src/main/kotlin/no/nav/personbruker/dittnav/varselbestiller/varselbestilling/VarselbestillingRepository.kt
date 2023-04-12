@@ -5,11 +5,11 @@ import no.nav.personbruker.dittnav.varselbestiller.common.database.Database
 class VarselbestillingRepository(private val database: Database) {
 
     suspend fun persistVarselbestilling(bestilling: Varselbestilling) =
-        database.queryWithExceptionTranslation { createVarselbestilling(bestilling) }
+        database.queryWithExceptionTranslation(bestilling.eventId) { createVarselbestilling(bestilling) }
 
     suspend fun getVarselbestillingIfExists(eventId: String) =
-        database.queryWithExceptionTranslation { getVarselbestillingIfExists(eventId) }
+        database.queryWithExceptionTranslation(eventId) { getVarselbestillingIfExists(eventId) }
 
     suspend fun cancelVarselbestilling(bestillingsId: String) =
-        database.queryWithExceptionTranslation { cancelVarselbestilling(bestillingsId) }
+        database.queryWithExceptionTranslation(bestillingsId) { cancelVarselbestilling(bestillingsId) }
 }

@@ -29,3 +29,9 @@ data class Varsel(
         prefererteKanaler = prefererteKanaler,
     )
 }
+
+enum class VarselType {
+    OPPGAVE,
+    BESKJED,
+    INNBOKS
+}

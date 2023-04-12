@@ -1,35 +1,32 @@
 package no.nav.personbruker.dittnav.varselbestiller.varsel
 
 import kotlinx.coroutines.runBlocking
+import mu.KotlinLogging
+import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.MessageProblems
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.River
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
-import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppTransformer.createDoknotifikasjonStopp
+import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
-class DoneSink(
+class InaktivertSink(
     rapidsConnection: RapidsConnection,
     private val doknotifikasjonStoppProducer: DoknotifikasjonStoppProducer,
     private val varselbestillingRepository: VarselbestillingRepository,
-    private val rapidMetricsProbe: RapidMetricsProbe,
-    private val includeVarselInaktivert: Boolean = false
+    private val rapidMetricsProbe: RapidMetricsProbe
 ) :
     River.PacketListener {
-    private val log: Logger = LoggerFactory.getLogger(DoneSink::class.java)
+    private val log = KotlinLogging.logger { }
 
     init {
         River(rapidsConnection).apply {
-            if (includeVarselInaktivert) {
-                validate { it.demandAny("@event_name", listOf("inaktivert")) }
-            } else {
-                validate { it.demandValue("@event_name", "done") }
+            validate {
+                it.requireValue("@event_name", "inaktivert")
+                it.requireKey("eventId")
             }
-            validate { it.requireKey("eventId") }
         }.register(this)
     }
 
@@ -51,7 +48,13 @@ class DoneSink(
     }
 
     override fun onError(problems: MessageProblems, context: MessageContext) {
-        log.error(problems.toString())
+        log.debug(problems.toString())
     }
 }
 
+fun createDoknotifikasjonStopp(varselbestilling: Varselbestilling): DoknotifikasjonStopp {
+    val doknotifikasjonStoppBuilder = DoknotifikasjonStopp.newBuilder()
+        .setBestillingsId(varselbestilling.bestillingsId)
+        .setBestillerId(varselbestilling.appnavn)
+    return doknotifikasjonStoppBuilder.build()
+}

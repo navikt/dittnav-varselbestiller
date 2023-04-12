@@ -9,7 +9,7 @@ import org.apache.kafka.common.config.SaslConfigs
 import org.apache.kafka.common.config.SslConfigs
 import org.apache.kafka.common.serialization.StringSerializer
 import java.net.InetSocketAddress
-import java.util.Properties
+import java.util.*
 
 object Kafka {
 
@@ -17,7 +17,10 @@ object Kafka {
 
     private fun credentialPropsAiven(securityVars: SecurityVars): Properties {
         return Properties().apply {
-            put(KafkaAvroSerializerConfig.USER_INFO_CONFIG, "${securityVars.aivenSchemaRegistryUser}:${securityVars.aivenSchemaRegistryPassword}")
+            put(
+                KafkaAvroSerializerConfig.USER_INFO_CONFIG,
+                "${securityVars.aivenSchemaRegistryUser}:${securityVars.aivenSchemaRegistryPassword}"
+            )
             put(KafkaAvroSerializerConfig.BASIC_AUTH_CREDENTIALS_SOURCE, "USER_INFO")
             put(SaslConfigs.SASL_MECHANISM, "PLAIN")
             put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SSL")
@@ -48,6 +51,10 @@ object Kafka {
     }
 
     private fun buildTransactionIdName(eventtype: Eventtype) =
-            "$transactionIdName-${eventtype.eventtype}"
+        "$transactionIdName-${eventtype.eventtype}"
 
+}
+
+enum class Eventtype(val eventtype: String) {
+    DOKNOTIFIKASJON_STOPP("doknotifikasjon-stopp"), VARSEL(" varsel")
 }

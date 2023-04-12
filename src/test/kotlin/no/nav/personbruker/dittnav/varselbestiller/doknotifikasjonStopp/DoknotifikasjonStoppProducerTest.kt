@@ -9,9 +9,9 @@ import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
-import no.nav.personbruker.dittnav.varselbestiller.common.database.exception.RetriableDatabaseException
+import no.nav.personbruker.dittnav.varselbestiller.common.RetriableDatabaseException
+import no.nav.personbruker.dittnav.varselbestiller.common.RetriableKafkaException
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaProducerWrapper
-import no.nav.personbruker.dittnav.varselbestiller.common.kafka.exception.RetriableKafkaException
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test

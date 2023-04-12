@@ -1,14 +1,17 @@
 package no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon
 
+import mu.KotlinLogging
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.doknotifikasjon.schemas.PrefererteKanal
-import no.nav.personbruker.dittnav.varselbestiller.common.exceptions.FieldValidationException
+import no.nav.personbruker.dittnav.varselbestiller.common.FieldValidationException
 import no.nav.personbruker.dittnav.varselbestiller.varsel.Varsel
 import no.nav.personbruker.dittnav.varselbestiller.varsel.VarselType
 
 object DoknotifikasjonCreator {
+    private val log = KotlinLogging.logger {  }
 
-    fun createDoknotifikasjonFromVarsel(varsel: Varsel): Doknotifikasjon =
+    fun createDoknotifikasjonFromVarsel(varsel: Varsel): Doknotifikasjon = try {
+
         Doknotifikasjon.newBuilder()
             .setBestillingsId(varsel.eventId)
             .setBestillerId(varsel.appnavn)
@@ -20,6 +23,10 @@ object DoknotifikasjonCreator {
             .setPrefererteKanaler(getPrefererteKanaler(varsel.eksternVarsling, varsel.prefererteKanaler))
             .setRenotifikasjoner(varsel)
             .build()
+    } catch (fe: FieldValidationException){
+        log.warn { fe.toString() }
+        throw fe
+    }
 
     private fun getDoknotifikasjonEmailText(varsel: Varsel): String =
         varsel.epostVarslingstekst?.let {
@@ -39,9 +46,9 @@ object DoknotifikasjonCreator {
 
     private fun getDoknotifikasjonSMSText(varsel: Varsel): String =
         varsel.smsVarslingstekst ?: when(varsel.varselType) {
-            VarselType.BESKJED -> this::class.java.getResource("/texts/sms_beskjed.txt")!!.readText(Charsets.UTF_8)
-            VarselType.OPPGAVE -> this::class.java.getResource("/texts/sms_oppgave.txt")!!.readText(Charsets.UTF_8)
-            VarselType.INNBOKS -> this::class.java.getResource("/texts/sms_innboks.txt")!!.readText(Charsets.UTF_8)
+            VarselType.BESKJED -> "Hei! Du har fått en ny beskjed fra NAV. Logg inn på nav.no for å se hva beskjeden gjelder. Vennlig hilsen NAV"
+            VarselType.OPPGAVE -> "Hei! Du har fått en ny oppgave fra NAV. Logg inn på nav.no for å se hva oppgaven gjelder. Vennlig hilsen NAV"
+            VarselType.INNBOKS -> "Hei! Du har fått en ny melding fra NAV. Logg inn på nav.no for å lese meldingen. Vennlig hilsen NAV"
         }
 
     private fun Doknotifikasjon.Builder.setRenotifikasjoner(varsel: Varsel): Doknotifikasjon.Builder {

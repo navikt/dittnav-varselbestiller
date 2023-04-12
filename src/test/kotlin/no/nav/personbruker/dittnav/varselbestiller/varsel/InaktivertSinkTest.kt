@@ -18,7 +18,7 @@ import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.getAllVarsel
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-class DoneSinkTest {
+class InaktivertSinkTest {
 
     private val database = LocalPostgresDatabase.cleanDb()
     private val varselbestillingRepository = VarselbestillingRepository(database)
@@ -60,7 +60,7 @@ class DoneSinkTest {
     @Test
     fun `Sender doknotifikasjonStopp ved inaktivert`() {
         runBlocking {
-            setupDoneSink(testRapid, true)
+            setupInaktivertSink(testRapid)
 
             testRapid.sendTestMessage(varselAktivertJson)
             testRapid.sendTestMessage(varselInaktivertEventJson(eventId))
@@ -84,7 +84,7 @@ class DoneSinkTest {
     @Test
     fun `Setter varselbestilling til avbestilt ved inaktivert-event`() {
         runBlocking {
-            setupDoneSink(testRapid, true)
+            setupInaktivertSink(testRapid)
 
             testRapid.sendTestMessage(varselAktivertJson)
             testRapid.sendTestMessage(
@@ -108,7 +108,7 @@ class DoneSinkTest {
 
     @Test
     fun `Sender ikke doknotifikasjonStopp for duplikat inaktivert-event`() = runBlocking {
-        setupDoneSink(testRapid, true)
+        setupInaktivertSink(testRapid)
 
         testRapid.sendTestMessage(varselAktivertJson)
         testRapid.sendTestMessage(
@@ -133,12 +133,11 @@ class DoneSinkTest {
         rapidMetricsProbe = mockk(relaxed = true)
     )
 
-    private fun setupDoneSink(testRapid: TestRapid, includeVarselInaktivert: Boolean = false) = DoneSink(
+    private fun setupInaktivertSink(testRapid: TestRapid) = InaktivertSink(
         rapidsConnection = testRapid,
         doknotifikasjonStoppProducer = doknotifikasjonStoppProducer,
         varselbestillingRepository = varselbestillingRepository,
-        rapidMetricsProbe = mockk(relaxed = true),
-        includeVarselInaktivert = includeVarselInaktivert
+        rapidMetricsProbe = mockk(relaxed = true)
     )
 
     private suspend fun bestilleringerFromDb(): List<Varselbestilling> {
