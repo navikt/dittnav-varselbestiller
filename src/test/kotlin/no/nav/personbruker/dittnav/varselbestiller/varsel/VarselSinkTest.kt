@@ -45,7 +45,7 @@ class VarselSinkTest {
         val testRapid = TestRapid()
         setupVarselSink(testRapid)
 
-        val varselJson = varselAktivertJson(VarselType.BESKJED, "1")
+        val varselJson = varselAktivertJson(VarselType.Beskjed, "1")
         testRapid.sendTestMessage(varselJson)
 
         doknotifikasjonKafkaProducer.history().size shouldBe 1
@@ -54,18 +54,17 @@ class VarselSinkTest {
 
         val varselbestilling = varselbestillinger.first()
         val varselJsonNode = ObjectMapper().readTree(varselJson)
-        varselbestilling.appnavn shouldBe varselJsonNode["appnavn"].textValue()
-        varselbestilling.bestillingsId shouldBe varselJsonNode["eventId"].textValue()
-        varselbestilling.eventId shouldBe varselJsonNode["eventId"].textValue()
-        varselbestilling.fodselsnummer shouldBe varselJsonNode["fodselsnummer"].textValue()
-        varselbestilling.namespace shouldBe varselJsonNode["namespace"].textValue()
-        varselbestilling.appnavn shouldBe varselJsonNode["appnavn"].textValue()
-        varselbestilling.prefererteKanaler shouldBe varselJsonNode["prefererteKanaler"].map { it.textValue() }
+        varselbestilling.appnavn shouldBe varselJsonNode["produsent"]["appnavn"].textValue()
+        varselbestilling.namespace shouldBe varselJsonNode["produsent"]["namespace"].textValue()
+        varselbestilling.bestillingsId shouldBe varselJsonNode["varselId"].textValue()
+        varselbestilling.eventId shouldBe varselJsonNode["varselId"].textValue()
+        varselbestilling.fodselsnummer shouldBe varselJsonNode["ident"].textValue()
+        varselbestilling.prefererteKanaler shouldBe varselJsonNode["eksternVarslingBestilling"]["prefererteKanaler"].map { it.textValue() }
         varselbestilling.avbestilt shouldBe false
     }
 
     @ParameterizedTest
-    @CsvSource("BESKJED,0,null", "OPPGAVE,1,7", "INNBOKS,1,4", nullValues = ["null"])
+    @CsvSource("Beskjed,0,null", "Oppgave,1,7", "Innboks,1,4", nullValues = ["null"])
     fun `Bestiller ekstern varsling for varsel`(varselType: VarselType, antallRenotifikasjoner: Int, renotifikasjonIntervall: Int?) = runBlocking {
         val testRapid = TestRapid()
         setupVarselSink(testRapid)
@@ -78,15 +77,15 @@ class VarselSinkTest {
 
         val doknotifikasjon = doknotifikasjonKafkaProducer.history().first()
         val varselJsonNode = ObjectMapper().readTree(varselJson)
-        doknotifikasjon.key() shouldBe varselJsonNode["eventId"].textValue()
-        doknotifikasjon.value().getBestillingsId() shouldBe varselJsonNode["eventId"].textValue()
-        doknotifikasjon.value().getBestillerId() shouldBe varselJsonNode["appnavn"].textValue()
-        doknotifikasjon.value().getSikkerhetsnivaa() shouldBe varselJsonNode["sikkerhetsnivaa"].intValue()
-        doknotifikasjon.value().getFodselsnummer() shouldBe varselJsonNode["fodselsnummer"].textValue()
-        doknotifikasjon.value().getTittel() shouldBe varselJsonNode["epostVarslingstittel"].textValue()
-        doknotifikasjon.value().getEpostTekst() shouldBe "<!DOCTYPE html><html><head><title>${varselJsonNode["epostVarslingstittel"].textValue()}</title></head><body>${varselJsonNode["epostVarslingstekst"].textValue()}</body></html>\n"
-        doknotifikasjon.value().getSmsTekst() shouldBe varselJsonNode["smsVarslingstekst"].textValue()
-        doknotifikasjon.value().getPrefererteKanaler() shouldBe varselJsonNode["prefererteKanaler"].map { PrefererteKanal.valueOf(it.textValue()) }
+        doknotifikasjon.key() shouldBe varselJsonNode["varselId"].textValue()
+        doknotifikasjon.value().getBestillingsId() shouldBe varselJsonNode["varselId"].textValue()
+        doknotifikasjon.value().getBestillerId() shouldBe varselJsonNode["produsent"]["appnavn"].textValue()
+        doknotifikasjon.value().getSikkerhetsnivaa() shouldBe if(varselJsonNode["sensitivitet"].textValue() == "high") 4 else 3
+        doknotifikasjon.value().getFodselsnummer() shouldBe varselJsonNode["ident"].textValue()
+        doknotifikasjon.value().getTittel() shouldBe varselJsonNode["eksternVarslingBestilling"]["epostVarslingstittel"].textValue()
+        doknotifikasjon.value().getEpostTekst() shouldBe "<!DOCTYPE html><html><head><title>${varselJsonNode["eksternVarslingBestilling"]["epostVarslingstittel"].textValue()}</title></head><body>${varselJsonNode["eksternVarslingBestilling"]["epostVarslingstekst"].textValue()}</body></html>\n"
+        doknotifikasjon.value().getSmsTekst() shouldBe varselJsonNode["eksternVarslingBestilling"]["smsVarslingstekst"].textValue()
+        doknotifikasjon.value().getPrefererteKanaler() shouldBe varselJsonNode["eksternVarslingBestilling"]["prefererteKanaler"].map { PrefererteKanal.valueOf(it.textValue()) }
         doknotifikasjon.value().getAntallRenotifikasjoner() shouldBe antallRenotifikasjoner
         doknotifikasjon.value().getRenotifikasjonIntervall() shouldBe renotifikasjonIntervall
     }
@@ -96,14 +95,14 @@ class VarselSinkTest {
         val testRapid = TestRapid()
         setupVarselSink(testRapid)
 
-        testRapid.sendTestMessage(varselAktivertJson(VarselType.BESKJED, "1"))
-        testRapid.sendTestMessage(varselAktivertJson(VarselType.BESKJED, "1"))
+        testRapid.sendTestMessage(varselAktivertJson(VarselType.Beskjed, "1"))
+        testRapid.sendTestMessage(varselAktivertJson(VarselType.Beskjed, "1"))
 
-        testRapid.sendTestMessage(varselAktivertJson(VarselType.OPPGAVE, "2"))
-        testRapid.sendTestMessage(varselAktivertJson(VarselType.OPPGAVE, "2"))
+        testRapid.sendTestMessage(varselAktivertJson(VarselType.Oppgave, "2"))
+        testRapid.sendTestMessage(varselAktivertJson(VarselType.Oppgave, "2"))
 
-        testRapid.sendTestMessage(varselAktivertJson(VarselType.INNBOKS, "3"))
-        testRapid.sendTestMessage(varselAktivertJson(VarselType.INNBOKS, "3"))
+        testRapid.sendTestMessage(varselAktivertJson(VarselType.Innboks, "3"))
+        testRapid.sendTestMessage(varselAktivertJson(VarselType.Innboks, "3"))
 
         val eksternVarselBestillinger = bestilleringerFromDb()
         eksternVarselBestillinger.size shouldBe 3
@@ -119,7 +118,7 @@ class VarselSinkTest {
         val testRapid = TestRapid()
         setupVarselSink(testRapid)
 
-        testRapid.sendTestMessage(varselAktivertJson(VarselType.BESKJED, "1", eksternVarsling = false))
+        testRapid.sendTestMessage(varselAktivertJson(VarselType.Beskjed, "1", eksternVarsling = false))
 
         val eksternVarselBestillinger = bestilleringerFromDb()
         eksternVarselBestillinger.size shouldBe 0
@@ -130,9 +129,9 @@ class VarselSinkTest {
         val testRapid = TestRapid()
         setupVarselSink(testRapid)
 
-        testRapid.sendTestMessage(varselAktivertJsonWithNullableFields(VarselType.BESKJED, "1"))
-        testRapid.sendTestMessage(varselAktivertJsonWithNullableFields(VarselType.OPPGAVE, "2"))
-        testRapid.sendTestMessage(varselAktivertJsonWithNullableFields(VarselType.INNBOKS, "3"))
+        testRapid.sendTestMessage(varselAktivertJsonWithNullableFields(VarselType.Beskjed, "1"))
+        testRapid.sendTestMessage(varselAktivertJsonWithNullableFields(VarselType.Oppgave, "2"))
+        testRapid.sendTestMessage(varselAktivertJsonWithNullableFields(VarselType.Innboks, "3"))
 
         doknotifikasjonKafkaProducer.history().size shouldBe 3
         val doknotifikasjonBeskjed = doknotifikasjonKafkaProducer.history().first { it.key() == "1" }

@@ -25,13 +25,13 @@ class InaktivertSink(
         River(rapidsConnection).apply {
             validate {
                 it.requireValue("@event_name", "inaktivert")
-                it.requireKey("eventId")
+                it.requireKey("varselId")
             }
         }.register(this)
     }
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
-        val eventId = packet["eventId"].textValue()
+        val eventId = packet["varselId"].textValue()
         val eventName = packet["@event_name"].textValue()
 
         runBlocking {

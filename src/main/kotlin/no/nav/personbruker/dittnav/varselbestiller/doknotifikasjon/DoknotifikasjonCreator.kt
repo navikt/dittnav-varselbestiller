@@ -13,14 +13,14 @@ object DoknotifikasjonCreator {
     fun createDoknotifikasjonFromVarsel(varsel: Varsel): Doknotifikasjon = try {
 
         Doknotifikasjon.newBuilder()
-            .setBestillingsId(varsel.eventId)
-            .setBestillerId(varsel.appnavn)
-            .setSikkerhetsnivaa(varsel.sikkerhetsnivaa)
-            .setFodselsnummer(varsel.fodselsnummer)
+            .setBestillingsId(varsel.varselId)
+            .setBestillerId(varsel.produsent.appnavn)
+            .setSikkerhetsnivaa(varsel.sensitivitet.loginLevel)
+            .setFodselsnummer(varsel.ident)
             .setTittel(getDoknotifikasjonEmailTitle(varsel))
             .setEpostTekst(getDoknotifikasjonEmailText(varsel))
             .setSmsTekst(getDoknotifikasjonSMSText(varsel))
-            .setPrefererteKanaler(getPrefererteKanaler(varsel.eksternVarsling, varsel.prefererteKanaler))
+            .setPrefererteKanaler(getPrefererteKanaler(varsel.eksternVarslingBestilling.prefererteKanaler))
             .setRenotifikasjoner(varsel)
             .build()
     } catch (fe: FieldValidationException){
@@ -29,38 +29,38 @@ object DoknotifikasjonCreator {
     }
 
     private fun getDoknotifikasjonEmailText(varsel: Varsel): String =
-        varsel.epostVarslingstekst?.let {
-            replaceInEmailTemplate(getDoknotifikasjonEmailTitle(varsel), varsel.epostVarslingstekst)
-        } ?: when (varsel.varselType) {
-            VarselType.BESKJED -> this::class.java.getResource("/texts/epost_beskjed.txt")!!.readText(Charsets.UTF_8)
-            VarselType.OPPGAVE -> this::class.java.getResource("/texts/epost_oppgave.txt")!!.readText(Charsets.UTF_8)
-            VarselType.INNBOKS -> this::class.java.getResource("/texts/epost_innboks.txt")!!.readText(Charsets.UTF_8)
+        varsel.eksternVarslingBestilling.epostVarslingstekst?.let {
+            replaceInEmailTemplate(getDoknotifikasjonEmailTitle(varsel), varsel.eksternVarslingBestilling.epostVarslingstekst)
+        } ?: when (varsel.type) {
+            VarselType.Beskjed -> this::class.java.getResource("/texts/epost_beskjed.txt")!!.readText(Charsets.UTF_8)
+            VarselType.Oppgave -> this::class.java.getResource("/texts/epost_oppgave.txt")!!.readText(Charsets.UTF_8)
+            VarselType.Innboks -> this::class.java.getResource("/texts/epost_innboks.txt")!!.readText(Charsets.UTF_8)
         }
 
     private fun getDoknotifikasjonEmailTitle(varsel: Varsel): String =
-        varsel.epostVarslingstittel ?: when(varsel.varselType) {
-            VarselType.BESKJED -> "Beskjed fra NAV"
-            VarselType.OPPGAVE -> "Du har fått en oppgave fra NAV"
-            VarselType.INNBOKS -> "Du har fått en melding fra NAV"
+        varsel.eksternVarslingBestilling.epostVarslingstittel ?: when(varsel.type) {
+            VarselType.Beskjed -> "Beskjed fra NAV"
+            VarselType.Oppgave -> "Du har fått en oppgave fra NAV"
+            VarselType.Innboks -> "Du har fått en melding fra NAV"
         }
 
     private fun getDoknotifikasjonSMSText(varsel: Varsel): String =
-        varsel.smsVarslingstekst ?: when(varsel.varselType) {
-            VarselType.BESKJED -> "Hei! Du har fått en ny beskjed fra NAV. Logg inn på nav.no for å se hva beskjeden gjelder. Vennlig hilsen NAV"
-            VarselType.OPPGAVE -> "Hei! Du har fått en ny oppgave fra NAV. Logg inn på nav.no for å se hva oppgaven gjelder. Vennlig hilsen NAV"
-            VarselType.INNBOKS -> "Hei! Du har fått en ny melding fra NAV. Logg inn på nav.no for å lese meldingen. Vennlig hilsen NAV"
+        varsel.eksternVarslingBestilling.smsVarslingstekst ?: when(varsel.type) {
+            VarselType.Beskjed -> "Hei! Du har fått en ny beskjed fra NAV. Logg inn på nav.no for å se hva beskjeden gjelder. Vennlig hilsen NAV"
+            VarselType.Oppgave -> "Hei! Du har fått en ny oppgave fra NAV. Logg inn på nav.no for å se hva oppgaven gjelder. Vennlig hilsen NAV"
+            VarselType.Innboks -> "Hei! Du har fått en ny melding fra NAV. Logg inn på nav.no for å lese meldingen. Vennlig hilsen NAV"
         }
 
     private fun Doknotifikasjon.Builder.setRenotifikasjoner(varsel: Varsel): Doknotifikasjon.Builder {
-        when (varsel.varselType) {
-            VarselType.BESKJED -> {
+        when (varsel.type) {
+            VarselType.Beskjed -> {
                 antallRenotifikasjoner = 0
             }
-            VarselType.OPPGAVE -> {
+            VarselType.Oppgave -> {
                 antallRenotifikasjoner = 1
                 renotifikasjonIntervall = 7
             }
-            VarselType.INNBOKS -> {
+            VarselType.Innboks -> {
                 antallRenotifikasjoner = 1
                 renotifikasjonIntervall = 4
             }
@@ -73,20 +73,17 @@ object DoknotifikasjonCreator {
 
         return emailTemplate.replace("\${EPOST_VARSELTITTEL}", title).replace("\${EPOST_VARSELTEKST}", body)
     }
-    private fun getPrefererteKanaler(eksternVarsling: Boolean, prefererteKanaler: List<String>?): List<PrefererteKanal> {
+    private fun getPrefererteKanaler(prefererteKanaler: List<String>?): List<PrefererteKanal> {
         val valgteKanaler = mutableListOf<PrefererteKanal>()
-        if(!eksternVarsling && !prefererteKanaler.isNullOrEmpty()) {
-            throw FieldValidationException("Prefererte kanaler kan ikke settes så lenge ekstern varsling ikke er bestilt.")
-        } else {
-            val doknotifikasjonPrefererteKanalerAsString = PrefererteKanal.values().map { it.name }
-            prefererteKanaler?.forEach { preferertKanal ->
-                if(doknotifikasjonPrefererteKanalerAsString.contains(preferertKanal)) {
-                    valgteKanaler.add(PrefererteKanal.valueOf(preferertKanal))
-                } else {
-                    throw FieldValidationException("Ukjent kanal, kanalen $preferertKanal er ikke definert som mulig preferert kanal i Doknotifikasjon.")
-                }
+        val doknotifikasjonPrefererteKanalerAsString = PrefererteKanal.values().map { it.name }
+        prefererteKanaler?.forEach { preferertKanal ->
+            if(doknotifikasjonPrefererteKanalerAsString.contains(preferertKanal)) {
+                valgteKanaler.add(PrefererteKanal.valueOf(preferertKanal))
+            } else {
+                throw FieldValidationException("Ukjent kanal, kanalen $preferertKanal er ikke definert som mulig preferert kanal i Doknotifikasjon.")
             }
         }
+
         return valgteKanaler
     }
 }
