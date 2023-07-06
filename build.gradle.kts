@@ -19,10 +19,9 @@ tasks.withType<KotlinCompile> {
 
 repositories {
     mavenCentral()
-    maven("https://packages.confluent.io/maven")
-    maven ( "https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven" )
-    mavenLocal()
     maven("https://jitpack.io")
+    maven("https://packages.confluent.io/maven")
+    mavenLocal()
 }
 
 sourceSets {
@@ -51,6 +50,7 @@ dependencies {
     implementation(Prometheus.hotspot)
     implementation(Prometheus.logback)
     implementation(RapidsAndRivers.rapidsAndRivers)
+    implementation(JacksonDataType14.moduleKotlin)
 
     testImplementation(Junit.api)
     testImplementation(Junit.engine)

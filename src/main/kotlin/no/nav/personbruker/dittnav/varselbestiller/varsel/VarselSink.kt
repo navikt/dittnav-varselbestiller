@@ -1,5 +1,11 @@
 package no.nav.personbruker.dittnav.varselbestiller.varsel
 
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.jacksonMapperBuilder
+import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import no.nav.helse.rapids_rivers.JsonMessage
@@ -16,31 +22,25 @@ class VarselSink(
     private val doknotifikasjonProducer: DoknotifikasjonProducer,
     private val varselbestillingRepository: VarselbestillingRepository,
     private val rapidMetricsProbe: RapidMetricsProbe
-) :
-    River.PacketListener {
+) : River.PacketListener {
     private val log = KotlinLogging.logger { }
+
+    private val objectMapper = jacksonMapperBuilder()
+        .addModule(JavaTimeModule())
+        .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+        .build()
 
     init {
         River(rapidsConnection).apply {
             validate { it.demandValue("@event_name", "aktivert") }
-            validate { it.demandAny("varselType", listOf("beskjed", "oppgave", "innboks")) }
-            validate { it.demandValue("eksternVarsling", true) }
+            validate { it.demandAny("type", listOf("beskjed", "oppgave", "innboks")) }
             validate {
                 it.requireKey(
-                    "namespace",
-                    "appnavn",
-                    "eventId",
-                    "fodselsnummer",
-                    "sikkerhetsnivaa",
-                    "eksternVarsling"
-                )
-            }
-            validate {
-                it.interestedIn(
-                    "prefererteKanaler",
-                    "smsVarslingstekst",
-                    "epostVarslingstekst",
-                    "epostVarslingstittel"
+                    "eksternVarslingBestilling",
+                    "produsent",
+                    "varselId",
+                    "ident",
+                    "sensitivitet"
                 )
             }
         }.register(this)
@@ -48,23 +48,11 @@ class VarselSink(
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
 
-        val varsel = Varsel(
-            varselType = VarselType.valueOf(packet["varselType"].textValue().uppercase()),
-            namespace = packet["namespace"].textValue(),
-            appnavn = packet["appnavn"].textValue(),
-            eventId = packet["eventId"].textValue(),
-            fodselsnummer = packet["fodselsnummer"].textValue(),
-            sikkerhetsnivaa = packet["sikkerhetsnivaa"].intValue(),
-            eksternVarsling = packet["eksternVarsling"].booleanValue(),
-            prefererteKanaler = packet["prefererteKanaler"].map { it.textValue() },
-            smsVarslingstekst = packet["smsVarslingstekst"].textValue(),
-            epostVarslingstekst = packet["epostVarslingstekst"].textValue(),
-            epostVarslingstittel = packet["epostVarslingstittel"].textValue()
-        )
+        val varsel: Varsel = objectMapper.readValue(packet.toJson())
 
         runBlocking {
             val isDuplicateVarselbestilling =
-                varselbestillingRepository.getVarselbestillingIfExists(varsel.eventId) != null
+                varselbestillingRepository.getVarselbestillingIfExists(varsel.varselId) != null
 
             if (!isDuplicateVarselbestilling) {
                 doknotifikasjonProducer.sendAndPersistBestilling(
@@ -72,9 +60,9 @@ class VarselSink(
 
                     doknotifikasjon = createDoknotifikasjonFromVarsel(varsel)
                 )
-                rapidMetricsProbe.countDoknotifikasjonProduced(varsel.varselType, varsel.prefererteKanaler)
+                rapidMetricsProbe.countDoknotifikasjonProduced(varsel.type, varsel.eksternVarslingBestilling.prefererteKanaler)
             } else {
-                rapidMetricsProbe.countDuplicates(varsel.varselType)
+                rapidMetricsProbe.countDuplicates(varsel.type)
             }
         }
     }
@@ -82,5 +70,6 @@ class VarselSink(
     override fun onError(problems: MessageProblems, context: MessageContext) {
         log.debug(problems.toString())
     }
+
 }
 

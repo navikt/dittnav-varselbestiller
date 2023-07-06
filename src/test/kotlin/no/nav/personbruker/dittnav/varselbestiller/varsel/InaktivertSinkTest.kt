@@ -43,7 +43,7 @@ class InaktivertSinkTest {
     )
 
     private val eventId = "77"
-    private val varselAktivertJson = varselAktivertJson(VarselType.BESKJED, eventId)
+    private val varselAktivertJson = varselAktivertJson(VarselType.Beskjed, eventId)
     private lateinit var testRapid: TestRapid
 
     @BeforeEach
@@ -66,8 +66,8 @@ class InaktivertSinkTest {
             testRapid.sendTestMessage(varselInaktivertEventJson(eventId))
             testRapid.sendTestMessage(
                 varselAktivertJson(
-                    eventId = "99",
-                    type = VarselType.BESKJED,
+                    varselId = "99",
+                    type = VarselType.Beskjed,
                     eksternVarsling = true,
                     prefererteKanaler = "SMS"
                 )
@@ -89,8 +89,8 @@ class InaktivertSinkTest {
             testRapid.sendTestMessage(varselAktivertJson)
             testRapid.sendTestMessage(
                 varselAktivertJson(
-                    eventId = "99",
-                    type = VarselType.BESKJED,
+                    varselId = "99",
+                    type = VarselType.Beskjed,
                     eksternVarsling = true,
                     prefererteKanaler = "SMS"
                 )
@@ -113,8 +113,8 @@ class InaktivertSinkTest {
         testRapid.sendTestMessage(varselAktivertJson)
         testRapid.sendTestMessage(
             varselAktivertJson(
-                eventId = "99",
-                type = VarselType.BESKJED,
+                varselId = "99",
+                type = VarselType.Beskjed,
                 eksternVarsling = true,
                 prefererteKanaler = "SMS"
             )
@@ -144,10 +144,10 @@ class InaktivertSinkTest {
         return database.dbQuery { getAllVarselbestilling() }
     }
 
-    private fun varselInaktivertEventJson(eventId: String) =
+    private fun varselInaktivertEventJson(varselId: String) =
         """{
         "@event_name": "inaktivert",
-        "eventId": "$eventId"
+        "varselId": "$varselId"
     }""".trimIndent()
 }
 

@@ -7,9 +7,9 @@ fun varselAktivertJsonWithNullableFields(
     eksternVarsling: Boolean = true
 ) = varselAktivertJson(
     type = type,
-    eventId = eventId,
+    varselId = eventId,
     eksternVarsling = eksternVarsling,
-    prefererteKanaler = null,
+    prefererteKanaler = "[]",
     smsVarslingstekst = null,
     epostVarslingstekst = null,
     epostVarslingstittel = null
@@ -17,7 +17,7 @@ fun varselAktivertJsonWithNullableFields(
 
 fun varselAktivertJson(
     type: VarselType,
-    eventId: String,
+    varselId: String,
     eksternVarsling: Boolean = true,
     prefererteKanaler: String? = """["EPOST", "SMS"]""",
     smsVarslingstekst: String? = "smstekst",
@@ -25,20 +25,31 @@ fun varselAktivertJson(
     epostVarslingstittel: String? = "eposttittel"
 ) = """{
         "@event_name": "aktivert",
-        "varselType": "${type.name.lowercase()}",
-        "namespace": "ns",
-        "appnavn": "app",
-        "eventId": "$eventId",
-        "forstBehandlet": "2022-02-01T00:00:00",
-        "fodselsnummer": "12345678910",
-        "tekst": "Tekst",
-        "link": "url",
-        "sikkerhetsnivaa": 4,
-        "synligFremTil": "2022-04-01T00:00:00",
-        "aktiv": true,
-        "eksternVarsling": $eksternVarsling,
-        "prefererteKanaler": $prefererteKanaler,
-        "smsVarslingstekst": ${smsVarslingstekst?.let { "\"$smsVarslingstekst\"" }},
-        "epostVarslingstekst": ${epostVarslingstekst?.let { "\"$epostVarslingstekst\"" }},
-        "epostVarslingstittel": ${epostVarslingstittel?.let { "\"$epostVarslingstittel\"" }}
+        "type": "${type.name.lowercase()}",
+        "produsent": {
+            "namespace": "ns",
+            "appnavn": "app"
+        },
+        "varselId": "$varselId",
+        "opprettet": "2022-02-01T00:00:00Z",
+        "ident": "12345678910",
+        "innhold": {
+            "tekst": "Tekst",
+            "link": "url"
+        },
+        "sensitivitet": "high",
+        "aktivFremTil": "2022-04-01T00:00:00Z"
+        ${
+            if(eksternVarsling) {
+                ""","eksternVarslingBestilling": {
+                    "prefererteKanaler": $prefererteKanaler,
+                    "smsVarslingstekst": ${smsVarslingstekst?.let { "\"$smsVarslingstekst\"" }},
+                    "epostVarslingstekst": ${epostVarslingstekst?.let { "\"$epostVarslingstekst\"" }},
+                    "epostVarslingstittel": ${epostVarslingstittel?.let { "\"$epostVarslingstittel\"" }}
+                }
+                """
+            }
+            else ""
+        }
+        
     }""".trimIndent()
