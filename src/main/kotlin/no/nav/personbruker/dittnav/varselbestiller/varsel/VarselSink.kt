@@ -1,13 +1,11 @@
 package no.nav.personbruker.dittnav.varselbestiller.varsel
 
-import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonMapperBuilder
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.runBlocking
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.MessageProblems
@@ -20,8 +18,7 @@ import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestil
 class VarselSink(
     rapidsConnection: RapidsConnection,
     private val doknotifikasjonProducer: DoknotifikasjonProducer,
-    private val varselbestillingRepository: VarselbestillingRepository,
-    private val rapidMetricsProbe: RapidMetricsProbe
+    private val varselbestillingRepository: VarselbestillingRepository
 ) : River.PacketListener {
     private val log = KotlinLogging.logger { }
 
@@ -60,15 +57,15 @@ class VarselSink(
 
                     doknotifikasjon = createDoknotifikasjonFromVarsel(varsel)
                 )
-                rapidMetricsProbe.countDoknotifikasjonProduced(varsel.type, varsel.eksternVarslingBestilling.prefererteKanaler)
+                RapidMetrics.eksternVarslingBestilt(varsel.type, varsel.eksternVarslingBestilling.prefererteKanaler)
             } else {
-                rapidMetricsProbe.countDuplicates(varsel.type)
+                RapidMetrics.duplikat(varsel.type)
             }
         }
     }
 
     override fun onError(problems: MessageProblems, context: MessageContext) {
-        log.debug(problems.toString())
+        log.debug { problems.toString() }
     }
 
 }

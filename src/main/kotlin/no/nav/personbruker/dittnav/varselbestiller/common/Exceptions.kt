@@ -3,7 +3,7 @@ package no.nav.personbruker.dittnav.varselbestiller.common
 open class AbstractCustomException(message: String, cause: Throwable?, identifier: String?) :
     Exception(message, cause) {
 
-    private val context: MutableMap<String, Any> = mutableMapOf()
+    private val context = mutableMapOf<String, Any>()
 
     init {
         if (identifier != null) {

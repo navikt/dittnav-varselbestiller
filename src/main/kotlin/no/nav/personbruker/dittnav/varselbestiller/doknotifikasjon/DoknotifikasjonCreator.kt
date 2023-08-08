@@ -1,6 +1,6 @@
 package no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon
 
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.doknotifikasjon.schemas.PrefererteKanal
 import no.nav.personbruker.dittnav.varselbestiller.common.FieldValidationException

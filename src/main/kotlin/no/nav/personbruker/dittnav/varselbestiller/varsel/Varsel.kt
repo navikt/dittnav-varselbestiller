@@ -37,7 +37,7 @@ enum class VarselType {
     Innboks;
 
     @JsonValue
-    fun toJson() = name.lowercase()
+    fun lowercaseName() = name.lowercase()
 }
 
 data class EksternVarslingBestilling(

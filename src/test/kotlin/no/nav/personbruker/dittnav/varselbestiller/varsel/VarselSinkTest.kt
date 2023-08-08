@@ -153,8 +153,7 @@ class VarselSinkTest {
     private fun setupVarselSink(testRapid: TestRapid) = VarselSink(
         rapidsConnection = testRapid,
         doknotifikasjonProducer = doknotifikasjonProducer,
-        varselbestillingRepository = varselbestillingRepository,
-        rapidMetricsProbe = mockk(relaxed = true)
+        varselbestillingRepository = varselbestillingRepository
     )
 
     private suspend fun bestilleringerFromDb(): List<Varselbestilling> {
