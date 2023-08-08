@@ -4,20 +4,15 @@ import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
 import no.nav.helse.rapids_rivers.RapidApplication
 import no.nav.helse.rapids_rivers.RapidsConnection
-import no.nav.personbruker.dittnav.common.metrics.MetricsReporter
-import no.nav.personbruker.dittnav.common.metrics.StubMetricsReporter
-import no.nav.personbruker.dittnav.common.metrics.influxdb.InfluxConfig
-import no.nav.personbruker.dittnav.common.metrics.influxdb.InfluxMetricsReporter
 import no.nav.personbruker.dittnav.varselbestiller.common.database.Database
 import no.nav.personbruker.dittnav.varselbestiller.common.kafka.KafkaProducerWrapper
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.varsel.InaktivertSink
-import no.nav.personbruker.dittnav.varselbestiller.varsel.RapidMetricsProbe
+import no.nav.personbruker.dittnav.varselbestiller.varsel.RapidMetrics
 import no.nav.personbruker.dittnav.varselbestiller.varsel.VarselSink
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
 import org.apache.kafka.clients.producer.KafkaProducer
-import java.util.concurrent.TimeUnit
 
 fun main() {
     val environment = Environment()
@@ -43,14 +38,12 @@ fun main() {
         ),
         varselbestillingRepository = varselbestillingRepository
     )
-    val rapidMetricsProbe = RapidMetricsProbe(resolveMetricsReporter(environment))
 
     startRapid(
         environment = environment,
         varselbestillingRepository = varselbestillingRepository,
         doknotifikasjonProducer = doknotifikasjonProducer,
-        doknotifikasjonStoppProducer = doknotifikasjonStoppProducer,
-        rapidMetricsProbe = rapidMetricsProbe
+        doknotifikasjonStoppProducer = doknotifikasjonStoppProducer
     )
 }
 
@@ -58,21 +51,18 @@ private fun startRapid(
     environment: Environment,
     varselbestillingRepository: VarselbestillingRepository,
     doknotifikasjonProducer: DoknotifikasjonProducer,
-    doknotifikasjonStoppProducer: DoknotifikasjonStoppProducer,
-    rapidMetricsProbe: RapidMetricsProbe
+    doknotifikasjonStoppProducer: DoknotifikasjonStoppProducer
 ) {
     RapidApplication.create(environment.rapidConfig()).apply {
         VarselSink(
             rapidsConnection = this,
             doknotifikasjonProducer = doknotifikasjonProducer,
-            varselbestillingRepository = varselbestillingRepository,
-            rapidMetricsProbe = rapidMetricsProbe
+            varselbestillingRepository = varselbestillingRepository
         )
         InaktivertSink(
             rapidsConnection = this,
             doknotifikasjonStoppProducer = doknotifikasjonStoppProducer,
-            varselbestillingRepository = varselbestillingRepository,
-            rapidMetricsProbe = rapidMetricsProbe
+            varselbestillingRepository = varselbestillingRepository
         )
     }.apply {
         register(object : RapidsConnection.StatusListener {
@@ -86,24 +76,4 @@ private fun startRapid(
             }
         })
     }.start()
-}
-
-fun resolveMetricsReporter(environment: Environment): MetricsReporter {
-    return if (environment.influxdbHost == "" || environment.influxdbHost == "stub") {
-        StubMetricsReporter()
-    } else {
-        val influxConfig = InfluxConfig(
-            applicationName = environment.applicationName,
-            hostName = environment.influxdbHost,
-            hostPort = environment.influxdbPort,
-            databaseName = environment.influxdbName,
-            retentionPolicyName = environment.influxdbRetentionPolicy,
-            clusterName = environment.clusterName,
-            namespace = environment.namespace,
-            userName = environment.influxdbUser,
-            password = environment.influxdbPassword,
-            timePrecision = TimeUnit.NANOSECONDS
-        )
-        InfluxMetricsReporter(influxConfig)
-    }
 }

@@ -1,6 +1,6 @@
 package no.nav.personbruker.dittnav.varselbestiller.common.kafka
 
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.personbruker.dittnav.varselbestiller.common.RetriableKafkaException
 import no.nav.personbruker.dittnav.varselbestiller.common.UnretriableKafkaException
 import org.apache.kafka.clients.producer.Producer
@@ -52,9 +52,9 @@ class KafkaProducerWrapper<K, V>(
         try {
             kafkaProducer.flush()
             kafkaProducer.close()
-            log.info("Produsent for kafka-eventer er flushet og lukket.")
+            log.info { "Produsent for kafka-eventer er flushet og lukket." }
         } catch (e: Exception) {
-            log.warn("Klarte ikke å flushe og lukke produsent. Det kan være eventer som ikke ble produsert.")
+            log.warn { "Klarte ikke å flushe og lukke produsent. Det kan være eventer som ikke ble produsert." }
         }
     }
 }

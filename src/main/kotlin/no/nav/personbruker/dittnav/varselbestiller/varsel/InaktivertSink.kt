@@ -1,7 +1,7 @@
 package no.nav.personbruker.dittnav.varselbestiller.varsel
 
 import kotlinx.coroutines.runBlocking
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageContext
@@ -15,8 +15,7 @@ import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestil
 class InaktivertSink(
     rapidsConnection: RapidsConnection,
     private val doknotifikasjonStoppProducer: DoknotifikasjonStoppProducer,
-    private val varselbestillingRepository: VarselbestillingRepository,
-    private val rapidMetricsProbe: RapidMetricsProbe
+    private val varselbestillingRepository: VarselbestillingRepository
 ) :
     River.PacketListener {
     private val log = KotlinLogging.logger { }
@@ -41,14 +40,14 @@ class InaktivertSink(
                     doknotifikasjonStoppProducer.sendDoknotifikasjonStoppAndPersistCancellation(
                         createDoknotifikasjonStopp(existingVarselbestilling)
                     )
-                    rapidMetricsProbe.countDoknotifikasjonStoppProduced(eventName)
+                    RapidMetrics.eksternVarslingStoppet(eventName)
                 }
             }
         }
     }
 
     override fun onError(problems: MessageProblems, context: MessageContext) {
-        log.debug(problems.toString())
+        log.debug { problems.toString() }
     }
 }
 

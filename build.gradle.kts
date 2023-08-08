@@ -32,21 +32,17 @@ sourceSets {
 }
 
 dependencies {
-    implementation(DittNAVCommonLib.influxdb)
     implementation(DittNAVCommonLib.utils)
     implementation(Doknotifikasjon.schemas)
     implementation(Flyway.core)
     implementation(Hikari.cp)
-    implementation(Influxdb.java)
     implementation(Kafka.clients)
     implementation(Avro.avroSerializer)
-    implementation(Logback.classic)
     implementation(Logstash.logbackEncoder)
     implementation(KotlinLogging.logging)
     implementation(Postgresql.postgresql)
     implementation(Prometheus.common)
     implementation(Prometheus.hotspot)
-    implementation(Prometheus.logback)
     implementation(RapidsAndRivers.rapidsAndRivers)
     implementation(JacksonDataType14.moduleKotlin)
 
@@ -56,9 +52,7 @@ dependencies {
     testImplementation(Kafka.kafka_2_12)
     testImplementation(Kafka.streams)
     testImplementation(Avro.schemaRegistry)
-    testImplementation(Kotlinx.atomicfu)
     testImplementation(Mockk.mockk)
-    testImplementation(NAV.kafkaEmbedded)
     testImplementation(TestContainers.postgresql)
     testImplementation(Kotest.runnerJunit5)
     testImplementation(Kotest.assertionsCore)
