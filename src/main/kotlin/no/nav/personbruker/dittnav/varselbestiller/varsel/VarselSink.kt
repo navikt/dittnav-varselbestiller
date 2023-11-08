@@ -11,9 +11,12 @@ import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.MessageProblems
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.River
+import no.nav.personbruker.dittnav.varselbestiller.common.eventMdc
+import no.nav.personbruker.dittnav.varselbestiller.common.typeMDC
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator.createDoknotifikasjonFromVarsel
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
+import observability.traceVarsel
 
 class VarselSink(
     rapidsConnection: RapidsConnection,
@@ -47,19 +50,21 @@ class VarselSink(
 
         val varsel: Varsel = objectMapper.readValue(packet.toJson())
 
-        runBlocking {
-            val isDuplicateVarselbestilling =
-                varselbestillingRepository.getVarselbestillingIfExists(varsel.varselId) != null
+        traceVarsel(varsel.varselId, mapOf("aktivert".eventMdc, varsel.type.typeMDC)) {
+            runBlocking {
+                val isDuplicateVarselbestilling =
+                    varselbestillingRepository.getVarselbestillingIfExists(varsel.varselId) != null
 
-            if (!isDuplicateVarselbestilling) {
-                doknotifikasjonProducer.sendAndPersistBestilling(
-                    varselbestilling = varsel.toVarselBestilling(),
+                if (!isDuplicateVarselbestilling) {
+                    doknotifikasjonProducer.sendAndPersistBestilling(
+                        varselbestilling = varsel.toVarselBestilling(),
 
-                    doknotifikasjon = createDoknotifikasjonFromVarsel(varsel)
-                )
-                RapidMetrics.eksternVarslingBestilt(varsel.type, varsel.eksternVarslingBestilling.prefererteKanaler)
-            } else {
-                RapidMetrics.duplikat(varsel.type)
+                        doknotifikasjon = createDoknotifikasjonFromVarsel(varsel)
+                    )
+                    RapidMetrics.eksternVarslingBestilt(varsel.type, varsel.eksternVarslingBestilling.prefererteKanaler)
+                } else {
+                    RapidMetrics.duplikat(varsel.type)
+                }
             }
         }
     }

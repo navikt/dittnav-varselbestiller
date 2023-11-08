@@ -8,9 +8,12 @@ import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.MessageProblems
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.River
+import no.nav.personbruker.dittnav.varselbestiller.common.eventMdc
+import no.nav.personbruker.dittnav.varselbestiller.common.logAvbestilling
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
+import observability.traceVarsel
 
 class InaktivertSink(
     rapidsConnection: RapidsConnection,
@@ -32,16 +35,18 @@ class InaktivertSink(
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
         val eventId = packet["varselId"].textValue()
         val eventName = packet["@event_name"].textValue()
-
-        runBlocking {
-
-            varselbestillingRepository.getVarselbestillingIfExists(eventId)?.let { existingVarselbestilling ->
-                if (!existingVarselbestilling.avbestilt) {
-                    doknotifikasjonStoppProducer.sendDoknotifikasjonStoppAndPersistCancellation(
-                        createDoknotifikasjonStopp(existingVarselbestilling)
-                    )
-                    RapidMetrics.eksternVarslingStoppet(eventName)
-                }
+        traceVarsel(id = eventId, extra = mapOf("inaktivert".eventMdc)) {
+            log.info { "Mottok inaktivertmelding" }
+            runBlocking {
+                varselbestillingRepository.getVarselbestillingIfExists(eventId)?.let { existingVarselbestilling ->
+                    if (!existingVarselbestilling.avbestilt) {
+                        doknotifikasjonStoppProducer.sendDoknotifikasjonStoppAndPersistCancellation(
+                            createDoknotifikasjonStopp(existingVarselbestilling)
+                        )
+                        RapidMetrics.eksternVarslingStoppet(eventName)
+                    }
+                    log.logAvbestilling(existingVarselbestilling)
+                } ?: log.info { "Fant ikke varsel" }
             }
         }
     }

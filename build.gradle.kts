@@ -45,6 +45,7 @@ dependencies {
     implementation(Prometheus.hotspot)
     implementation(RapidsAndRivers.rapidsAndRivers)
     implementation(JacksonDataType14.moduleKotlin)
+    implementation(TmsCommonLib.commonLib)
 
     testImplementation(Junit.api)
     testImplementation(Junit.engine)
