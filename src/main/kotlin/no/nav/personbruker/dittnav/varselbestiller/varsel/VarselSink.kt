@@ -63,6 +63,7 @@ class VarselSink(
                     )
                     RapidMetrics.eksternVarslingBestilt(varsel.type, varsel.eksternVarslingBestilling.prefererteKanaler)
                 } else {
+                    log.info { "Varsel er duplikat" }
                     RapidMetrics.duplikat(varsel.type)
                 }
             }

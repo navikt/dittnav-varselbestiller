@@ -19,6 +19,7 @@ class DoknotifikasjonProducer(
 
         try {
             log.info { "Sender bestilling av eksternt varsel" }
+            secureLog.info { "Sender bestilling av eksternt varsel for ident ${varselbestilling.fodselsnummer}" }
             producer.sendEventsAndLeaveTransactionOpen(event)
             varselbestillingRepository.persistVarselbestilling(varselbestilling)
             producer.commitCurrentTransaction()
