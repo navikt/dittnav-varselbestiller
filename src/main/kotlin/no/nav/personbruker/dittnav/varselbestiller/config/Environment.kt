@@ -1,7 +1,7 @@
 package no.nav.personbruker.dittnav.varselbestiller.config
 
-import no.nav.personbruker.dittnav.common.util.config.IntEnvVar.getEnvVarAsInt
-import no.nav.personbruker.dittnav.common.util.config.StringEnvVar.getEnvVar
+import no.nav.tms.common.util.config.IntEnvVar.getEnvVarAsInt
+import no.nav.tms.common.util.config.StringEnvVar.getEnvVar
 
 data class Environment(
     val groupId: String = getEnvVar("GROUP_ID"),

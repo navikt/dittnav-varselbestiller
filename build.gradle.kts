@@ -17,10 +17,16 @@ tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "17"
 }
 
+
 repositories {
     mavenCentral()
-    maven("https://jitpack.io")
     maven("https://packages.confluent.io/maven")
+    maven("https://maven.pkg.github.com/navikt/*") {
+        credentials {
+            username = System.getenv("GITHUB_ACTOR")?: "x-access-token"
+            password = System.getenv("GITHUB_TOKEN")?: project.findProperty("githubPassword") as String
+        }
+    }
     mavenLocal()
 }
 
@@ -32,7 +38,6 @@ sourceSets {
 }
 
 dependencies {
-    implementation(DittNAVCommonLib.utils)
     implementation(Doknotifikasjon.schemas)
     implementation(Flyway.core)
     implementation(Hikari.cp)
@@ -43,6 +48,7 @@ dependencies {
     implementation(Postgresql.postgresql)
     implementation(Prometheus.common)
     implementation(Prometheus.hotspot)
+    implementation(TmsCommonLib.utils)
     implementation(RapidsAndRivers.rapidsAndRivers)
     implementation(JacksonDataType14.moduleKotlin)
 
@@ -51,7 +57,6 @@ dependencies {
     testImplementation(Junit.params)
     testImplementation(Kafka.kafka_2_12)
     testImplementation(Kafka.streams)
-    testImplementation(Avro.schemaRegistry)
     testImplementation(Mockk.mockk)
     testImplementation(TestContainers.postgresql)
     testImplementation(Kotest.runnerJunit5)
