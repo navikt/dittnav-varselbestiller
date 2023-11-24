@@ -48,7 +48,7 @@ class VarselSink(
         val varsel: Varsel = objectMapper.readValue(packet.toJson())
 
         traceVarselAsync(varsel.varselId, mapOf("action" to "aktivert", "initiated_by" to varsel.produsent.namespace)) {
-            log.info { "Behandler aktivert-melding" }
+            log.info { "Aktivert-melding motatt" }
             val isDuplicateVarselbestilling =
                 varselbestillingRepository.getVarselbestillingIfExists(varsel.varselId) != null
 

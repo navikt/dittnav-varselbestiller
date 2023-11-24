@@ -37,6 +37,7 @@ class InaktivertSink(
             id = eventId,
             extra = mapOf("action" to "inaktivert", "initiated_by" to packet["namespace"].asText())
         ) {
+            log.info { "Inaktivert-event motatt" }
 
             varselbestillingRepository.getVarselbestillingIfExists(eventId)?.let { existingVarselbestilling ->
                 if (!existingVarselbestilling.avbestilt) {
@@ -45,7 +46,7 @@ class InaktivertSink(
                     )
                     RapidMetrics.eksternVarslingStoppet(eventName)
                 } else {
-                    log.info { "Eksternn varsling er avbestilt tidligere" }
+                    log.info { "Ekstern varsling er avbestilt tidligere" }
                 }
             }
         }
