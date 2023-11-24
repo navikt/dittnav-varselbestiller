@@ -2,7 +2,6 @@ package no.nav.personbruker.dittnav.varselbestiller.varsel
 
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
-import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
@@ -145,7 +144,8 @@ class InaktivertSinkTest {
     private fun varselInaktivertEventJson(varselId: String) =
         """{
         "@event_name": "inaktivert",
-        "varselId": "$varselId"
+        "varselId": "$varselId",
+        "namespace": "testtadda"
     }""".trimIndent()
 }
 

@@ -49,6 +49,7 @@ dependencies {
     implementation(Prometheus.common)
     implementation(Prometheus.hotspot)
     implementation(TmsCommonLib.utils)
+    implementation(TmsCommonLib.observability)
     implementation(RapidsAndRivers.rapidsAndRivers)
     implementation(JacksonDataType14.moduleKotlin)
 

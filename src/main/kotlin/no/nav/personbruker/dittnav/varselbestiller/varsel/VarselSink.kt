@@ -4,13 +4,13 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonMapperBuilder
 import com.fasterxml.jackson.module.kotlin.readValue
-import kotlinx.coroutines.runBlocking
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.MessageProblems
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.River
+import no.nav.personbruker.dittnav.varselbestiller.common.traceVarselAsync
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator.createDoknotifikasjonFromVarsel
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
@@ -47,7 +47,8 @@ class VarselSink(
 
         val varsel: Varsel = objectMapper.readValue(packet.toJson())
 
-        runBlocking {
+        traceVarselAsync(varsel.varselId, mapOf("action" to "aktivert", "initiated_by" to varsel.produsent.namespace)) {
+            log.info { "Behandler aktivert-melding" }
             val isDuplicateVarselbestilling =
                 varselbestillingRepository.getVarselbestillingIfExists(varsel.varselId) != null
 

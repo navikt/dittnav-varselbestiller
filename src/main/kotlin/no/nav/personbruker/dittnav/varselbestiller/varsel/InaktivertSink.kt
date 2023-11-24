@@ -1,6 +1,5 @@
 package no.nav.personbruker.dittnav.varselbestiller.varsel
 
-import kotlinx.coroutines.runBlocking
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
 import no.nav.helse.rapids_rivers.JsonMessage
@@ -8,6 +7,7 @@ import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.MessageProblems
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.River
+import no.nav.personbruker.dittnav.varselbestiller.common.traceVarselAsync
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
@@ -24,7 +24,7 @@ class InaktivertSink(
         River(rapidsConnection).apply {
             validate {
                 it.requireValue("@event_name", "inaktivert")
-                it.requireKey("varselId")
+                it.requireKey("varselId", "namespace")
             }
         }.register(this)
     }
@@ -33,7 +33,10 @@ class InaktivertSink(
         val eventId = packet["varselId"].textValue()
         val eventName = packet["@event_name"].textValue()
 
-        runBlocking {
+        traceVarselAsync(
+            id = eventId,
+            extra = mapOf("action" to "inaktivert", "initiated_by" to packet["namespace"].asText())
+        ) {
 
             varselbestillingRepository.getVarselbestillingIfExists(eventId)?.let { existingVarselbestilling ->
                 if (!existingVarselbestilling.avbestilt) {
@@ -41,6 +44,8 @@ class InaktivertSink(
                         createDoknotifikasjonStopp(existingVarselbestilling)
                     )
                     RapidMetrics.eksternVarslingStoppet(eventName)
+                } else {
+                    log.info { "Eksternn varsling er avbestilt tidligere" }
                 }
             }
         }
