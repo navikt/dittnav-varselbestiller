@@ -18,13 +18,13 @@ class DoknotifikasjonProducer(
         val event = RecordKeyValueWrapper(doknotifikasjon.getBestillingsId(), doknotifikasjon)
 
         try {
-            log.info { "Sender bestilling av eksternt varsel for ${varselbestilling.eventId}" }
+            log.info { "Sender bestilling av eksternt varsel" }
             producer.sendEventsAndLeaveTransactionOpen(event)
             varselbestillingRepository.persistVarselbestilling(varselbestilling)
             producer.commitCurrentTransaction()
         } catch (e: Exception) {
-            log.info { "Feil i eksternvarsel-bestilling for $varselbestilling" }
-            secureLog.error { "Feil i eksternvarsel-bestilling for $varselbestilling fra ${varselbestilling.appnavn}: \n ${e.stackTraceToString()}" }
+            log.info { "Feil i eksternvarsel-bestilling" }
+            secureLog.error(e) { "Feil i eksternvarsel-bestilling" }
             producer.abortCurrentTransaction()
             throw e
         }
