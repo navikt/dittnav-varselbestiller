@@ -2,7 +2,6 @@ package no.nav.personbruker.dittnav.varselbestiller.varsel
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.kotest.matchers.shouldBe
-import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.doknotifikasjon.schemas.PrefererteKanal
@@ -45,7 +44,7 @@ class VarselSinkTest {
         val testRapid = TestRapid()
         setupVarselSink(testRapid)
 
-        val varselJson = varselAktivertJson(VarselType.Beskjed, "1")
+        val varselJson = varselOpprettetJson(VarselType.Beskjed, "1")
         testRapid.sendTestMessage(varselJson)
 
         doknotifikasjonKafkaProducer.history().size shouldBe 1
@@ -69,7 +68,7 @@ class VarselSinkTest {
         val testRapid = TestRapid()
         setupVarselSink(testRapid)
 
-        val varselJson = varselAktivertJson(varselType, "1")
+        val varselJson = varselOpprettetJson(varselType, "1")
         testRapid.sendTestMessage(varselJson)
 
         doknotifikasjonKafkaProducer.history().size shouldBe 1
@@ -95,14 +94,14 @@ class VarselSinkTest {
         val testRapid = TestRapid()
         setupVarselSink(testRapid)
 
-        testRapid.sendTestMessage(varselAktivertJson(VarselType.Beskjed, "1"))
-        testRapid.sendTestMessage(varselAktivertJson(VarselType.Beskjed, "1"))
+        testRapid.sendTestMessage(varselOpprettetJson(VarselType.Beskjed, "1"))
+        testRapid.sendTestMessage(varselOpprettetJson(VarselType.Beskjed, "1"))
 
-        testRapid.sendTestMessage(varselAktivertJson(VarselType.Oppgave, "2"))
-        testRapid.sendTestMessage(varselAktivertJson(VarselType.Oppgave, "2"))
+        testRapid.sendTestMessage(varselOpprettetJson(VarselType.Oppgave, "2"))
+        testRapid.sendTestMessage(varselOpprettetJson(VarselType.Oppgave, "2"))
 
-        testRapid.sendTestMessage(varselAktivertJson(VarselType.Innboks, "3"))
-        testRapid.sendTestMessage(varselAktivertJson(VarselType.Innboks, "3"))
+        testRapid.sendTestMessage(varselOpprettetJson(VarselType.Innboks, "3"))
+        testRapid.sendTestMessage(varselOpprettetJson(VarselType.Innboks, "3"))
 
         val eksternVarselBestillinger = bestilleringerFromDb()
         eksternVarselBestillinger.size shouldBe 3
@@ -118,7 +117,7 @@ class VarselSinkTest {
         val testRapid = TestRapid()
         setupVarselSink(testRapid)
 
-        testRapid.sendTestMessage(varselAktivertJson(VarselType.Beskjed, "1", eksternVarsling = false))
+        testRapid.sendTestMessage(varselOpprettetJson(VarselType.Beskjed, "1", eksternVarsling = false))
 
         val eksternVarselBestillinger = bestilleringerFromDb()
         eksternVarselBestillinger.size shouldBe 0
@@ -156,7 +155,7 @@ class VarselSinkTest {
         varselbestillingRepository = varselbestillingRepository
     )
 
-    private suspend fun bestilleringerFromDb(): List<Varselbestilling> {
+    private fun bestilleringerFromDb(): List<Varselbestilling> {
         return database.dbQuery { getAllVarselbestilling() }
     }
 }

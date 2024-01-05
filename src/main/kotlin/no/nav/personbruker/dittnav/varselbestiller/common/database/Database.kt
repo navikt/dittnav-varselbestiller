@@ -15,8 +15,8 @@ interface Database {
 
     val dataSource: HikariDataSource
 
-    suspend fun <T> dbQuery(operationToExecute: Connection.() -> T): T = withContext(Dispatchers.IO) {
-        dataSource.connection.use { openConnection ->
+    fun <T> dbQuery(operationToExecute: Connection.() -> T): T {
+        return dataSource.connection.use { openConnection ->
             try {
                 openConnection.operationToExecute().apply {
                     openConnection.commit()
@@ -33,7 +33,7 @@ interface Database {
         }
     }
 
-    suspend fun <T> queryWithExceptionTranslation(
+    fun <T> queryWithExceptionTranslation(
         identifier: String? = null,
         operationToExecute: Connection.() -> T
     ): T {

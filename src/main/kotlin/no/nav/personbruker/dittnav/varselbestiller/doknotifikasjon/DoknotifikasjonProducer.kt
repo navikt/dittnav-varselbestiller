@@ -14,7 +14,7 @@ class DoknotifikasjonProducer(
 
     private val log = KotlinLogging.logger { }
     private val secureLog = KotlinLogging.logger("secureLog")
-    suspend fun sendAndPersistBestilling(varselbestilling: Varselbestilling, doknotifikasjon: Doknotifikasjon) {
+    fun sendAndPersistBestilling(varselbestilling: Varselbestilling, doknotifikasjon: Doknotifikasjon) {
         val event = RecordKeyValueWrapper(doknotifikasjon.getBestillingsId(), doknotifikasjon)
 
         try {

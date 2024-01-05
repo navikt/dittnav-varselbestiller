@@ -42,7 +42,7 @@ class InaktivertSinkTest {
     )
 
     private val eventId = "77"
-    private val varselAktivertJson = varselAktivertJson(VarselType.Beskjed, eventId)
+    private val varselAktivertJson = varselOpprettetJson(VarselType.Beskjed, eventId)
     private lateinit var testRapid: TestRapid
 
     @BeforeEach
@@ -64,7 +64,7 @@ class InaktivertSinkTest {
             testRapid.sendTestMessage(varselAktivertJson)
             testRapid.sendTestMessage(varselInaktivertEventJson(eventId))
             testRapid.sendTestMessage(
-                varselAktivertJson(
+                varselOpprettetJson(
                     varselId = "99",
                     type = VarselType.Beskjed,
                     eksternVarsling = true,
@@ -87,7 +87,7 @@ class InaktivertSinkTest {
 
             testRapid.sendTestMessage(varselAktivertJson)
             testRapid.sendTestMessage(
-                varselAktivertJson(
+                varselOpprettetJson(
                     varselId = "99",
                     type = VarselType.Beskjed,
                     eksternVarsling = true,
@@ -111,7 +111,7 @@ class InaktivertSinkTest {
 
         testRapid.sendTestMessage(varselAktivertJson)
         testRapid.sendTestMessage(
-            varselAktivertJson(
+            varselOpprettetJson(
                 varselId = "99",
                 type = VarselType.Beskjed,
                 eksternVarsling = true,
@@ -137,7 +137,7 @@ class InaktivertSinkTest {
         varselbestillingRepository = varselbestillingRepository
     )
 
-    private suspend fun bestilleringerFromDb(): List<Varselbestilling> {
+    private fun bestilleringerFromDb(): List<Varselbestilling> {
         return database.dbQuery { getAllVarselbestilling() }
     }
 
@@ -145,7 +145,11 @@ class InaktivertSinkTest {
         """{
         "@event_name": "inaktivert",
         "varselId": "$varselId",
-        "namespace": "testtadda"
+        "produsent": {
+            "cluster": "cluster",
+            "namespace": "namespace",
+            "appnavn": "appnavn"
+        }
     }""".trimIndent()
 }
 

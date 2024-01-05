@@ -14,7 +14,7 @@ class DoknotifikasjonStoppProducer(
     private val secureLog = KotlinLogging.logger("secureLog")
 
 
-    suspend fun sendDoknotifikasjonStoppAndPersistCancellation(doknotStop: DoknotifikasjonStopp) {
+    fun sendDoknotifikasjonStoppAndPersistCancellation(doknotStop: DoknotifikasjonStopp) {
         val event = RecordKeyValueWrapper(doknotStop.getBestillingsId(), doknotStop)
 
         try {
