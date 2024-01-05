@@ -10,10 +10,10 @@ import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.MessageProblems
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.River
-import no.nav.personbruker.dittnav.varselbestiller.common.traceVarselAsync
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonCreator.createDoknotifikasjonFromVarsel
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjon.DoknotifikasjonProducer
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
+import observability.traceVarsel
 
 class VarselSink(
     rapidsConnection: RapidsConnection,
@@ -29,7 +29,7 @@ class VarselSink(
 
     init {
         River(rapidsConnection).apply {
-            validate { it.demandValue("@event_name", "aktivert") }
+            validate { it.demandValue("@event_name", "opprettet") }
             validate { it.demandAny("type", listOf("beskjed", "oppgave", "innboks")) }
             validate {
                 it.requireKey(
@@ -47,8 +47,8 @@ class VarselSink(
 
         val varsel: Varsel = objectMapper.readValue(packet.toJson())
 
-        traceVarselAsync(varsel.varselId, mapOf("action" to "aktivert", "initiated_by" to varsel.produsent.namespace)) {
-            log.info { "Aktivert-melding motatt" }
+        traceVarsel(varsel.varselId, mapOf("action" to "opprettet", "initiated_by" to varsel.produsent.namespace)) {
+            log.info { "Opprettet-event motatt" }
             val isDuplicateVarselbestilling =
                 varselbestillingRepository.getVarselbestillingIfExists(varsel.varselId) != null
 

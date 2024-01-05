@@ -7,10 +7,10 @@ import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.MessageProblems
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.River
-import no.nav.personbruker.dittnav.varselbestiller.common.traceVarselAsync
 import no.nav.personbruker.dittnav.varselbestiller.doknotifikasjonStopp.DoknotifikasjonStoppProducer
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.Varselbestilling
 import no.nav.personbruker.dittnav.varselbestiller.varselbestilling.VarselbestillingRepository
+import observability.traceVarsel
 
 class InaktivertSink(
     rapidsConnection: RapidsConnection,
@@ -24,7 +24,7 @@ class InaktivertSink(
         River(rapidsConnection).apply {
             validate {
                 it.requireValue("@event_name", "inaktivert")
-                it.requireKey("varselId", "namespace")
+                it.requireKey("varselId", "produsent")
             }
         }.register(this)
     }
@@ -33,9 +33,9 @@ class InaktivertSink(
         val eventId = packet["varselId"].textValue()
         val eventName = packet["@event_name"].textValue()
 
-        traceVarselAsync(
+        traceVarsel(
             id = eventId,
-            extra = mapOf("action" to "inaktivert", "initiated_by" to packet["namespace"].asText())
+            extra = mapOf("action" to "inaktivert", "initiated_by" to packet["produsent"]["namespace"].asText())
         ) {
             log.info { "Inaktivert-event motatt" }
 

@@ -5,7 +5,7 @@ fun varselAktivertJsonWithNullableFields(
     type: VarselType,
     eventId: String,
     eksternVarsling: Boolean = true
-) = varselAktivertJson(
+) = varselOpprettetJson(
     type = type,
     varselId = eventId,
     eksternVarsling = eksternVarsling,
@@ -15,7 +15,7 @@ fun varselAktivertJsonWithNullableFields(
     epostVarslingstittel = null
 )
 
-fun varselAktivertJson(
+fun varselOpprettetJson(
     type: VarselType,
     varselId: String,
     eksternVarsling: Boolean = true,
@@ -24,9 +24,10 @@ fun varselAktivertJson(
     epostVarslingstekst: String? = "eposttekst",
     epostVarslingstittel: String? = "eposttittel"
 ) = """{
-        "@event_name": "aktivert",
+        "@event_name": "opprettet",
         "type": "${type.name.lowercase()}",
         "produsent": {
+            "cluster": "cluster",
             "namespace": "ns",
             "appnavn": "app"
         },
@@ -34,7 +35,18 @@ fun varselAktivertJson(
         "opprettet": "2022-02-01T00:00:00Z",
         "ident": "12345678910",
         "innhold": {
-            "tekst": "Tekst",
+            "tekster": [
+                {
+                    "tekst": "Norsk tekst",
+                    "spraakkode": "nb",
+                    "default": false
+                },
+                {
+                    "tekst": "Default text",
+                    "spraakkode": "en",
+                    "default": true
+                }
+            ],
             "link": "url"
         },
         "sensitivitet": "high",
