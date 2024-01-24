@@ -11,10 +11,6 @@ open class AbstractCustomException(message: String, cause: Throwable?, identifie
         }
     }
 
-    fun addContext(key: String, value: Any) {
-        context[key] = value
-    }
-
     override fun toString(): String {
         return when (context.isNotEmpty()) {
             true -> super.toString() + ", context: $context"
@@ -26,12 +22,3 @@ open class AbstractCustomException(message: String, cause: Throwable?, identifie
 
 class FieldValidationException(message: String, cause: Throwable? = null) :
     AbstractCustomException(message, cause, null)
-
-open class RetriableDatabaseException(message: String, cause: Throwable? = null, identifier: String?=null) :
-    AbstractCustomException(message, cause, identifier)
-
-class UnretriableKafkaException(message: String, cause: Throwable? = null, identifier: String?=null) :
-    AbstractCustomException(message, cause, identifier)
-
-class RetriableKafkaException(message: String, cause: Throwable? = null, identifier: String?=null) :
-    AbstractCustomException(message, cause, identifier)
