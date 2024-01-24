@@ -1,14 +1,11 @@
 apiVersion: "nais.io/v1alpha1"
 kind: "Application"
 metadata:
-  name: dittnav-varselbestiller
+  name: tms-ekstern-varselbestiller
   namespace: min-side
   labels:
     team: min-side
 spec:
-  envFrom:
-    - secret: dittnav-varselbestiller-secrets
-    - secret: influxdb-credentials
   image: {{version}}
   port: 8080
   liveness:
@@ -23,27 +20,11 @@ spec:
   secureLogs:
     enabled: true
   replicas:
-    min: 1
-    max: 1
+    min: 2
+    max: 4
     cpuThresholdPercentage: 50
   kafka:
     pool: nav-prod
-  gcp:
-    sqlInstances:
-      - name: varselbestiller
-        type: POSTGRES_11
-        tier: db-custom-1-6144
-        diskType: SSD
-        diskSize: 25
-        diskAutoresize: false
-        autoBackupTime: "03:00"
-        databases:
-          - name: varselbestiller
-            envVarPrefix: DB
-        maintenanceWindow:
-          day: 1
-          hour: 4
-        cascadingDelete: false
   resources:
     limits:
       cpu: "1"
@@ -51,3 +32,12 @@ spec:
     requests:
       cpu: "50m"
       memory: 512Mi
+  env:
+    - name: DOKNOTIFIKASJON_STOP_TOPIC
+      value: teamdokumenthandtering.privat-dok-notifikasjon-stopp
+    - name: DOKNOTIFIKASJON_TOPIC
+      value: teamdokumenthandtering.privat-dok-notifikasjon
+    - name: GROUP_ID
+      value: "ekstern-varselbestiller-01"
+    - name: VARSEL_TOPIC
+      value: min-side.brukervarsel-v1
