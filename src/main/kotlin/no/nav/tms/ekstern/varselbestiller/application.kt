@@ -1,9 +1,11 @@
-package no.nav.tms.ekstern.varselbestiller.config
+package no.nav.tms.ekstern.varselbestiller
 
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
 import no.nav.helse.rapids_rivers.RapidApplication
 import no.nav.helse.rapids_rivers.RapidsConnection
+import no.nav.tms.ekstern.varselbestiller.config.Environment
+import no.nav.tms.ekstern.varselbestiller.config.Kafka
 import no.nav.tms.ekstern.varselbestiller.doknotifikasjon.DoknotEventProducer
 import no.nav.tms.ekstern.varselbestiller.doknotifikasjon.InaktivertSink
 import no.nav.tms.ekstern.varselbestiller.doknotifikasjon.VarselOpprettetSink
