@@ -13,7 +13,7 @@ import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.River
 import no.nav.tms.ekstern.varselbestiller.doknotifikasjon.DoknotifikasjonCreator.createDoknotifikasjonFromVarsel
 import no.nav.tms.ekstern.varselbestiller.config.MetricsCollector
-import observability.traceVarsel
+import no.nav.tms.common.observability.traceVarsel
 
 class VarselOpprettetSink(
     rapidsConnection: RapidsConnection,
