@@ -27,7 +27,7 @@ fun main() {
         environment = environment,
         doknotifikasjonProducer = doknotifikasjonProducer,
         doknotifikasjonStoppProducer = doknotifikasjonStoppProducer
-    )
+    ).start()
 }
 
 fun startKafkaApplication(
@@ -40,7 +40,6 @@ fun startKafkaApplication(
         readTopic(environment.kafkaTopic)
     }
     subscribers(VarselOpprettetSubscriber(doknotifikasjonProducer),VarselInaktivertSink(doknotifikasjonStoppProducer))
-    ktorModule {  }
     onShutdown {
         doknotifikasjonProducer.flushAndClose()
         doknotifikasjonStoppProducer.flushAndClose()
