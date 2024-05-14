@@ -40,6 +40,7 @@ fun startKafkaApplication(
         readTopic(environment.kafkaTopic)
     }
     subscribers(VarselOpprettetSubscriber(doknotifikasjonProducer),VarselInaktivertSink(doknotifikasjonStoppProducer))
+    ktorModule {  }
     onShutdown {
         doknotifikasjonProducer.flushAndClose()
         doknotifikasjonStoppProducer.flushAndClose()
