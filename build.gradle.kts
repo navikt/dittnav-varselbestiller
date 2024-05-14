@@ -33,8 +33,9 @@ dependencies {
     implementation(Prometheus.hotspot)
     implementation(TmsCommonLib.utils)
     implementation(TmsCommonLib.observability)
-    implementation(RapidsAndRivers.rapidsAndRivers)
+    implementation(TmsKafkaTools.kafkaApplication)
     implementation(JacksonDataType14.moduleKotlin)
+    implementation(JacksonDatatype.datatypeJsr310)
 
     testImplementation(Junit.api)
     testImplementation(Junit.engine)

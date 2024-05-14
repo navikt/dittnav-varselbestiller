@@ -3,14 +3,14 @@ package no.nav.tms.ekstern.varselbestiller.varsel
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
-import no.nav.helse.rapids_rivers.testsupport.TestRapid
 import no.nav.tms.ekstern.varselbestiller.doknotifikasjon.DoknotEventProducer
 import no.nav.tms.ekstern.varselbestiller.doknotifikasjon.VarselType
-import no.nav.tms.ekstern.varselbestiller.doknotifikasjon.InaktivertSink
+import no.nav.tms.ekstern.varselbestiller.doknotifikasjon.VarselInaktivertSink
+import no.nav.tms.kafka.application.MessageBroadcaster
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-class InaktivertSinkTest {
+class InaktivertSubscriberTest {
     private val doknotifikasjonStoppKafkaProducer = KafkaTestUtil.createMockProducer<String, DoknotifikasjonStopp>()
 
     private val doknotifikasjonStoppProducer = DoknotEventProducer<DoknotifikasjonStopp>(
@@ -18,28 +18,33 @@ class InaktivertSinkTest {
         kafkaProducer = doknotifikasjonStoppKafkaProducer
     )
 
+    private val testBraodcaster = MessageBroadcaster(
+        listOf(
+            VarselInaktivertSink(
+                doknotifikasjonStoppProducer
+            )
+        )
+    )
     private val eventId = "77"
     private val varselAktivertJson = varselOpprettetJson(VarselType.Beskjed, eventId)
-    private lateinit var testRapid: TestRapid
+
 
     @BeforeEach
     fun setup() {
         doknotifikasjonStoppKafkaProducer.clear()
-        testRapid = TestRapid()
     }
 
     @Test
     fun `Sender doknotifikasjonStopp ved inaktivert`() {
-        setupInaktivertSink(testRapid)
 
-        testRapid.sendTestMessage(varselAktivertJson)
-        testRapid.sendTestMessage(varselInaktivertEventJson(eventId))
-        testRapid.sendTestMessage(
+        testBraodcaster.broadcastJson(varselAktivertJson)
+        testBraodcaster.broadcastJson(varselInaktivertEventJson(eventId))
+        testBraodcaster.broadcastJson(
             varselOpprettetJson(
                 varselId = "99",
                 type = VarselType.Beskjed,
                 eksternVarsling = true,
-                prefererteKanaler = "SMS"
+                prefererteKanaler = """["SMS"]"""
             )
         )
 
@@ -48,11 +53,6 @@ class InaktivertSinkTest {
             map { it.key() } shouldContainExactly listOf(eventId)
         }
     }
-
-    private fun setupInaktivertSink(testRapid: TestRapid) = InaktivertSink(
-        rapidsConnection = testRapid,
-        doknotifikasjonStoppProducer
-    )
 
     private fun varselInaktivertEventJson(varselId: String) =
         """{
