@@ -1,5 +1,6 @@
 package no.nav.tms.ekstern.varselbestiller.config
 
+import no.nav.tms.common.util.config.BooleanEnvVar.getEnvVarAsBoolean
 import no.nav.tms.common.util.config.StringEnvVar.getEnvVar
 
 data class Environment(
@@ -10,7 +11,8 @@ data class Environment(
     val kafkaSchemaRegistry: String = getEnvVar("KAFKA_SCHEMA_REGISTRY"),
     val securityVars: SecurityVars = SecurityVars(),
     val kafkaTopic: String = getEnvVar("VARSEL_TOPIC"),
-    )
+    val backdoorEnabled: Boolean = getEnvVarAsBoolean("BACKDOOR_ENABLED", false)
+)
 
 data class SecurityVars(
     val kafkaTruststorePath: String = getEnvVar("KAFKA_TRUSTSTORE_PATH"),

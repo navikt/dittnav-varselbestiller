@@ -40,3 +40,6 @@ spec:
       value: "ekstern-varselbestiller-01"
     - name: VARSEL_TOPIC
       value: min-side.brukervarsel-v1
+    - name: BACKDOOR_ENABLED
+      value: "true"
+

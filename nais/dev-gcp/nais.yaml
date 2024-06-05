@@ -34,10 +34,12 @@ spec:
       memory: 256Mi
   env:
     - name: DOKNOTIFIKASJON_STOP_TOPIC
-      value: teamdokumenthandtering.privat-dok-notifikasjon-stopp
+      value: "teamdokumenthandtering.privat-dok-notifikasjon-stopp"
     - name: DOKNOTIFIKASJON_TOPIC
-      value: teamdokumenthandtering.privat-dok-notifikasjon
+      value: "teamdokumenthandtering.privat-dok-notifikasjon"
     - name: GROUP_ID
       value: "ekstern-varselbestiller-01"
     - name: VARSEL_TOPIC
-      value: min-side.brukervarsel-v1
+      value: "min-side.brukervarsel-v1"
+    - name: BACKDOOR_ENABLED
+      value: "true"

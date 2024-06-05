@@ -33,14 +33,13 @@ class VarselOpprettetSubscriber(
         .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
         .build()
     override suspend fun receive(jsonMessage: JsonMessage) {
+        val varsel: Varsel = objectMapper.treeToValue(jsonMessage.json)
 
-                val varsel: Varsel = objectMapper.treeToValue(jsonMessage.json)
-
-                traceVarsel(varsel.varselId, mapOf("action" to "opprettet", "initiated_by" to varsel.produsent.namespace)) {
-                    log.info { "Opprettet-event motatt" }
-                    doknotifikasjonProducer.sendEvent(varsel.varselId, createDoknotifikasjonFromVarsel(varsel))
-                    MetricsCollector.eksternVarslingBestilt(varsel.type, varsel.eksternVarslingBestilling.prefererteKanaler)
-                }
+        traceVarsel(varsel.varselId, mapOf("action" to "opprettet", "initiated_by" to varsel.produsent.namespace)) {
+            log.info { "Opprettet-event motatt" }
+            doknotifikasjonProducer.sendEvent(varsel.varselId, createDoknotifikasjonFromVarsel(varsel))
+            MetricsCollector.eksternVarslingBestilt(varsel.type, varsel.eksternVarslingBestilling.prefererteKanaler)
+        }
     }
 }
 
