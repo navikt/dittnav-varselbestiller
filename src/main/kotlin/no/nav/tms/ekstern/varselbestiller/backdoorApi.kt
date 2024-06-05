@@ -3,8 +3,10 @@ package no.nav.tms.ekstern.varselbestiller
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonMapperBuilder
 import com.fasterxml.jackson.module.kotlin.treeToValue
+import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
+import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.tms.common.observability.traceVarsel
@@ -12,6 +14,7 @@ import no.nav.tms.ekstern.varselbestiller.config.MetricsCollector
 import no.nav.tms.ekstern.varselbestiller.doknotifikasjon.DoknotEventProducer
 import no.nav.tms.ekstern.varselbestiller.doknotifikasjon.DoknotifikasjonCreator
 import no.nav.tms.ekstern.varselbestiller.doknotifikasjon.Varsel
+import no.nav.tms.kafka.application.isMissingOrNull
 
 fun Route.backdoorApi(
     doknotifikasjonProducer: DoknotEventProducer<Doknotifikasjon>
@@ -21,13 +24,20 @@ fun Route.backdoorApi(
         .build()
 
     post("backdoor") {
+
         val event = call.receiveText().let { objectMapper.readTree(it) }
 
-        val varsel: Varsel = objectMapper.treeToValue(event)
+        if (event["eksternVarslingBestilling"].isMissingOrNull()) {
+            call.respond(HttpStatusCode.BadRequest, "Mangler bestilling")
+        } else {
+            val varsel: Varsel = objectMapper.treeToValue(event)
 
-        traceVarsel(varsel.varselId, mapOf("action" to "opprettet", "initiated_by" to "admin")) {
-            doknotifikasjonProducer.sendEvent(varsel.varselId, DoknotifikasjonCreator.createDoknotifikasjonFromVarsel(varsel))
-            MetricsCollector.eksternVarslingBestilt(varsel.type, varsel.eksternVarslingBestilling.prefererteKanaler)
+            traceVarsel(varsel.varselId, mapOf("action" to "opprettet", "initiated_by" to "admin")) {
+                doknotifikasjonProducer.sendEvent(varsel.varselId, DoknotifikasjonCreator.createDoknotifikasjonFromVarsel(varsel))
+                MetricsCollector.eksternVarslingBestilt(varsel.type, varsel.eksternVarslingBestilling.prefererteKanaler)
+            }
+
+            call.respond(HttpStatusCode.Created)
         }
     }
 }
