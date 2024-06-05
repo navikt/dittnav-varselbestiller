@@ -1,5 +1,6 @@
 package no.nav.tms.ekstern.varselbestiller
 
+import io.ktor.server.routing.*
 import no.nav.doknotifikasjon.schemas.Doknotifikasjon
 import no.nav.doknotifikasjon.schemas.DoknotifikasjonStopp
 import no.nav.tms.ekstern.varselbestiller.config.Environment
@@ -36,12 +37,23 @@ fun startKafkaApplication(
     doknotifikasjonStoppProducer: DoknotEventProducer<DoknotifikasjonStopp>
 ) = KafkaApplication.build {
     kafkaConfig {
-        groupId=environment.groupId
+        groupId = environment.groupId
         readTopic(environment.kafkaTopic)
     }
-    subscribers(VarselOpprettetSubscriber(doknotifikasjonProducer),VarselInaktivertSink(doknotifikasjonStoppProducer))
+    subscribers(
+        VarselOpprettetSubscriber(doknotifikasjonProducer),
+        VarselInaktivertSink(doknotifikasjonStoppProducer)
+    )
     onShutdown {
         doknotifikasjonProducer.flushAndClose()
         doknotifikasjonStoppProducer.flushAndClose()
+    }
+
+    if (environment.backdoorEnabled) {
+        ktorModule {
+            routing {
+                backdoorApi(doknotifikasjonProducer)
+            }
+        }
     }
 }

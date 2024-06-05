@@ -28,6 +28,8 @@ dependencies {
     implementation(Kafka.clients)
     implementation(Avro.avroSerializer)
     implementation(KotlinLogging.logging)
+    implementation(Ktor.Server.core)
+    implementation(Ktor.Server.netty)
     implementation(Logstash.logbackEncoder)
     implementation(Prometheus.common)
     implementation(Prometheus.hotspot)
