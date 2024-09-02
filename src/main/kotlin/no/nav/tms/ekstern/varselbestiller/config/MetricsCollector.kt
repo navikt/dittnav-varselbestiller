@@ -37,6 +37,7 @@ object MetricsCollector {
 }
 
 private fun List<String>.metricString(): String = when {
+    isEmpty() -> "DEFAULT_EPOST"
     this == listOf("SMS") -> "SMS"
     this == listOf("EPOST") -> "EPOST"
     else -> sorted().joinToString("_")
