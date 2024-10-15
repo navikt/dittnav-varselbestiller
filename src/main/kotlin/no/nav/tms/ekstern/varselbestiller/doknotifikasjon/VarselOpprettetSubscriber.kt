@@ -32,10 +32,17 @@ class VarselOpprettetSubscriber(
         .addModule(JavaTimeModule())
         .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
         .build()
+
     override suspend fun receive(jsonMessage: JsonMessage) {
         val varsel: Varsel = objectMapper.treeToValue(jsonMessage.json)
 
         traceVarsel(varsel.varselId, mapOf("action" to "opprettet", "initiated_by" to varsel.produsent.namespace)) {
+
+            if (varsel.eksternVarslingBestilling.utsettSendingTil != null) {
+                log.info { "Bestiller ikke ekstern varsling fordi utsatt sendingstidspunkt er definert" }
+                return@traceVarsel
+            }
+
             log.info { "Opprettet-event motatt" }
             doknotifikasjonProducer.sendEvent(varsel.varselId, createDoknotifikasjonFromVarsel(varsel))
             MetricsCollector.eksternVarslingBestilt(varsel.type, varsel.eksternVarslingBestilling.prefererteKanaler)

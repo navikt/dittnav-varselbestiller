@@ -1,6 +1,7 @@
 package no.nav.tms.ekstern.varselbestiller.doknotifikasjon
 
 import com.fasterxml.jackson.annotation.JsonValue
+import java.time.ZonedDateTime
 
 data class Varsel(
     val type: VarselType,
@@ -44,6 +45,7 @@ data class EksternVarslingBestilling(
     val smsVarslingstekst: String? = null,
     val epostVarslingstekst: String? = null,
     val epostVarslingstittel: String? = null,
+    val utsettSendingTil: ZonedDateTime? = null
 )
 
 enum class Sensitivitet(val loginLevel: Int) {
